@@ -19,3 +19,14 @@ docker run --env-file .env -i \
 ```
 
 `.env` must contain `ANTHROPIC_API_KEY`. It is never committed.
+
+## Repository layout
+
+The repository holds two things: the product, and the development harness I built it with. Evaluating the product needs only Docker; the harness is there to show how it was built.
+
+| Part | Paths | Purpose |
+|---|---|---|
+| **Product** | `src/`, `Dockerfile`, `package.json`, `tsconfig.json`, `traces/examples/` | The scheduling agent and a committed example trace. Only this goes into the image (see `.dockerignore`) |
+| **Tests** | `tests/` | Unit and scenario tests, plus `tests/harness/` for the harness's own checks. Run with `pnpm check` |
+| **Development harness** | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs), `scripts/` | The rules and checks the coding agent works inside. See [`docs/planning/03-harness-engineering.md`](docs/planning/03-harness-engineering.md) |
+| **Decisions** | `docs/planning/`, `docs/adr/` | How the architecture was chosen, and the individual decisions |

@@ -1,0 +1,23 @@
+# The image contains the product only. The development harness and the
+# test suite stay out; `pnpm check` runs on the host, not in the image.
+
+# Secrets and local state
+.env
+.env.*
+!.env.example
+traces/
+node_modules/
+dist/
+coverage/
+.git/
+.DS_Store
+*.log
+
+# Development harness
+.claude/
+CLAUDE.md
+specs/
+docs/
+scripts/
+tests/
+vitest.config.ts
