@@ -96,6 +96,7 @@ Coordinate a handyman visit for every work order between the order's tenant and 
 - **REQ-DL-1.** THE repository SHALL contain a Dockerfile at its root; `docker build -t agent .` and the documented `docker run` command SHALL be the only steps needed.
 - **REQ-DL-2.** Credentials SHALL come from `.env` (`ANTHROPIC_API_KEY`), which SHALL NOT be committed.
 - **REQ-DL-3.** THE repository SHALL include the traces of at least one complete run, and a README documenting assumptions and trade-offs.
+- **REQ-DL-4.** THE Dockerfile SHALL run the typecheck and the test suite in a build stage, without network access to the model and without `ANTHROPIC_API_KEY`, so that `docker build` fails if any test fails. THE runtime stage SHALL contain only the compiled output and production dependencies.
 
 ## Review reasons
 

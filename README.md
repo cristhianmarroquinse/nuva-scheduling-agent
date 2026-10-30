@@ -26,7 +26,7 @@ The repository holds two things: the product, and the development harness I buil
 
 | Part | Paths | Purpose |
 |---|---|---|
-| **Product** | `src/`, `Dockerfile`, `package.json`, `tsconfig.json`, `traces/examples/` | The scheduling agent and a committed example trace. Only this goes into the image (see `.dockerignore`) |
-| **Tests** | `tests/` | Unit and scenario tests, plus `tests/harness/` for the harness's own checks. Run with `pnpm check` |
+| **Product** | `src/`, `Dockerfile`, `package.json`, `tsconfig.json`, `traces/examples/` | The scheduling agent and a committed example trace. Only its compiled output goes into the runtime image |
+| **Tests** | `tests/` | Unit and scenario tests, plus `tests/harness/` for the harness's own checks. They run in the Docker build stage, so the image does not build if they fail; `pnpm check` also runs them on the host, with invariant coverage |
 | **Development harness** | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs), `scripts/` | The rules and checks the coding agent works inside. See [`docs/planning/03-harness-engineering.md`](docs/planning/03-harness-engineering.md) |
 | **Decisions** | `docs/planning/`, `docs/adr/` | How the architecture was chosen, and the individual decisions |
