@@ -42,6 +42,7 @@ Every requirement in the take-home and where the design addresses it. Section nu
 | Read-only CSV at `/app/work_orders.csv`, given schema, must work with other orders | 02 §1 |
 | Start coordination for all orders at startup; initial messages without waiting | 02 §1 |
 | Stay ready for messages about any unfinished order, in any order; evaluator can always type | 02 §2, serial queue in the diagram |
+| Continue until every order is terminal (and do not hang afterwards) | 02 §9 (exit when all orders are closed; end of input) |
 | Schedule only when both explicitly accepted the same date and time | 02 §4, [ADR 0001](../adr/0001-deterministic-core-llm-interpreter.md) |
 | Confirm to both parties before the result; report the agreed datetime | 02 §9 |
 | `requires_review` with a short reason when coordination cannot complete reliably | 02 §6, §7, §9 |

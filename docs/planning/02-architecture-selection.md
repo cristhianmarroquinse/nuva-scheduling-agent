@@ -90,7 +90,7 @@ stdin ─► line reader ─► serial queue (events)
 6. **Negotiation.**
    - A counter-proposal produces a new concrete slot sent to both parties, which cancels the previous one in writing.
    - Unclear or contradictory replies get one clarification; a second consecutive one goes to review.
-   - Three proposals without agreement → `no_mutual_slot`.
+   - Three proposals declined or countered by a party → `no_mutual_slot`. Re-proposals the system causes (preemption, handyman blackouts) do not count.
    - Questions are answered and do not count.
    - Availability withdrawn before closing releases the hold and triggers a new proposal.
    - A reply about another order (`crossRef`) gets a clarification; if it stays unresolved → `cross_reference`.
@@ -101,17 +101,18 @@ stdin ─► line reader ─► serial queue (events)
    - A Critical tenant's first timeout goes straight to review, with a reason that states what is known (for example, the handyman's available slot).
 8. **Messages.**
    - Templates: handyman always in Spanish; tenant in the order's language.
-   - Every date is absolute, with weekday and time range in Madrid time ("jueves 5 de noviembre de 2026, de 10:00 a 12:00 (hora de Madrid)"). The work-order title is included.
+   - Every date is absolute, with weekday and time range in Madrid time ("jueves 5 de noviembre de 2026, de 10:00 a 12:00 (hora de Madrid)"). Proposals and confirmations include the work-order title.
    - The first party to accept gets a short acknowledgement.
    - The LLM only answers questions, to the sender, from a closed list of facts.
    - The output writer guarantees one frame per message (`WOID:<id>|ROLE:<role>`, body, blank line) and normalises bodies.
 9. **Terminal results.**
    - Exactly one per order. When scheduled, confirmations go to both parties first, then `WOID:<id>|RESULT:scheduled` + `SCHEDULED_FOR:<ISO 8601 with Madrid offset>`.
-   - Otherwise `WOID:<id>|RESULT:requires_review` + `REASON:<short human-readable sentence>`. The reason code comes from a closed set (`no_response`, `no_mutual_slot`, `contradictory_replies`, `interpretation_failed`, `llm_unavailable`, `cross_reference`) and goes to the traces with a handoff summary.
+   - Otherwise `WOID:<id>|RESULT:requires_review` + `REASON:<short human-readable sentence>`. The reason code comes from a closed set (`no_response`, `no_mutual_slot`, `contradictory_replies`, `interpretation_failed`, `llm_unavailable`, `cross_reference`, `invalid_work_order`) and goes to the traces with a handoff summary.
    - Input for a finished order is traced and ignored.
    - End of input closes any open order as `no_response`.
+   - When every order has a terminal result, the process flushes its traces and exits with code 0, so an evaluator waiting for the container to finish never hangs.
 10. **Traces.**
     - JSONL under `/app/traces`. Every line has `timestamp`, `work_order_id` (null for run-level events), `event_type` and `detail`.
     - Together, facts and projections cover incoming and outgoing messages, state changes, decisions and terminal results.
-    - Runtime logs also go to files there. Nothing but the protocol reaches stdout, and nothing reaches stderr.
+    - Runtime logs also go to files there. Nothing but the protocol reaches stdout, and nothing reaches stderr: the container sets `NODE_NO_WARNINGS=1`, and the streams module redirects anything else written to stderr into the tracer.
 11. **Never crash.** Transient errors are retried by the SDK, then the message becomes `unclear`, then `llm_unavailable`. Malformed lines, unknown orders and invalid roles are traced and ignored.

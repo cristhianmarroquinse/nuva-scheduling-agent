@@ -2,7 +2,7 @@
 
 Coordinates handyman visits between tenants and a single handyman over stdin/stdout until every work order is `scheduled` or `requires_review`.
 
-> Status: planning complete, harness (phase 0) next. See [`docs/planning/`](docs/planning/README.md) for how the architecture and the development harness were chosen, and [`docs/adr/`](docs/adr/) for the decisions.
+> Status: planning and development harness (phase 0) complete; product implementation (phase 1) next. See [`docs/planning/`](docs/planning/README.md) for how the architecture and the development harness were chosen, and [`docs/adr/`](docs/adr/) for the decisions.
 
 ## Approach in one line
 

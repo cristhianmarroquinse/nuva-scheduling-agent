@@ -21,7 +21,7 @@ I used Claude Code as a research and review tool, not as the decision maker:
 
 The reviews found real defects, listed in [02](02-architecture-selection.md#what-stress-testing-changed). I fixed most of them. I also rejected or narrowed several suggestions:
 
-- **Reference time.** I first accepted anchoring "now" to the CSV dates, then reversed it. The evaluator types relative dates against the real present, and a scheduler should never propose past dates ([ADR 0003](../adr/0003-reference-time.md)).
+- **Reference time.** A reviewer suggested always anchoring "now" to the CSV dates. I rejected that as the default, because the evaluator types relative dates against the real present and a scheduler should not propose past dates. A later review showed that a stale sample CSV with scripted replies would break a clock-only rule, so I kept the clock but added a narrow exception: when every order is more than a week old, the CSV is treated as a fixture and "now" is its latest date ([ADR 0003](../adr/0003-reference-time.md)).
 - **Re-confirming acceptances.** A reviewer proposed re-confirming every acceptance that is not a plain "yes". I limited it to replies containing contrast or negation words, so "Yes, Thursday is fine" still closes in one round.
 - **Critical orders.** I kept immediate review when a Critical order's tenant does not respond: someone has to phone. I accepted that the handyman always gets one reminder.
 - **A tool-calling agent as the base.** It would show off more "agent". I chose against it because it puts correctness in the model's hands. It stays as an optional, bounded tier ([ADR 0005](../adr/0005-tiered-agent-escalation.md)).

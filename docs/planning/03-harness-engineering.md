@@ -44,7 +44,7 @@ The point is not speed. It is that agent-written code must respect explicit inva
 - `review-architecture`
 - `adversarial-evaluator`, which plays a difficult tenant or handyman (phase 2)
 
-**Hooks:**
+**Hooks** (a safety net on the agent's normal edit path; the real gate is `pnpm check`, which includes a source-hygiene test, because a hook on Edit/Write cannot see changes made through Bash):
 - Block edits to `.env`, and block `console.` in `src/`.
 - Typecheck after every edit.
 - At stop, run `pnpm check`. A red result means the task is not done.
