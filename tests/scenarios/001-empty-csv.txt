@@ -1,0 +1,10 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+# stdin keep-open
+# stdout
+# exit
+0
+# trace
+{"event_type":"run_started","work_order_id":null}
+{"event_type":"csv_loaded","detail":{"rows":[]}}
+{"event_type":"run_finished","detail":{"exit_code":0}}

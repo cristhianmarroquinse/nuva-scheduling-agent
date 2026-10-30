@@ -1,0 +1,21 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-1,Tap,Calle Mayor 1,Drips,2026-10-07T09:30:00,Medium
+# env
+AGENT_NOW=2026-10-08T10:00
+# imports
+./tests/fixtures/noisy.mjs
+# stdin
+WO-1|tenant hello after the noise
+# stdout
+WOID:WO-1|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"line_classified","work_order_id":"WO-1","detail":{"classification":"message","seq":1}}
+{"event_type":"stderr","work_order_id":null,"detail":{"text":"fixture stray stderr write\n"}}
+{"event_type":"uncaught_exception","work_order_id":null,"detail":{"message":"fixture boom"}}
+{"event_type":"eof"}
+{"event_type":"result","work_order_id":"WO-1","detail":{"code":"no_response"}}

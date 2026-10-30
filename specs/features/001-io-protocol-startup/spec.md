@@ -1,6 +1,6 @@
 # 001 · I/O protocol and startup foundations
 
-**Status:** clarified
+**Status:** implemented
 **Product requirements:** REQ-IN-1, REQ-IN-2, REQ-IN-3, REQ-IN-4, REQ-IN-5, REQ-IN-6, REQ-IN-7, REQ-IN-8, REQ-OUT-1, REQ-OUT-4, REQ-RES-2, REQ-RES-3, REQ-TO-4, REQ-TO-5, REQ-TO-6, REQ-TR-1, REQ-TR-2 (incoming messages, state changes, results), REQ-TR-3, REQ-TM-1, REQ-TM-2, REQ-RB-2
 **Invariants touched:** ORD-1, ORD-2, OUT-1, OUT-2, TIME-1, TRACE-1, TRACE-2, RUN-1
 **Deferred to 002 (calendar and initial proposals):** REQ-ST-1, REQ-ST-2, REQ-ST-3, REQ-ST-4, REQ-SC-1, REQ-SC-2, REQ-SC-3, REQ-OUT-2, REQ-OUT-3; invariants SCHED-*, COM-*, RUN-2
@@ -56,7 +56,7 @@ As the evaluator, I want "now" fixed and recorded at startup, so that every date
 
 As the evaluator, I want to type lines for any order at any time and have malformed input ignored rather than crash the agent.
 
-**Independent test:** pipe a mix of valid, malformed, unknown-order, invalid-role, `<NO RESPONSE>` and closed-order lines into the line reader; each is traced with its classification, in arrival order, and none produces stdout output.
+**Independent test:** pipe a mix of valid, malformed, unknown-order, invalid-role, `<NO RESPONSE>` and closed-order lines into the agent; each is traced with its classification, in arrival order, and none produces stdout output.
 
 **Acceptance criteria (EARS):**
 
@@ -84,7 +84,7 @@ As the evaluator, I want every order to end with exactly one result and the proc
 
 As the evaluator, I want stdout to carry only well-formed frames and results and stderr to stay empty, so that my parser never breaks.
 
-**Independent test:** the message writer, exercised directly with hostile bodies, always produces one well-formed frame; a spawned run leaves stderr empty.
+**Independent test:** the frame writer, exercised directly with hostile bodies, always produces one well-formed frame; a spawned run leaves stderr empty.
 
 **Acceptance criteria (EARS):**
 
@@ -131,18 +131,19 @@ Protocol-visible behaviour is covered by scenarios (`tests/scenarios/001-*.txt`)
 | `001-invalid-rows` | AC-1.3, AC-1.4, AC-1.5 | Bad urgency, empty title, bad date, no id, duplicate id; EOF | One `invalid_work_order` per bad row; nothing for no-id; duplicate traced once |
 | `001-all-invalid-exits` | AC-5.2 | Only invalid rows; stdin left open | Results, then exit 0 without EOF |
 | `001-empty-csv` | AC-5.2 | Header only | No output; exit 0 |
-| `001-csv-unusable` | AC-1.6 | Missing file; wrong header | Empty stdout and stderr; error traced; exit 1 |
-| `001-reported-at-zones` | AC-1.7, TIME-1 | Rows with and without offsets around 2026-10-25 | Traced instants in Madrid with the correct offsets |
+| `001-csv-missing`, `001-csv-wrong-header` | AC-1.6 | Missing file; wrong header | Empty stdout and stderr; error traced; exit 1 |
+| `001-reported-at-zones` | AC-1.7 (groundwork for TIME-1, cited from 002) | Rows with and without offsets around 2026-10-25 | Traced instants in Madrid with the correct offsets |
 | `001-language` | AC-2.1, AC-2.2, AC-2.3 | Spanish, English, no-evidence orders | `es`, `en`, `en` traced with evidence |
-| `001-reference-time` | AC-3.1–AC-3.4 | `AGENT_NOW` set / invalid / unset with fresh and stale CSVs | Recorded reference time per rule; fixture decision traced |
+| `001-reference-time-*` (`agent-now`, `agent-now-winter`, `invalid`, `fresh`, `stale`, `stale-mixed`) | AC-3.1–AC-3.4 | `AGENT_NOW` set / invalid / unset with fresh and stale CSVs | Recorded reference time per rule; fixture decision traced |
 | `001-bad-lines` | AC-4.1–AC-4.3, AC-4.5, AC-4.6 | Valid, malformed, unknown order, invalid role, `<NO RESPONSE>`, CRLF, `\|` in body | Each traced with its classification; no stdout before EOF |
 | `001-closed-order-line` | AC-4.3, AC-5.3, ORD-2 | Line for an `invalid_work_order` order | Traced and ignored; no second result |
 | `001-queue-order` | AC-4.4, AC-5.1 | Burst of lines then EOF, written before startup ends | Traced in arrival order; closures after all lines |
 | Writer unit tests | AC-6.1–AC-6.4, OUT-2 | Bodies with blank lines, whitespace, `\r\n`, header-like lines; multi-line reasons | One frame / result each, exact shape |
-| `001-clean-streams` | AC-6.5, OUT-1 | Spawned run with a dependency warning and a thrown error forced | stderr empty; stdout only frames/results; error in traces |
-| `001-trace-shape` | AC-7.1, AC-7.2, TRACE-1 | Any scenario | Every line has the four fields; required events present |
-| `001-replay` | AC-7.3, TRACE-2 | Replay of `001-invalid-rows` and `001-bad-lines` traces | Same states and results |
-| No-timer check | AC-5.4 | Source | No timer or wall-clock waiting in `src/` |
+| `001-clean-streams` | AC-6.5, OUT-1 | Spawned run with a dependency warning, a stray stderr write and a thrown error forced (`tests/fixtures/noisy.mjs`) | stderr empty; stdout only frames/results; noise and error in traces |
+| Hostile-input run (`tests/scenarios/001.test.ts`) | RUN-1, AC-6.5, OUT-1 | Hostile CSV (frame-like text, control characters, bad ids) and hostile lines (200 KB, binary, frame-like, null bytes) | One result per usable order; stderr empty; exit 0 |
+| Trace-shape test (`tests/scenarios/001.test.ts`) | AC-7.1, AC-7.2, TRACE-1 | Every 001 scenario | Every line has the four fields; required events present |
+| `tests/scenarios/replay.test.ts` | AC-7.3, TRACE-2 | Replay of `001-invalid-rows` and `001-bad-lines` traces | Same stdout, results and projections |
+| No-timer check (`tests/harness/source-hygiene.test.ts`) | AC-5.4 | Source | No timer or wall-clock waiting in `src/` |
 
 ## Success criteria
 

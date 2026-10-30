@@ -1,0 +1,9 @@
+# csv
+id,title,address,description,reported_at,urgency
+WO-1,Tap,Calle Mayor 5,Drips,2026-10-07T09:30:00,Medium
+# stdin keep-open
+# stdout
+# exit
+1
+# trace
+{"event_type":"run_error","work_order_id":null,"detail":{"during":"read_csv","problem":"wrong_header","header":["id","title","address","description","reported_at","urgency"]}}

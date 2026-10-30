@@ -41,6 +41,14 @@ export function sourceViolations(path: string, text: string): string[] {
   return violations;
 }
 
+const TIMER = /\b(setTimeout|setInterval|setImmediate|timers\/promises|Atomics\s*\.\s*wait)\b/;
+
+/** Reasons a piece of src/ code waits on the wall clock (REQ-TO-5). Empty when clean. Checked by the test suite, not the edit hook. */
+export function timerViolations(path: string, text: string): string[] {
+  if (!path.startsWith('src/')) return [];
+  return TIMER.test(text) ? [`${path}: timers and wall-clock waiting are not allowed in src/; timeouts arrive as <NO RESPONSE> (REQ-TO-5).`] : [];
+}
+
 export function guardEdit(input: EditInput, projectDir: string): Verdict {
   const path = relativePath(input.file_path ?? '', projectDir);
   if (ENV_FILE.test(path) && !ENV_EXAMPLE.test(path)) {

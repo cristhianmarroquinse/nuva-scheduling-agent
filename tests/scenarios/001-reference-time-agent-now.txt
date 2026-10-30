@@ -1,0 +1,14 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-1,Tap,Calle Mayor 1,Drips,2026-01-05T09:00:00,Medium
+# env
+AGENT_NOW=2026-10-24T18:00
+# stdin
+# stdout
+WOID:WO-1|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"run_started","work_order_id":null,"detail":{"sim_now":"2026-10-24T18:00:00+02:00","source":"agent_now","agent_now":"2026-10-24T18:00"}}

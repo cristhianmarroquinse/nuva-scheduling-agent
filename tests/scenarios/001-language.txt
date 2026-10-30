@@ -1,0 +1,22 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-ES,Grifo que gotea,Calle Mayor 1,"El grifo de la cocina gotea toda la noche y no cierra bien.",2026-10-07T09:30:00,Medium
+WO-EN,Leaking tap,Calle Mayor 2,"The kitchen tap drips all night and does not close properly.",2026-10-07T09:30:00,Medium
+WO-NONE,Radiator,Calle Mayor 3,KO,2026-10-07T09:30:00,High
+# stdin
+# stdout
+WOID:WO-ES|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-EN|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-NONE|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"language_inferred","work_order_id":"WO-ES","detail":{"language":"es","evidence":{"en":0,"matches":{"en":[]}}}}
+{"event_type":"language_inferred","work_order_id":"WO-EN","detail":{"language":"en","evidence":{"es":0,"matches":{"es":[]}}}}
+{"event_type":"language_inferred","work_order_id":"WO-NONE","detail":{"language":"en","evidence":{"es":0,"en":0}}}

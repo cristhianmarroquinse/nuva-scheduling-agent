@@ -1,0 +1,34 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-1,Summer local,Calle Mayor 1,No offset before the change,2026-10-24T18:00:00,Medium
+WO-2,Winter local,Calle Mayor 2,No offset after the change,2026-10-26T09:00:00,Medium
+WO-3,Summer offset,Calle Mayor 3,UTC before the change,2026-10-24T16:00:00Z,Medium
+WO-4,Winter offset,Calle Mayor 4,UTC after the change,2026-10-26T08:00:00Z,Medium
+WO-5,Foreign offset,Calle Mayor 5,New York time,2026-10-26T03:00:00-05:00,Medium
+# env
+AGENT_NOW=2026-10-27T10:00
+# stdin
+# stdout
+WOID:WO-1|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-2|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-3|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-4|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-5|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"order_loaded","work_order_id":"WO-1","detail":{"reported_at":"2026-10-24T18:00:00+02:00"}}
+{"event_type":"order_loaded","work_order_id":"WO-2","detail":{"reported_at":"2026-10-26T09:00:00+01:00"}}
+{"event_type":"order_loaded","work_order_id":"WO-3","detail":{"reported_at":"2026-10-24T18:00:00+02:00"}}
+{"event_type":"order_loaded","work_order_id":"WO-4","detail":{"reported_at":"2026-10-26T09:00:00+01:00"}}
+{"event_type":"order_loaded","work_order_id":"WO-5","detail":{"reported_at":"2026-10-26T09:00:00+01:00"}}

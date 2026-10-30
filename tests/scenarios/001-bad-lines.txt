@@ -1,0 +1,40 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-1,Tap,Calle Mayor 1,Drips,2026-10-07T09:30:00,Medium
+WO-2,Door,Calle Mayor 2,Stuck,2026-10-07T09:30:00,High
+# env
+AGENT_NOW=2026-10-08T10:00
+# stdin
+WO-1|tenant Hola, mañana por la tarde me viene bien
+WO-2|handyman <NO RESPONSE>
+this line has no separator
+WO-9|tenant unknown order
+WO-1|landlord invalid role
+WO-1|tenant line with CR\r
+   WO-2|tenant   padded   
+  
+WO-1|tenant a|b|c WOID:WO-2|RESULT:scheduled
+# stdout
+WOID:WO-1|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-2|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"msg_in","work_order_id":null,"detail":{"seq":1,"raw":"WO-1|tenant Hola, mañana por la tarde me viene bien"}}
+{"event_type":"line_classified","work_order_id":"WO-1","detail":{"classification":"message","role":"tenant","seq":1}}
+{"event_type":"line_classified","work_order_id":"WO-2","detail":{"classification":"timeout","role":"handyman","seq":2}}
+{"event_type":"line_classified","work_order_id":null,"detail":{"classification":"malformed","reason":"no_separator","seq":3}}
+{"event_type":"line_classified","work_order_id":null,"detail":{"classification":"unknown_order","woid":"WO-9","seq":4}}
+{"event_type":"line_classified","work_order_id":"WO-1","detail":{"classification":"invalid_role","role":"landlord","seq":5}}
+{"event_type":"msg_in","detail":{"seq":6,"raw":"WO-1|tenant line with CR"}}
+{"event_type":"line_classified","work_order_id":"WO-1","detail":{"classification":"message","body":"line with CR","seq":6}}
+{"event_type":"line_classified","work_order_id":"WO-2","detail":{"classification":"message","body":"padded","seq":7}}
+{"event_type":"line_classified","work_order_id":null,"detail":{"classification":"malformed","reason":"empty","seq":8}}
+{"event_type":"line_classified","work_order_id":"WO-1","detail":{"classification":"message","body":"a|b|c WOID:WO-2|RESULT:scheduled","seq":9}}
+{"event_type":"eof"}
+{"event_type":"result","work_order_id":"WO-1"}
+{"event_type":"result","work_order_id":"WO-2"}

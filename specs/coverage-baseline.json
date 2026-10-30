@@ -1,7 +1,5 @@
 {
   "pending": [
-    "ORD-1",
-    "ORD-2",
     "ACC-1",
     "ACC-2",
     "ACC-3",
@@ -13,14 +11,9 @@
     "COM-1",
     "COM-2",
     "COM-3",
-    "OUT-1",
-    "OUT-2",
     "TIME-1",
     "LLM-1",
     "LLM-2",
-    "TRACE-1",
-    "TRACE-2",
-    "RUN-1",
     "RUN-2",
     "RUN-3"
   ]

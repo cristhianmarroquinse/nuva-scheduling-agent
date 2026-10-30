@@ -1,0 +1,6 @@
+# stdin keep-open
+# stdout
+# exit
+1
+# trace
+{"event_type":"run_error","work_order_id":null,"detail":{"during":"read_csv"}}

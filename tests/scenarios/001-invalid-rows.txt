@@ -1,0 +1,33 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-U,Boiler,Calle Mayor 1,No hot water,2026-10-07T09:30:00,Urgent
+WO-T,,Calle Mayor 2,Empty title,2026-10-07T09:30:00,High
+WO-D,Window,Calle Mayor 3,Broken glass,last Tuesday,Low
+,Ghost,Calle Mayor 4,No id at all,2026-10-07T09:30:00,Low
+WO-1,Tap,Calle Mayor 5,Drips,2026-10-07T09:30:00,Medium
+WO-1,Tap again,Calle Mayor 5,Duplicate row,2026-10-08T09:30:00,Medium
+# stdin
+# stdout
+WOID:WO-U|RESULT:requires_review
+REASON:The work order row has an unknown urgency 'Urgent'.
+
+WOID:WO-T|RESULT:requires_review
+REASON:The work order row has no title.
+
+WOID:WO-D|RESULT:requires_review
+REASON:The work order row has an unreadable reported_at 'last Tuesday'.
+
+WOID:WO-1|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"row_rejected","work_order_id":"WO-U","detail":{"line":1,"problem":{"field":"urgency","problem":"unknown","value":"Urgent"}}}
+{"event_type":"result","work_order_id":"WO-U","detail":{"code":"invalid_work_order"}}
+{"event_type":"row_rejected","work_order_id":"WO-T","detail":{"problem":{"field":"work_order","problem":"empty"}}}
+{"event_type":"row_rejected","work_order_id":"WO-D","detail":{"problem":{"field":"reported_at","problem":"unparseable"}}}
+{"event_type":"row_ignored","work_order_id":null,"detail":{"line":4,"reason":"no_id"}}
+{"event_type":"order_loaded","work_order_id":"WO-1","detail":{"title":"Tap"}}
+{"event_type":"row_ignored","work_order_id":null,"detail":{"line":6,"reason":"duplicate","id":"WO-1"}}
+{"event_type":"result","work_order_id":"WO-1","detail":{"code":"no_response"}}
