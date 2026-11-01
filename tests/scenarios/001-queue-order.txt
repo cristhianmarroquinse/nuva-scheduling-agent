@@ -68,7 +68,7 @@ WO-2|tenant burst line 57
 WO-3|tenant burst line 58
 WO-4|tenant burst line 59
 WO-5|tenant burst line 60
-# stdout
+# stdout results
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 

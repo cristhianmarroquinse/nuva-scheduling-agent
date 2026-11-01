@@ -28,4 +28,5 @@ async function replay(name: string): Promise<void> {
 describe('replay (AC-7.3, TRACE-2)', () => {
   it('001-invalid-rows: replaying the facts reproduces the states, results and projections (TRACE-2)', () => replay('001-invalid-rows'), 20_000);
   it('001-bad-lines: replaying the facts reproduces the states, results and projections (TRACE-2)', () => replay('001-bad-lines'), 20_000);
+  it('002-urgency-order: replaying the facts reproduces the holds, frames and results without the calendar being re-fed (TRACE-2)', () => replay('002-urgency-order'), 20_000);
 });

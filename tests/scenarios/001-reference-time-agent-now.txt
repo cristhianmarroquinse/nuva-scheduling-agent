@@ -4,7 +4,7 @@ WO-1,Tap,Calle Mayor 1,Drips,2026-01-05T09:00:00,Medium
 # env
 AGENT_NOW=2026-10-24T18:00
 # stdin
-# stdout
+# stdout results
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 

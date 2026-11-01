@@ -17,6 +17,12 @@ REASON:The work order row has no title.
 WOID:WO-D|RESULT:requires_review
 REASON:The work order row has an unreadable reported_at 'last Tuesday'.
 
+WOID:WO-1|ROLE:tenant
+Hello. We are writing about your report "Tap". We propose the handyman's visit on Wednesday 7 October 2026, 11:00 to 13:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap» (urgencia media) en Calle Mayor 5. Propuesta: miércoles 7 de octubre de 2026, de 11:00 a 13:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 

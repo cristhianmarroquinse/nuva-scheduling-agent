@@ -1,0 +1,135 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-01,Tap 1,Calle Mayor 1,Drips.,2026-10-30T09:00:00,Medium
+WO-02,Tap 2,Calle Mayor 2,Drips.,2026-10-30T09:01:00,Medium
+WO-03,Tap 3,Calle Mayor 3,Drips.,2026-10-30T09:02:00,Medium
+WO-04,Tap 4,Calle Mayor 4,Drips.,2026-10-30T09:03:00,Medium
+WO-05,Tap 5,Calle Mayor 5,Drips.,2026-10-30T09:04:00,Medium
+WO-06,Tap 6,Calle Mayor 6,Drips.,2026-10-30T09:05:00,Medium
+WO-07,Tap 7,Calle Mayor 7,Drips.,2026-10-30T09:06:00,Medium
+WO-08,Tap 8,Calle Mayor 8,Drips.,2026-10-30T09:07:00,Medium
+WO-09,Tap 9,Calle Mayor 9,Drips.,2026-10-30T09:08:00,Medium
+WO-10,Tap 10,Calle Mayor 10,Drips.,2026-10-30T09:09:00,Medium
+WO-11,Tap 11,Calle Mayor 11,Drips.,2026-10-30T09:10:00,Medium
+WO-12,Tap 12,Calle Mayor 12,Drips.,2026-10-30T09:11:00,Medium
+# env
+AGENT_NOW=2026-11-02T07:00
+# stdin
+# stdout
+WOID:WO-01|ROLE:tenant
+Hello. We are writing about your report "Tap 1". We propose the handyman's visit on Monday 2 November 2026, 09:00 to 11:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-01|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 1» (urgencia media) en Calle Mayor 1. Propuesta: lunes 2 de noviembre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-02|ROLE:tenant
+Hello. We are writing about your report "Tap 2". We propose the handyman's visit on Monday 2 November 2026, 11:00 to 13:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-02|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 2» (urgencia media) en Calle Mayor 2. Propuesta: lunes 2 de noviembre de 2026, de 11:00 a 13:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-03|ROLE:tenant
+Hello. We are writing about your report "Tap 3". We propose the handyman's visit on Monday 2 November 2026, 13:00 to 15:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-03|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 3» (urgencia media) en Calle Mayor 3. Propuesta: lunes 2 de noviembre de 2026, de 13:00 a 15:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-04|ROLE:tenant
+Hello. We are writing about your report "Tap 4". We propose the handyman's visit on Monday 2 November 2026, 15:00 to 17:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-04|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 4» (urgencia media) en Calle Mayor 4. Propuesta: lunes 2 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-05|ROLE:tenant
+Hello. We are writing about your report "Tap 5". We propose the handyman's visit on Monday 2 November 2026, 17:00 to 19:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-05|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 5» (urgencia media) en Calle Mayor 5. Propuesta: lunes 2 de noviembre de 2026, de 17:00 a 19:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-06|ROLE:tenant
+Hello. We are writing about your report "Tap 6". We propose the handyman's visit on Tuesday 3 November 2026, 09:00 to 11:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-06|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 6» (urgencia media) en Calle Mayor 6. Propuesta: martes 3 de noviembre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-07|ROLE:tenant
+Hello. We are writing about your report "Tap 7". We propose the handyman's visit on Tuesday 3 November 2026, 11:00 to 13:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-07|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 7» (urgencia media) en Calle Mayor 7. Propuesta: martes 3 de noviembre de 2026, de 11:00 a 13:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-08|ROLE:tenant
+Hello. We are writing about your report "Tap 8". We propose the handyman's visit on Tuesday 3 November 2026, 13:00 to 15:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-08|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 8» (urgencia media) en Calle Mayor 8. Propuesta: martes 3 de noviembre de 2026, de 13:00 a 15:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-09|ROLE:tenant
+Hello. We are writing about your report "Tap 9". We propose the handyman's visit on Tuesday 3 November 2026, 15:00 to 17:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-09|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 9» (urgencia media) en Calle Mayor 9. Propuesta: martes 3 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-10|ROLE:tenant
+Hello. We are writing about your report "Tap 10". We propose the handyman's visit on Tuesday 3 November 2026, 17:00 to 19:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-10|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 10» (urgencia media) en Calle Mayor 10. Propuesta: martes 3 de noviembre de 2026, de 17:00 a 19:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-11|ROLE:tenant
+Hello. We are writing about your report "Tap 11". We propose the handyman's visit on Wednesday 4 November 2026, 09:00 to 11:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-11|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 11» (urgencia media) en Calle Mayor 11. Propuesta: miércoles 4 de noviembre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-12|ROLE:tenant
+Hello. We are writing about your report "Tap 12". We propose the handyman's visit on Wednesday 4 November 2026, 11:00 to 13:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-12|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap 12» (urgencia media) en Calle Mayor 12. Propuesta: miércoles 4 de noviembre de 2026, de 11:00 a 13:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-01|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-02|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-03|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-04|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-05|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-06|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-07|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-08|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-09|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-10|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-11|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-12|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"hold_taken","work_order_id":"WO-01","detail":{"start":"2026-11-02T09:00:00+01:00","end":"2026-11-02T11:00:00+01:00"}}
+{"event_type":"hold_taken","work_order_id":"WO-05","detail":{"start":"2026-11-02T17:00:00+01:00","end":"2026-11-02T19:00:00+01:00"}}
+{"event_type":"hold_taken","work_order_id":"WO-06","detail":{"start":"2026-11-03T09:00:00+01:00","end":"2026-11-03T11:00:00+01:00"}}
+{"event_type":"hold_taken","work_order_id":"WO-10","detail":{"start":"2026-11-03T17:00:00+01:00","end":"2026-11-03T19:00:00+01:00"}}
+{"event_type":"hold_taken","work_order_id":"WO-11","detail":{"start":"2026-11-04T09:00:00+01:00","end":"2026-11-04T11:00:00+01:00"}}
+{"event_type":"hold_taken","work_order_id":"WO-12","detail":{"start":"2026-11-04T11:00:00+01:00","end":"2026-11-04T13:00:00+01:00"}}

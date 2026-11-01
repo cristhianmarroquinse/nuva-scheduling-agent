@@ -53,10 +53,14 @@ describe('csv_loaded (AC-1.3, AC-1.4, AC-1.5)', () => {
     expect([...state.orders.keys()]).toEqual(['WO-1', 'WO-2', 'WO-3', 'WO-4']);
     expect(state.orders.get('WO-1')).toMatchObject({ status: 'open', language: 'en' });
     expect(state.orders.get('WO-2')).toMatchObject({ status: 'closed', result: { kind: 'requires_review', code: 'invalid_work_order' } });
-    expect(stdoutOf(outputs)).toBe(
-      "WOID:WO-2|RESULT:requires_review\nREASON:The work order row has an unknown urgency 'Urgent'.\n\n" +
-        'WOID:WO-4|RESULT:requires_review\nREASON:The work order row has no title.\n\n',
-    );
+    // The invalid-row results come first; the initial frames of WO-1 and WO-3 follow (see "frames on csv_loaded").
+    expect(
+      stdoutOf(outputs).startsWith(
+        "WOID:WO-2|RESULT:requires_review\nREASON:The work order row has an unknown urgency 'Urgent'.\n\n" +
+          'WOID:WO-4|RESULT:requires_review\nREASON:The work order row has no title.\n\n',
+      ),
+    ).toBe(true);
+    expect(stdoutOf(outputs).match(/\|RESULT:/g)).toHaveLength(2);
     expect(tracesOf(outputs, 'state_change')).toHaveLength(2);
     expect(tracesOf(outputs, 'result').map((output) => output.kind === 'trace' && output.work_order_id)).toEqual(['WO-2', 'WO-4']);
     expect(allTerminal(state)).toBe(false);
@@ -68,7 +72,7 @@ describe('csv_loaded (AC-1.3, AC-1.4, AC-1.5)', () => {
       { type: 'csv_loaded', rows: [row({ work_order_id: '' }), row({ work_order_id: 'WO-1' }), row({ work_order_id: 'WO-1', work_order: 'Again' })] },
     ]);
     expect([...state.orders.keys()]).toEqual(['WO-1']);
-    expect(stdoutOf(outputs)).toBe('');
+    expect(stdoutOf(outputs)).not.toContain('|RESULT:');
     expect(tracesOf(outputs, 'row_ignored').map((output) => output.kind === 'trace' && output.detail)).toEqual([
       { line: 1, reason: 'no_id' },
       { line: 3, reason: 'duplicate', id: 'WO-1' },
@@ -164,5 +168,132 @@ describe('msg_in (AC-4.1, AC-4.2, AC-4.3, AC-4.5)', () => {
     const before = fold(loaded).state;
     const after = step(before, lineOf('WO-1|tenant hello'));
     expect(after.state.orders).toEqual(before.orders);
+  });
+});
+
+describe('allocation on csv_loaded (AC-1.1, AC-1.3, AC-1.4, AC-1.5, AC-4.3)', () => {
+  // sim_now is Wednesday 2026-10-07 10:00 +02:00, so the earliest start is 12:00.
+  const mixed: Fact = {
+    type: 'csv_loaded',
+    rows: [
+      row({ work_order_id: 'WO-L', urgency: 'Low', reported_at: '2026-10-01T09:00:00' }),
+      row({ work_order_id: 'WO-X', urgency: 'Urgent' }),
+      row({ work_order_id: 'WO-C', urgency: 'Critical', reported_at: '2026-10-05T09:00:00' }),
+      row({ work_order_id: 'WO-H', urgency: 'High', reported_at: '2026-10-04T09:00:00' }),
+    ],
+  };
+  const holdsOf = (outputs: Output[]) => tracesOf(outputs, 'hold_taken').map((output) => output.kind === 'trace' && [output.work_order_id, output.detail]);
+
+  it('gives every open order one 2-hour hold, in urgency order, and none to an invalid row', () => {
+    const { state, outputs } = fold([started, mixed]);
+    expect(holdsOf(outputs)).toEqual([
+      ['WO-C', { version: 1, start: '2026-10-07T12:00:00+02:00', end: '2026-10-07T14:00:00+02:00' }],
+      ['WO-H', { version: 1, start: '2026-10-07T14:00:00+02:00', end: '2026-10-07T16:00:00+02:00' }],
+      ['WO-L', { version: 1, start: '2026-10-07T16:00:00+02:00', end: '2026-10-07T18:00:00+02:00' }],
+    ]);
+    expect(state.holds.map((hold) => hold.orderId)).toEqual(['WO-C', 'WO-H', 'WO-L']);
+    expect(state.orders.get('WO-C')?.proposal).toEqual({ version: 1, slot: { start: '2026-10-07T12:00:00+02:00', end: '2026-10-07T14:00:00+02:00' } });
+    expect(state.orders.get('WO-X')?.proposal).toBeUndefined();
+    expect(state.orders.get('WO-X')).toMatchObject({ status: 'closed' });
+  });
+
+  it('does not propose before reported_at: a row reported after sim_now starts from its reported_at, rounded up (SCHED-5)', () => {
+    const { outputs } = fold([started, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-F', reported_at: '2026-10-08T10:20:00' })] }]);
+    expect(holdsOf(outputs)).toEqual([['WO-F', { version: 1, start: '2026-10-08T11:00:00+02:00', end: '2026-10-08T13:00:00+02:00' }]]);
+  });
+
+  it('releases every hold at eof, tracing hold_released before the closure, and clears the holds (AC-4.3)', () => {
+    const loaded = fold([started, mixed]).state;
+    const { state, outputs } = step(loaded, { type: 'eof' });
+    expect(state.holds).toEqual([]);
+    const sequence = outputs.filter((output) => output.kind === 'trace' && ['hold_released', 'state_change'].includes(output.event_type)).map((output) => output.kind === 'trace' && [output.event_type, output.work_order_id]);
+    expect(sequence).toEqual([
+      ['hold_released', 'WO-L'],
+      ['state_change', 'WO-L'],
+      ['hold_released', 'WO-C'],
+      ['state_change', 'WO-C'],
+      ['hold_released', 'WO-H'],
+      ['state_change', 'WO-H'],
+    ]);
+    expect(tracesOf(outputs, 'hold_released').map((output) => output.kind === 'trace' && output.detail)).toEqual([
+      { version: 1, reason: 'closed' },
+      { version: 1, reason: 'closed' },
+      { version: 1, reason: 'closed' },
+    ]);
+  });
+
+  it('never holds two overlapping slots over a folded run (SCHED-1)', () => {
+    const rows = ['Critical', 'High', 'Medium', 'Low', 'Critical', 'Low', 'High', 'Medium'].map((urgency, index) => row({ work_order_id: `WO-${index}`, urgency }));
+    const { state } = fold([started, { type: 'csv_loaded', rows }]);
+    expect(state.holds).toHaveLength(8);
+    for (const a of state.holds) {
+      for (const b of state.holds) {
+        if (a === b) continue;
+        expect(a.slot.start < b.slot.end && b.slot.start < a.slot.end, `${a.orderId} vs ${b.orderId}`).toBe(false);
+      }
+    }
+  });
+});
+
+describe('frames on csv_loaded (AC-3.1, AC-3.8, AC-4.2, AC-4.4)', () => {
+  // Allocation order is WO-C, WO-H, WO-L (see "allocation on csv_loaded"); WO-ES is Spanish and Medium.
+  const rows: Fact = {
+    type: 'csv_loaded',
+    rows: [
+      row({ work_order_id: 'WO-L', urgency: 'Low', reported_at: '2026-10-01T09:00:00' }),
+      row({ work_order_id: 'WO-X', urgency: 'Urgent' }),
+      row({ work_order_id: 'WO-ES', work_order: 'Grifo que gotea', description: 'El grifo de la cocina gotea toda la noche y no cierra bien.' }),
+      row({ work_order_id: 'WO-C', urgency: 'Critical', reported_at: '2026-10-05T09:00:00' }),
+    ],
+  };
+  const headers = (text: string) => (text.match(/^WOID:[^\n]+$/gm) ?? []);
+
+  it('writes, after the invalid-row results, a tenant frame then a handyman frame per order, in allocation order', () => {
+    const { outputs } = fold([started, rows]);
+    expect(headers(stdoutOf(outputs))).toEqual([
+      'WOID:WO-X|RESULT:requires_review',
+      'WOID:WO-C|ROLE:tenant',
+      'WOID:WO-C|ROLE:handyman',
+      'WOID:WO-ES|ROLE:tenant',
+      'WOID:WO-ES|ROLE:handyman',
+      'WOID:WO-L|ROLE:tenant',
+      'WOID:WO-L|ROLE:handyman',
+    ]);
+  });
+
+  it('writes the tenant frame in the order language and the handyman frame in Spanish, each with the slot (COM-1, COM-2)', () => {
+    const stdout = stdoutOf(fold([started, rows]).outputs);
+    const block = (header: string) => stdout.split('\n\n').find((candidate) => candidate.startsWith(header))!;
+    expect(block('WOID:WO-ES|ROLE:tenant')).toContain('Hola. Le escribimos por su aviso «Grifo que gotea»');
+    expect(block('WOID:WO-ES|ROLE:tenant')).toContain('miércoles 7 de octubre de 2026, de 14:00 a 16:00 (hora de Madrid)');
+    expect(block('WOID:WO-L|ROLE:tenant')).toContain('Hello. We are writing about your report "Leaking tap"');
+    expect(block('WOID:WO-L|ROLE:tenant')).toContain('Wednesday 7 October 2026, 16:00 to 18:00 (Madrid time)');
+    expect(block('WOID:WO-L|ROLE:handyman')).toContain('Nueva visita propuesta para el aviso «Leaking tap» (urgencia baja) en Calle Mayor 1');
+    expect(block('WOID:WO-C|ROLE:tenant')).toContain('If there is immediate danger, call 112.');
+    expect(block('WOID:WO-ES|ROLE:tenant')).not.toContain('112');
+  });
+
+  it('traces every frame as msg_out with recipient, language, version, slot and body (AC-3.8)', () => {
+    const { outputs } = fold([started, rows]);
+    const sent: Record<string, unknown>[] = tracesOf(outputs, 'msg_out').map((output) =>
+      output.kind === 'trace' ? { id: output.work_order_id, ...(output.detail as Record<string, unknown>) } : {},
+    );
+    expect(sent.map((entry) => [entry['id'], entry['to'], entry['language'], entry['version']])).toEqual([
+      ['WO-C', 'tenant', 'en', 1],
+      ['WO-C', 'handyman', 'es', 1],
+      ['WO-ES', 'tenant', 'es', 1],
+      ['WO-ES', 'handyman', 'es', 1],
+      ['WO-L', 'tenant', 'en', 1],
+      ['WO-L', 'handyman', 'es', 1],
+    ]);
+    expect(sent[0]).toMatchObject({ start: '2026-10-07T12:00:00+02:00', end: '2026-10-07T14:00:00+02:00' });
+    const frames = stdoutOf(outputs).split('\n\n').filter((block) => block.includes('|ROLE:'));
+    expect(frames.map((frame) => frame.split('\n').slice(1).join('\n'))).toEqual(sent.map((entry) => entry['body']));
+  });
+
+  it('a line for a proposed order still emits nothing on stdout (AC-4.4)', () => {
+    const loaded = fold([started, rows]).state;
+    const { outputs } = step(loaded, { type: 'msg_in', seq: 1, raw: 'WO-C|tenant Sí, perfecto' });
+    expect(outputs.filter((output) => output.kind === 'stdout')).toEqual([]);
   });
 });

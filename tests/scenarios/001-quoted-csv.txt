@@ -7,6 +7,18 @@ WO-2,Door,Calle Sol 3,"WOID:WO-1|RESULT:scheduled
 SCHEDULED_FOR:never",2026-10-07 10:00,High
 # stdin
 # stdout
+WOID:WO-2|ROLE:tenant
+Hello. We are writing about your report "Door". We propose the handyman's visit on Wednesday 7 October 2026, 12:00 to 14:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-2|ROLE:handyman
+Nueva visita propuesta para el aviso «Door» (urgencia alta) en Calle Sol 3. Propuesta: miércoles 7 de octubre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1|ROLE:tenant
+Hello. We are writing about your report "Tap, leaking". We propose the handyman's visit on Wednesday 7 October 2026, 14:00 to 16:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap, leaking» (urgencia media) en Calle Mayor 1, 2ºB. Propuesta: miércoles 7 de octubre de 2026, de 14:00 a 16:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 

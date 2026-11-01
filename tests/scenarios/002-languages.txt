@@ -1,0 +1,33 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-ES,Grifo que gotea,Calle Mayor 1,"El grifo de la cocina gotea toda la noche y no cierra bien.",2026-11-02T09:00:00,Medium
+WO-EN,Leaking tap,Calle Mayor 2,"The kitchen tap drips all night and does not close properly.",2026-11-02T10:00:00,Medium
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+# stdout
+WOID:WO-ES|ROLE:tenant
+Hola. Le escribimos por su aviso «Grifo que gotea». Proponemos la visita del técnico el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Le viene bien? Si no, indíquenos qué días y horas le vendrían bien.
+
+WOID:WO-ES|ROLE:handyman
+Nueva visita propuesta para el aviso «Grifo que gotea» (urgencia media) en Calle Mayor 1. Propuesta: miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-EN|ROLE:tenant
+Hello. We are writing about your report "Leaking tap". We propose the handyman's visit on Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-EN|ROLE:handyman
+Nueva visita propuesta para el aviso «Leaking tap» (urgencia media) en Calle Mayor 2. Propuesta: miércoles 4 de noviembre de 2026, de 14:00 a 16:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-ES|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-EN|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"msg_out","work_order_id":"WO-ES","detail":{"to":"tenant","language":"es","version":1}}
+{"event_type":"msg_out","work_order_id":"WO-ES","detail":{"to":"handyman","language":"es","version":1}}
+{"event_type":"msg_out","work_order_id":"WO-EN","detail":{"to":"tenant","language":"en","version":1}}
+{"event_type":"msg_out","work_order_id":"WO-EN","detail":{"to":"handyman","language":"es","version":1}}

@@ -4,7 +4,7 @@ WO-1,Tap,Calle Mayor 1,Drips,${NOW-1d},Medium
 # env
 AGENT_NOW=tomorrow
 # stdin
-# stdout
+# stdout results
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 

@@ -3,7 +3,7 @@ work_order_id,work_order,address,description,reported_at,urgency
 WO-1,Tap,Calle Mayor 1,Drips,2026-10-05T09:00:00,Medium
 WO-2,Door,Calle Mayor 2,Stuck,${NOW+1d},High
 # stdin
-# stdout
+# stdout results
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 

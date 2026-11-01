@@ -7,7 +7,7 @@ AGENT_NOW=2026-10-08T10:00
 # stdin
 WO-1|tenant hello, is anyone there?
 WO-1|tenant <NO RESPONSE>
-# stdout
+# stdout results
 WOID:WO-1|RESULT:requires_review
 REASON:The work order row has an unknown urgency 'Urgent'.
 

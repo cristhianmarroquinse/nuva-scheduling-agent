@@ -82,7 +82,7 @@ describe('US6 · the terminal belongs to the protocol', () => {
     expect(output.code).toBe(0);
     const blocks = stdoutBlocks(output.stdout);
     expect(blocks.every(isProtocolBlock)).toBe(true);
-    const resultIds = blocks.map((block) => /^WOID:(.+)\|RESULT:/.exec(block)?.[1]).sort();
+    const resultIds = blocks.flatMap((block) => /^WOID:(.+)\|RESULT:/.exec(block)?.[1] ?? []).sort();
     expect(resultIds).toEqual(['WO-1', 'WO-2', 'WO-5', 'WO-6']);
     expect(output.trace.filter((line) => line.event_type === 'msg_in')).toHaveLength(lines.length);
     expect(output.trace.filter((line) => line.event_type === 'run_error')).toEqual([]);
@@ -115,6 +115,7 @@ describe('US7 · the run can be reconstructed from its traces', () => {
       expect(types, name).toContain('csv_loaded');
       for (const block of stdoutBlocks(output.stdout)) {
         const id = /^WOID:(.+)\|RESULT:/.exec(block)?.[1];
+        if (id === undefined) continue; // a frame, not a result
         expect(output.trace.filter((line) => line.event_type === 'result' && line.work_order_id === id), `${name}: result ${id}`).toHaveLength(1);
         expect(output.trace.filter((line) => line.event_type === 'state_change' && line.work_order_id === id), `${name}: state_change ${id}`).toHaveLength(1);
       }

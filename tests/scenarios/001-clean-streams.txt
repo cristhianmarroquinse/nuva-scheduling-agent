@@ -7,7 +7,7 @@ AGENT_NOW=2026-10-08T10:00
 ./tests/fixtures/noisy.mjs
 # stdin
 WO-1|tenant hello after the noise
-# stdout
+# stdout results
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 

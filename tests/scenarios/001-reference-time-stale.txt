@@ -5,6 +5,24 @@ WO-2,Door,Calle Mayor 2,Stuck,2026-10-07T18:30:00,High
 WO-3,Window,Calle Mayor 3,Cracked,2026-09-30T08:00:00+02:00,Low
 # stdin
 # stdout
+WOID:WO-2|ROLE:tenant
+Hello. We are writing about your report "Door". We propose the handyman's visit on Thursday 8 October 2026, 09:00 to 11:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-2|ROLE:handyman
+Nueva visita propuesta para el aviso «Door» (urgencia alta) en Calle Mayor 2. Propuesta: jueves 8 de octubre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1|ROLE:tenant
+Hello. We are writing about your report "Tap". We propose the handyman's visit on Thursday 8 October 2026, 11:00 to 13:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1|ROLE:handyman
+Nueva visita propuesta para el aviso «Tap» (urgencia media) en Calle Mayor 1. Propuesta: jueves 8 de octubre de 2026, de 11:00 a 13:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-3|ROLE:tenant
+Hello. We are writing about your report "Window". We propose the handyman's visit on Thursday 8 October 2026, 13:00 to 15:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-3|ROLE:handyman
+Nueva visita propuesta para el aviso «Window» (urgencia baja) en Calle Mayor 3. Propuesta: jueves 8 de octubre de 2026, de 13:00 a 15:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 

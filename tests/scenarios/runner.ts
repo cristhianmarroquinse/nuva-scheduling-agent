@@ -45,7 +45,13 @@ export interface RunOutput {
 export interface Scenario {
   name: string;
   input: RunInput;
-  expected: { stdout?: string; exit?: number; trace?: unknown[] };
+  expected: {
+    stdout?: string;
+    /** `results`: `stdout` is compared with the result blocks only (frames are still shape-checked). Default `exact`. */
+    stdoutMode?: 'exact' | 'results';
+    exit?: number;
+    trace?: unknown[];
+  };
 }
 
 const SCENARIO_DIR = new URL('.', import.meta.url).pathname;
@@ -107,7 +113,10 @@ export function parseScenario(name: string, text: string): Scenario {
   const expected: Scenario['expected'] = {};
   // stdout is exact: blank lines are part of the protocol, so the section is taken as written (plus the final newline).
   const stdout = sections.get('stdout');
-  if (stdout) expected.stdout = stdout.lines.length === 0 ? '' : `${stdout.lines.join('\n')}\n`;
+  if (stdout) {
+    expected.stdout = stdout.lines.length === 0 ? '' : `${stdout.lines.join('\n')}\n`;
+    expected.stdoutMode = stdout.flags.includes('results') ? 'results' : 'exact';
+  }
   const exit = body('exit');
   if (exit !== undefined) expected.exit = Number(exit.trim());
   const trace = body('trace');
@@ -204,6 +213,14 @@ export function stdoutBlocks(stdout: string): string[] {
   return stdout.split('\n\n').filter((block) => block !== '');
 }
 
+/** Only the terminal results of stdout, each with its terminating blank line, in order. */
+export function resultBlocks(stdout: string): string {
+  return stdoutBlocks(stdout)
+    .filter((block) => /^WOID:[^|\s]+\|RESULT:/.test(block))
+    .map((block) => `${block}\n\n`)
+    .join('');
+}
+
 const FRAME_HEADER = /^WOID:[^|\s]+\|ROLE:(tenant|handyman)$/;
 const RESULT_REVIEW = /^WOID:[^|\s]+\|RESULT:requires_review$/;
 const RESULT_SCHEDULED = /^WOID:[^|\s]+\|RESULT:scheduled$/;
@@ -224,8 +241,11 @@ export function scenarioFailures(scenario: Scenario, output: RunOutput): string[
   const failures: string[] = [];
   if (output.stderr !== '') failures.push(`stderr is not empty:\n${output.stderr}`);
   if (scenario.expected.exit !== undefined && output.code !== scenario.expected.exit) failures.push(`exit code ${output.code}, expected ${scenario.expected.exit}`);
-  if (scenario.expected.stdout !== undefined && output.stdout !== scenario.expected.stdout) {
-    failures.push(`stdout differs.\n--- expected\n${scenario.expected.stdout}\n--- actual\n${output.stdout}`);
+  if (scenario.expected.stdout !== undefined) {
+    const compared = scenario.expected.stdoutMode === 'results' ? resultBlocks(output.stdout) : output.stdout;
+    if (compared !== scenario.expected.stdout) {
+      failures.push(`stdout (${scenario.expected.stdoutMode ?? 'exact'}) differs.\n--- expected\n${scenario.expected.stdout}\n--- actual\n${compared}`);
+    }
   }
   for (const block of stdoutBlocks(output.stdout)) {
     if (!isProtocolBlock(block)) failures.push(`stdout block is not a frame or result:\n${block}`);

@@ -5,6 +5,24 @@ WO-EN,Leaking tap,Calle Mayor 2,"The kitchen tap drips all night and does not cl
 WO-NONE,Radiator,Calle Mayor 3,KO,2026-10-07T09:30:00,High
 # stdin
 # stdout
+WOID:WO-NONE|ROLE:tenant
+Hello. We are writing about your report "Radiator". We propose the handyman's visit on Wednesday 7 October 2026, 11:00 to 13:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-NONE|ROLE:handyman
+Nueva visita propuesta para el aviso «Radiator» (urgencia alta) en Calle Mayor 3. Propuesta: miércoles 7 de octubre de 2026, de 11:00 a 13:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-ES|ROLE:tenant
+Hola. Le escribimos por su aviso «Grifo que gotea». Proponemos la visita del técnico el miércoles 7 de octubre de 2026, de 13:00 a 15:00 (hora de Madrid). ¿Le viene bien? Si no, indíquenos qué días y horas le vendrían bien.
+
+WOID:WO-ES|ROLE:handyman
+Nueva visita propuesta para el aviso «Grifo que gotea» (urgencia media) en Calle Mayor 1. Propuesta: miércoles 7 de octubre de 2026, de 13:00 a 15:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-EN|ROLE:tenant
+Hello. We are writing about your report "Leaking tap". We propose the handyman's visit on Wednesday 7 October 2026, 15:00 to 17:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-EN|ROLE:handyman
+Nueva visita propuesta para el aviso «Leaking tap» (urgencia media) en Calle Mayor 2. Propuesta: miércoles 7 de octubre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
 WOID:WO-ES|RESULT:requires_review
 REASON:No reply was received before the end of input.
 

@@ -3,11 +3,20 @@
 import type { Fact } from './facts.js';
 import { parseLine } from './protocol.js';
 import { NO_RESPONSE_SENTENCE, invalidRowSentence } from './reasons.js';
-import { formatResult, type Result, type Role } from '../io/frames.js';
+import { earliestStart, nextSlot, priorityOrder, type Hold, type Slot } from '../calendar/calendar.js';
+import { formatFrame, formatResult, type Result, type Role } from '../io/frames.js';
+import { initialProposalToHandyman, initialProposalToTenant } from '../messages/templates.js';
 import { inferLanguage } from '../orders/language.js';
 import { validateRows, type WorkOrder } from '../orders/validate.js';
+import type { Language } from '../time/format.js';
+import { parseLocalOrOffset } from '../time/time.js';
 
-export type Language = 'es' | 'en';
+export type { Language } from '../time/format.js';
+
+export interface Proposal {
+  version: number;
+  slot: Slot;
+}
 
 export interface OrderState {
   id: string;
@@ -15,6 +24,8 @@ export interface OrderState {
   order?: WorkOrder;
   language?: Language;
   status: 'open' | 'closed';
+  /** The latest proposal sent for the order; its hold lives in `State.holds` while the order is open. */
+  proposal?: Proposal;
   result?: Result;
 }
 
@@ -23,6 +34,8 @@ export interface State {
   loaded: boolean;
   /** Insertion order is CSV order. */
   orders: Map<string, OrderState>;
+  /** Live tentative holds (SCHED-1: never overlapping). */
+  holds: Hold[];
   ended: boolean;
 }
 
@@ -36,7 +49,7 @@ export interface StepResult {
 }
 
 export function initialState(): State {
-  return { simNow: null, loaded: false, orders: new Map(), ended: false };
+  return { simNow: null, loaded: false, orders: new Map(), holds: [], ended: false };
 }
 
 function trace(work_order_id: string | null, event_type: string, detail: unknown): Output {
@@ -73,7 +86,41 @@ function loadCsv(state: State, rows: Fact & { type: 'csv_loaded' }): StepResult 
       close(orders, outputs, id, { kind: 'requires_review', code: 'invalid_work_order', sentence: invalidRowSentence(problem) });
     }
   }
-  return { state: { ...state, loaded: true, orders }, outputs };
+  const holds = allocate(state, orders, outputs);
+  return { state: { ...state, loaded: true, orders, holds }, outputs };
+}
+
+/**
+ * Initial proposals (REQ-ST-1..3): every open order gets the earliest free 2-hour slot, allocated Critical first, then
+ * High, Medium, Low, ties by `reported_at`. Each allocation is a tentative hold, traced as `hold_taken`, followed by the
+ * tenant frame and the handyman frame (REQ-ST-2), each traced as `msg_out`.
+ */
+function allocate(state: State, orders: Map<string, OrderState>, outputs: Output[]): Hold[] {
+  if (state.simNow === null) throw new Error('csv_loaded before run_started: no reference time');
+  const simNow = parseLocalOrOffset(state.simNow);
+  if (simNow === null) throw new Error(`Unreadable reference time ${state.simNow}`);
+  const holds = [...state.holds];
+  const open = [...orders.values()].flatMap((entry) => (entry.status === 'open' && entry.order !== undefined ? [entry.order] : []));
+  for (const order of priorityOrder(open)) {
+    const slot = nextSlot({ from: earliestStart(simNow, parseLocalOrOffset(order.reportedAt)!), urgency: order.urgency, holds });
+    const version = 1;
+    holds.push({ orderId: order.id, version, slot });
+    const current = orders.get(order.id)!;
+    orders.set(order.id, { ...current, proposal: { version, slot } });
+    outputs.push(trace(order.id, 'hold_taken', { version, start: slot.start, end: slot.end }));
+    const language: Language = current.language ?? 'en';
+    send(outputs, order.id, 'tenant', language, version, slot, initialProposalToTenant({ language, title: order.title, slot, critical: order.urgency === 'Critical' }));
+    send(outputs, order.id, 'handyman', 'es', version, slot, initialProposalToHandyman({ title: order.title, address: order.address, urgency: order.urgency, slot }));
+  }
+  return holds;
+}
+
+/** One outgoing message: traced as `msg_out`, then written as exactly one frame (OUT-2). */
+function send(outputs: Output[], id: string, to: Role, language: Language, version: number, slot: Slot, body: string): void {
+  const text = formatFrame(id, to, body);
+  const written = text.slice(text.indexOf('\n') + 1).trimEnd();
+  outputs.push(trace(id, 'msg_out', { to, language, version, start: slot.start, end: slot.end, body: written }));
+  outputs.push({ kind: 'stdout', text });
 }
 
 const ROLES: readonly Role[] = ['tenant', 'handyman'];
@@ -102,10 +149,16 @@ function endInput(state: State): StepResult {
   if (state.ended) return { state, outputs: [trace(null, 'ignored_fact', { type: 'eof', reason: 'already_ended' })] };
   const outputs: Output[] = [];
   const orders = new Map(state.orders);
+  let holds = state.holds;
   for (const order of orders.values()) {
+    if (order.status === 'closed') continue;
+    for (const hold of holds.filter((candidate) => candidate.orderId === order.id)) {
+      outputs.push(trace(order.id, 'hold_released', { version: hold.version, reason: 'closed' }));
+    }
+    holds = holds.filter((hold) => hold.orderId !== order.id);
     close(orders, outputs, order.id, { kind: 'requires_review', code: 'no_response', sentence: NO_RESPONSE_SENTENCE });
   }
-  return { state: { ...state, ended: true, orders }, outputs };
+  return { state: { ...state, ended: true, orders, holds }, outputs };
 }
 
 export function step(state: State, fact: Fact): StepResult {

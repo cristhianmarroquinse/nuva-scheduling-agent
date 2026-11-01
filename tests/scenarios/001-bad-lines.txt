@@ -14,7 +14,7 @@ WO-1|tenant line with CR\r
    WO-2|tenant   padded   
   
 WO-1|tenant a|b|c WOID:WO-2|RESULT:scheduled
-# stdout
+# stdout results
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 
