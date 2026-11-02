@@ -1,6 +1,6 @@
 # 006 · Golden set and interpretation evaluation
 
-**Status:** planned
+**Status:** implemented
 **Product requirements:** REQ-DL-3 (README: assumptions and trade-offs, "where AI is used and why"), ADR 0004 (model choice decided by data), REQ-TR-2 (model calls traced)
 **Invariants touched:** LLM-1 (the eval exercises the same validator), TIME-1 (expected times are local Madrid values)
 **Deferred:** the Dockerfile and the README itself → 007

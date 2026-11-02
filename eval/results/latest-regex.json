@@ -1,0 +1,441 @@
+{
+  "tier": "regex",
+  "model": null,
+  "promptVersion": "3",
+  "date": "2026-11-02",
+  "metrics": {
+    "n": 50,
+    "intentAccuracy": 0.08,
+    "fullAccuracy": 0.08,
+    "fastPathShare": 0.08,
+    "modelShare": 0,
+    "unresolvedShare": 0.92,
+    "p50LatencyMs": null,
+    "p95LatencyMs": null,
+    "inputTokens": 0,
+    "outputTokens": 0,
+    "costUsd": 0
+  },
+  "outcomes": [
+    {
+      "id": "g01",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g02",
+      "resolvedBy": "regex",
+      "obtained": {
+        "intent": "accept",
+        "times": [],
+        "exclusions": [],
+        "quote": "Yes"
+      },
+      "intentMatch": true,
+      "fullMatch": true,
+      "calls": 0
+    },
+    {
+      "id": "g03",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g04",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g05",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g06",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g07",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g08",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g09",
+      "resolvedBy": "regex",
+      "obtained": {
+        "intent": "decline",
+        "times": [],
+        "exclusions": [],
+        "quote": "No"
+      },
+      "intentMatch": true,
+      "fullMatch": true,
+      "calls": 0
+    },
+    {
+      "id": "g10",
+      "resolvedBy": "regex",
+      "obtained": {
+        "intent": "decline",
+        "times": [],
+        "exclusions": [],
+        "quote": "No puedo"
+      },
+      "intentMatch": true,
+      "fullMatch": true,
+      "calls": 0
+    },
+    {
+      "id": "g11",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g12",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g13",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g14",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g15",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g16",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g17",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g18",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g19",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g20",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g21",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g22",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g23",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g24",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g25",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g26",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g27",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g28",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g29",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g30",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g31",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g32",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g33",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g34",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g35",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g36",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g37",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g38",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g39",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g40",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g41",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g42",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g43",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g44",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g45",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g46",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g47",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g48",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g49",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g50",
+      "resolvedBy": "regex",
+      "obtained": {
+        "intent": "accept",
+        "times": [],
+        "exclusions": [],
+        "quote": "OK"
+      },
+      "intentMatch": true,
+      "fullMatch": true,
+      "calls": 0
+    }
+  ]
+}

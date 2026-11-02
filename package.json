@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "invariants": "tsx scripts/invariant-coverage.ts",
+    "eval": "tsx eval/run.ts",
     "check": "pnpm typecheck && pnpm test && pnpm invariants"
   },
   "devDependencies": {

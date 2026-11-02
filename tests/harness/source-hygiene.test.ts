@@ -28,3 +28,14 @@ describe('source hygiene', () => {
     expect(violations).toEqual([]);
   });
 });
+
+describe('the real interpreter adapter stays out of tests (006 AC-2.7)', () => {
+  const importsAdapter = (path: string): boolean => /interpreter\/anthropic(\.js)?['"]/.test(readFileSync(path, 'utf8'));
+  const allowed = (path: string): boolean => path === 'src/main.ts' || path.startsWith('eval/');
+
+  it('is imported only by src/main.ts and files under eval/', () => {
+    const offenders = [...sourceFiles('src'), ...sourceFiles('tests'), ...sourceFiles('eval'), ...sourceFiles('scripts')].filter((path) => importsAdapter(path) && !allowed(path));
+    expect(offenders).toEqual([]);
+    expect(importsAdapter('src/main.ts')).toBe(true);
+  });
+});
