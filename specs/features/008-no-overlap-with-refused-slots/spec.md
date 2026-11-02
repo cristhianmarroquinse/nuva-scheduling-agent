@@ -1,6 +1,6 @@
 # 008 · Re-proposals never overlap a refused slot
 
-**Status:** clarified
+**Status:** planned
 **Product requirements:** REQ-NG-11 (new), REQ-NG-1, REQ-NG-4, REQ-NG-5, REQ-NG-9, REQ-SC-2, REQ-SC-3, REQ-SC-5, REQ-SC-6
 **Invariants touched:** SCHED-1, SCHED-2, SCHED-5 (unchanged; every new slot must still satisfy them)
 **Amends:** 004 AC-1.1 ("the next free slot after the declined one") and AC-4.1; 005 AC-2.5 and AC-3.2 inherit the new rule
