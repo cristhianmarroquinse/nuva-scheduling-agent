@@ -8,7 +8,8 @@ import { scenarioRun } from './runner.js';
 async function replay(name: string): Promise<void> {
   const { output } = await scenarioRun(name);
   const facts = output.trace.map(factFromTrace).filter((fact): fact is Fact => fact !== null);
-  expect(facts.map((fact) => fact.type)).toEqual(expect.arrayContaining(['run_started', 'csv_loaded', 'eof']));
+  // A run that schedules every order exits before end of input, so `eof` is not always recorded.
+  expect(facts.map((fact) => fact.type)).toEqual(expect.arrayContaining(['run_started', 'csv_loaded']));
 
   const replayed = fold(facts);
   const stdout = replayed.outputs.map((output) => (output.kind === 'stdout' ? output.text : '')).join('');
@@ -18,7 +19,7 @@ async function replay(name: string): Promise<void> {
   const replayedResults = [...replayed.state.orders.values()].filter((order) => order.result).map((order) => [order.id, order.result]);
   expect(replayedResults).toEqual(tracedResults);
 
-  const tracedProjections = output.trace.filter((line) => factFromTrace(line) === null && !['run_finished', 'agent_now_invalid', 'stderr'].includes(line.event_type));
+  const tracedProjections = output.trace.filter((line) => factFromTrace(line) === null && !['run_finished', 'agent_now_invalid', 'stderr', 'model_call'].includes(line.event_type));
   const replayedProjections = replayed.outputs.filter((output) => output.kind === 'trace');
   expect(replayedProjections.map((output) => output.kind === 'trace' && [output.work_order_id, output.event_type, output.detail])).toEqual(
     tracedProjections.map((line) => [line.work_order_id, line.event_type, line.detail]),
@@ -29,4 +30,6 @@ describe('replay (AC-7.3, TRACE-2)', () => {
   it('001-invalid-rows: replaying the facts reproduces the states, results and projections (TRACE-2)', () => replay('001-invalid-rows'), 20_000);
   it('001-bad-lines: replaying the facts reproduces the states, results and projections (TRACE-2)', () => replay('001-bad-lines'), 20_000);
   it('002-urgency-order: replaying the facts reproduces the holds, frames and results without the calendar being re-fed (TRACE-2)', () => replay('002-urgency-order'), 20_000);
+  it('003-both-accept: replaying the interpretation facts reproduces the acknowledgement, confirmations and the scheduled result without calling the model (TRACE-2)', () => replay('003-both-accept'), 20_000);
+  it('003-model-invalid-output: replaying reproduces the clarification and the acknowledgement from the recorded facts alone (TRACE-2)', () => replay('003-model-invalid-output'), 20_000);
 });

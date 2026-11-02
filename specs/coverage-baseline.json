@@ -1,11 +1,7 @@
 {
   "pending": [
-    "ACC-1",
-    "ACC-2",
-    "ACC-3",
     "SCHED-3",
     "SCHED-4",
-    "LLM-1",
     "LLM-2",
     "RUN-3"
   ]

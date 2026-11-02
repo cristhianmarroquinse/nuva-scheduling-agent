@@ -17,6 +17,11 @@ process.on('unhandledRejection', (reason) => report({ work_order_id: null, event
 
 const { createTracer } = await import('./trace/tracer.js');
 const { run } = await import('./runtime/run.js');
+// The real adapter (and the SDK) is loaded only when the fake is not selected, so tests never touch the network.
+const interpreter =
+  process.env['AGENT_INTERPRETER'] === 'fake'
+    ? (await import('./interpreter/fake.js')).createFakeInterpreter()
+    : (await import('./interpreter/anthropic.js')).createAnthropicInterpreter({ elapsed: () => performance.now() });
 
 const tracer = createTracer({ dir: process.env['TRACES_DIR'] ?? '/app/traces', now: () => new Date() });
 report = (event) => tracer.trace(event);
@@ -29,6 +34,7 @@ const code = await run({
   lines: stdinLines(),
   write: writeOutput,
   tracer,
+  interpreter,
 });
 tracer.trace({ work_order_id: null, event_type: 'run_finished', detail: { exit_code: code } });
 await flushOutput();

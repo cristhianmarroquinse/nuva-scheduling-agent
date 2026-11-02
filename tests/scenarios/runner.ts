@@ -137,6 +137,8 @@ export async function runAgent(input: RunInput): Promise<RunOutput> {
     const env: Record<string, string | undefined> = { ...process.env };
     delete env['AGENT_NOW'];
     delete env['NODE_NO_WARNINGS'];
+    env['AGENT_INTERPRETER'] = 'fake'; // never the network in pnpm test
+    delete env['ANTHROPIC_API_KEY'];
     env['WORK_ORDERS_PATH'] = input.csv === undefined ? join(tmp, 'missing.csv') : csvPath;
     env['TRACES_DIR'] = tracesDir;
     for (const [key, value] of Object.entries(input.env ?? {})) env[key] = value.replace(/\$\{TMP\}/g, tmp);

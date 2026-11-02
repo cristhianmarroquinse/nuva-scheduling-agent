@@ -297,3 +297,243 @@ describe('frames on csv_loaded (AC-3.1, AC-3.8, AC-4.2, AC-4.4)', () => {
     expect(outputs.filter((output) => output.kind === 'stdout')).toEqual([]);
   });
 });
+
+describe('interpret requests and the model boundary (AC-1.1, AC-1.9, LLM-1)', () => {
+  const loaded: Fact[] = [
+    started,
+    {
+      type: 'csv_loaded',
+      rows: [
+        row({ work_order_id: 'WO-1', work_order: 'Grifo que gotea', description: 'El grifo de la cocina gotea toda la noche y no cierra bien.' }),
+        row({ work_order_id: 'WO-X', urgency: 'Urgent' }),
+      ],
+    },
+  ];
+  const requestsOf = (outputs: Output[]) => outputs.filter((output) => output.kind === 'interpret');
+  const lineOf = (raw: string, seq = 1): Fact => ({ type: 'msg_in', seq, raw });
+
+  it('emits exactly one interpret request for a message on an open order with a proposal, carrying the sender, the proposal and the reference time', () => {
+    const { outputs } = step(fold(loaded).state, lineOf('WO-1|tenant Sí, el miércoles por la tarde', 7));
+    expect(requestsOf(outputs)).toEqual([
+      {
+        kind: 'interpret',
+        request: {
+          woid: 'WO-1',
+          seq: 7,
+          role: 'tenant',
+          body: 'Sí, el miércoles por la tarde',
+          language: 'es',
+          proposal: { version: 1, slot: { start: '2026-10-07T12:00:00+02:00', end: '2026-10-07T14:00:00+02:00' } },
+          simNow: '2026-10-07T10:00:00+02:00',
+        },
+      },
+    ]);
+    const handyman = step(fold(loaded).state, lineOf('WO-1|handyman Vale, perfecto', 8));
+    expect(requestsOf(handyman.outputs).map((output) => output.kind === 'interpret' && output.request.language)).toEqual(['es']);
+  });
+
+  it('emits no request for a timeout, a malformed line, an unknown order or a closed order', () => {
+    const state = fold(loaded).state;
+    for (const raw of ['WO-1|tenant <NO RESPONSE>', 'garbage', 'WO-9|tenant hello', 'WO-X|tenant hello', 'WO-1|landlord hello']) {
+      expect(requestsOf(step(state, lineOf(raw)).outputs), raw).toEqual([]);
+    }
+  });
+
+  it('an interpretation for a closed order is traced as ignored and changes nothing (ORD-2)', () => {
+    const before = fold(loaded).state;
+    const { state, outputs } = step(before, { type: 'interpretation', seq: 1, woid: 'WO-X', role: 'tenant', source: 'fake', prompt_version: '1', result: { intent: 'accept', times: [], exclusions: [], quote: 'yes' } });
+    expect(state).toEqual(before);
+    expect(outputs.filter((output) => output.kind === 'stdout')).toEqual([]);
+    expect(tracesOf(outputs, 'ignored_fact')).toHaveLength(1);
+  });
+
+  it('a single accept interpretation never closes an order or writes a result by itself (LLM-1)', () => {
+    const { state, outputs } = step(fold(loaded).state, { type: 'interpretation', seq: 1, woid: 'WO-1', role: 'tenant', source: 'fake', prompt_version: '1', result: { intent: 'accept', times: [], exclusions: [], quote: 'yes' } });
+    expect(state.orders.get('WO-1')?.status).toBe('open');
+    expect(stdoutOf(outputs)).not.toContain('|RESULT:');
+    expect(tracesOf(outputs, 'result')).toEqual([]);
+    expect(state.holds.map((hold) => hold.kind)).toEqual(['tentative']);
+  });
+});
+
+describe('acceptance rules (AC-2.4, AC-2.5, AC-2.6, AC-2.7, AC-2.8, AC-4.2, ACC-1, ACC-2, ACC-3, ORD-1)', () => {
+  // WO-1 (en, Medium) is proposed Wed 7 Oct 12:00–14:00; WO-ES (es, Medium, same reported_at) 14:00–16:00.
+  const loaded: Fact[] = [
+    started,
+    {
+      type: 'csv_loaded',
+      rows: [
+        row({ work_order_id: 'WO-1' }),
+        row({ work_order_id: 'WO-ES', work_order: 'Grifo que gotea', description: 'El grifo de la cocina gotea toda la noche y no cierra bien.' }),
+      ],
+    },
+  ];
+  type Result = import('../../src/interpreter/schema.js').Interpretation;
+  const interp = (woid: string, role: 'tenant' | 'handyman', result: Partial<Result>, seq = 1): Fact => ({
+    type: 'interpretation',
+    seq,
+    woid,
+    role,
+    source: 'fake',
+    prompt_version: '1',
+    result: { intent: 'accept', times: [], exclusions: [], quote: 'yes', ...result },
+  });
+  const decisions = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as Record<string, unknown>)['outcome']);
+  const blocks = (outputs: Output[]) => stdoutOf(outputs).split('\n\n').filter(Boolean).map((block) => block.split('\n')[0]);
+
+  it('the first acceptance gets a brief acknowledgement and is recorded against the proposal version (AC-2.4)', () => {
+    const { state, outputs } = step(fold(loaded).state, interp('WO-1', 'tenant', {}));
+    expect(decisions(outputs)).toEqual(['accepted']);
+    expect(blocks(outputs)).toEqual(['WOID:WO-1|ROLE:tenant']);
+    expect(stdoutOf(outputs)).toContain('Thank you, noted.');
+    expect(state.orders.get('WO-1')).toMatchObject({ status: 'open', accepted: { tenant: 1 } });
+    expect(tracesOf(outputs, 'msg_out')).toHaveLength(1);
+  });
+
+  it('a repeated acceptance is recorded and sends nothing (AC-2.5)', () => {
+    const once = fold([...loaded, interp('WO-1', 'tenant', {})]).state;
+    const { outputs } = step(once, interp('WO-1', 'tenant', {}, 2));
+    expect(decisions(outputs)).toEqual(['already_accepted']);
+    expect(stdoutOf(outputs)).toBe('');
+  });
+
+  it('an accept whose stated time does not fit is a mismatch: nothing sent, nothing recorded (AC-2.2)', () => {
+    const { state, outputs } = step(fold(loaded).state, interp('WO-1', 'tenant', { times: [{ date: '2026-10-08' }] }));
+    expect(decisions(outputs)).toEqual(['mismatch']);
+    expect(stdoutOf(outputs)).toBe('');
+    expect(state.orders.get('WO-1')?.accepted).toEqual({});
+  });
+
+  it('an accept with a constraint gets a one-line confirmation request; a bare accept afterwards counts (AC-2.3)', () => {
+    const first = step(fold(loaded).state, interp('WO-1', 'tenant', { exclusions: [{ weekday: 'thursday' }] }));
+    expect(decisions(first.outputs)).toEqual(['needs_confirmation']);
+    expect(stdoutOf(first.outputs)).toContain('To confirm: does the visit for "Leaking tap" on Wednesday 7 October 2026, 12:00 to 14:00');
+    expect(first.state.orders.get('WO-1')?.accepted).toEqual({});
+    const second = step(first.state, interp('WO-1', 'tenant', {}, 2));
+    expect(decisions(second.outputs)).toEqual(['accepted']);
+    expect(second.state.orders.get('WO-1')?.accepted).toEqual({ tenant: 1 });
+  });
+
+  it('when both parties accept the same version, confirmations go to the tenant and the handyman before the scheduled result, whose SCHEDULED_FOR is the hold start (AC-2.6, ACC-1, ACC-2, ACC-3)', () => {
+    const afterTenant = fold([...loaded, interp('WO-ES', 'tenant', {})]).state;
+    const { state, outputs } = step(afterTenant, interp('WO-ES', 'handyman', {}, 2));
+    expect(decisions(outputs)).toEqual(['scheduled']);
+    expect(blocks(outputs)).toEqual(['WOID:WO-ES|ROLE:tenant', 'WOID:WO-ES|ROLE:handyman', 'WOID:WO-ES|RESULT:scheduled']);
+    expect(stdoutOf(outputs)).toContain('Confirmado: la visita del técnico por «Grifo que gotea» queda fijada para el miércoles 7 de octubre de 2026, de 14:00 a 16:00 (hora de Madrid).');
+    expect(stdoutOf(outputs)).toContain('Confirmado: visita por «Grifo que gotea» en Calle Mayor 1, miércoles 7 de octubre de 2026, de 14:00 a 16:00 (hora de Madrid).');
+    expect(stdoutOf(outputs)).toMatch(/WOID:WO-ES\|RESULT:scheduled\nSCHEDULED_FOR:2026-10-07T14:00:00\+02:00\n\n$/);
+    expect(state.orders.get('WO-ES')).toMatchObject({ status: 'closed', result: { kind: 'scheduled', scheduledFor: '2026-10-07T14:00:00+02:00' } });
+    expect(state.holds.find((hold) => hold.orderId === 'WO-ES')).toMatchObject({ kind: 'scheduled', version: 1 });
+    expect(tracesOf(outputs, 'result')).toHaveLength(1);
+  });
+
+  it('a scheduled visit keeps its slot at end of input and gets no second result (AC-2.7, AC-4.2, ORD-1)', () => {
+    const scheduled = fold([...loaded, interp('WO-ES', 'tenant', {}), interp('WO-ES', 'handyman', {}, 2)]).state;
+    const { state, outputs } = step(scheduled, { type: 'eof' });
+    expect(state.holds.map((hold) => [hold.orderId, hold.kind])).toEqual([['WO-ES', 'scheduled']]);
+    expect(blocks(outputs)).toEqual(['WOID:WO-1|RESULT:requires_review']);
+    expect(tracesOf(outputs, 'hold_released').map((output) => output.kind === 'trace' && output.work_order_id)).toEqual(['WO-1']);
+  });
+
+  it('acceptances of different proposal versions never schedule (ACC-1)', () => {
+    const afterTenant = fold([...loaded, interp('WO-1', 'tenant', {})]).state;
+    const order = afterTenant.orders.get('WO-1')!;
+    const bumped = { ...afterTenant, orders: new Map(afterTenant.orders).set('WO-1', { ...order, proposal: { ...order.proposal!, version: 2 } }) };
+    const { state, outputs } = step(bumped, interp('WO-1', 'handyman', {}, 2));
+    expect(decisions(outputs)).toEqual(['accepted']);
+    expect(state.orders.get('WO-1')?.status).toBe('open');
+    expect(stdoutOf(outputs)).not.toContain('RESULT:');
+  });
+});
+
+describe('unclear replies, model failures and deferred intents (AC-3.1, AC-3.2, AC-3.3, AC-3.4, AC-3.5, AC-4.1)', () => {
+  // WO-1 (en, Medium) is proposed Wed 7 Oct 12:00–14:00.
+  const loaded: Fact[] = [started, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1' })] }];
+  type Result = import('../../src/interpreter/schema.js').Interpretation;
+  let seq = 0;
+  const interp = (role: 'tenant' | 'handyman', result: Partial<Result>): Fact => ({
+    type: 'interpretation',
+    seq: (seq += 1),
+    woid: 'WO-1',
+    role,
+    source: 'fake',
+    prompt_version: '1',
+    result: { intent: 'unclear', times: [], exclusions: [], quote: '???', ...result },
+  });
+  const failure = (role: 'tenant' | 'handyman' = 'tenant'): Fact => ({ type: 'llm_error', seq: (seq += 1), woid: 'WO-1', role, message: 'boom' });
+  const decisions = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as Record<string, unknown>)['outcome']);
+  const reasonOf = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as Record<string, unknown>)['reason']);
+
+  it('the first unclear reply gets one clarification that restates the slot (AC-3.1, AC-3.5)', () => {
+    const { state, outputs } = step(fold(loaded).state, interp('tenant', {}));
+    expect(decisions(outputs)).toEqual(['clarify']);
+    expect(stdoutOf(outputs)).toContain('WOID:WO-1|ROLE:tenant\nSorry, we did not understand your reply. The proposed visit for "Leaking tap" is on Wednesday 7 October 2026, 12:00 to 14:00 (Madrid time).');
+    expect(state.orders.get('WO-1')).toMatchObject({ status: 'open', unclearStreak: { tenant: { count: 1, contradictory: false } } });
+  });
+
+  it('a second consecutive unclear reply from the same party closes the order as interpretation_failed, releasing the hold (AC-3.2)', () => {
+    const once = fold([...loaded, interp('tenant', {})]).state;
+    const { state, outputs } = step(once, interp('tenant', {}));
+    expect(decisions(outputs)).toEqual(['review']);
+    expect(reasonOf(outputs)).toEqual(['interpretation_failed']);
+    expect(stdoutOf(outputs)).toBe('WOID:WO-1|RESULT:requires_review\nREASON:Two consecutive replies from the tenant could not be understood.\n\n');
+    expect(state.orders.get('WO-1')).toMatchObject({ status: 'closed', result: { code: 'interpretation_failed' } });
+    expect(state.holds).toEqual([]);
+    expect(tracesOf(outputs, 'hold_released')).toHaveLength(1);
+  });
+
+  it('is contradictory_replies when either of the two was contradictory (AC-3.2)', () => {
+    const a = step(fold([...loaded, interp('tenant', {})]).state, interp('tenant', { intent: 'contradictory' }));
+    expect(reasonOf(a.outputs)).toEqual(['contradictory_replies']);
+    const b = step(fold([...loaded, interp('tenant', { intent: 'contradictory' })]).state, interp('tenant', {}));
+    expect(reasonOf(b.outputs)).toEqual(['contradictory_replies']);
+    expect(stdoutOf(b.outputs)).toContain('REASON:The tenant gave two consecutive replies that could not be reconciled with the proposed visit.');
+  });
+
+  it('any other intent resets the party streak, so unclear, accept, unclear gives a second clarification (AC-3.3)', () => {
+    const { state, outputs } = step(fold([...loaded, interp('tenant', {}), interp('tenant', { intent: 'accept', quote: 'yes' })]).state, interp('tenant', {}));
+    expect(decisions(outputs)).toEqual(['clarify']);
+    expect(state.orders.get('WO-1')?.status).toBe('open');
+  });
+
+  it('streaks are per party: one unclear from each side gives two clarifications and no review', () => {
+    const { state, outputs } = step(fold([...loaded, interp('tenant', {})]).state, interp('handyman', {}));
+    expect(decisions(outputs)).toEqual(['clarify']);
+    expect(stdoutOf(outputs)).toContain('Perdona, no he entendido tu respuesta.');
+    expect(state.orders.get('WO-1')?.status).toBe('open');
+  });
+
+  it('a model failure counts as unclear: one clarification; two in a row close the order as llm_unavailable (AC-1.7, AC-3.4)', () => {
+    const first = step(fold(loaded).state, failure());
+    expect(decisions(first.outputs)).toEqual(['llm_error', 'clarify']);
+    expect(first.state.orders.get('WO-1')).toMatchObject({ status: 'open', llmFailures: 1 });
+    expect(stdoutOf(first.outputs)).toContain('Sorry, we did not understand your reply.');
+    const second = step(first.state, failure('handyman'));
+    expect(reasonOf(second.outputs)).toContain('llm_unavailable');
+    expect(stdoutOf(second.outputs)).toBe('WOID:WO-1|RESULT:requires_review\nREASON:The reply interpreter was unavailable twice in a row for this order.\n\n');
+    expect(second.state.holds).toEqual([]);
+  });
+
+  it('a valid reply between two model failures resets the failure count', () => {
+    const { state, outputs } = step(fold([...loaded, failure(), interp('tenant', { intent: 'accept', quote: 'yes' })]).state, failure());
+    expect(decisions(outputs)).toEqual(['llm_error', 'clarify']);
+    expect(state.orders.get('WO-1')?.status).toBe('open');
+  });
+
+  it('a model failure for a closed order is ignored (ORD-2)', () => {
+    const closed = fold([...loaded, { type: 'eof' }]).state;
+    const { state, outputs } = step(closed, failure());
+    expect(state).toEqual(closed);
+    expect(tracesOf(outputs, 'ignored_fact')).toHaveLength(1);
+  });
+
+  it('decline, counter, question, withdraw and cross_reference are recorded as deferred, send nothing and reset the streak (AC-4.1)', () => {
+    for (const intent of ['decline', 'counter', 'question', 'withdraw', 'cross_reference'] as const) {
+      const { state, outputs } = step(fold([...loaded, interp('tenant', {})]).state, interp('tenant', { intent, quote: 'later' }));
+      expect(decisions(outputs), intent).toEqual(['deferred']);
+      expect(tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as Record<string, unknown>)['intent']), intent).toEqual([intent]);
+      expect(stdoutOf(outputs), intent).toBe('');
+      expect(state.orders.get('WO-1'), intent).toMatchObject({ status: 'open', unclearStreak: { tenant: { count: 0 } } });
+    }
+  });
+});

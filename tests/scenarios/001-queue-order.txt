@@ -8,66 +8,66 @@ WO-5,Order 5,Calle Mayor 5,Desc,2026-10-07T09:30:00,Low
 # env
 AGENT_NOW=2026-10-08T10:00
 # stdin
-WO-1|tenant burst line 1
-WO-2|tenant burst line 2
-WO-3|tenant burst line 3
-WO-4|tenant burst line 4
-WO-5|tenant burst line 5
-WO-1|tenant burst line 6
-WO-2|tenant burst line 7
-WO-3|tenant burst line 8
-WO-4|tenant burst line 9
-WO-5|tenant burst line 10
-WO-1|tenant burst line 11
-WO-2|tenant burst line 12
-WO-3|tenant burst line 13
-WO-4|tenant burst line 14
-WO-5|tenant burst line 15
-WO-1|tenant burst line 16
-WO-2|tenant burst line 17
-WO-3|tenant burst line 18
-WO-4|tenant burst line 19
-WO-5|tenant burst line 20
-WO-1|tenant burst line 21
-WO-2|tenant burst line 22
-WO-3|tenant burst line 23
-WO-4|tenant burst line 24
-WO-5|tenant burst line 25
-WO-1|tenant burst line 26
-WO-2|tenant burst line 27
-WO-3|tenant burst line 28
-WO-4|tenant burst line 29
-WO-5|tenant burst line 30
-WO-1|tenant burst line 31
-WO-2|tenant burst line 32
-WO-3|tenant burst line 33
-WO-4|tenant burst line 34
-WO-5|tenant burst line 35
-WO-1|tenant burst line 36
-WO-2|tenant burst line 37
-WO-3|tenant burst line 38
-WO-4|tenant burst line 39
-WO-5|tenant burst line 40
-WO-1|tenant burst line 41
-WO-2|tenant burst line 42
-WO-3|tenant burst line 43
-WO-4|tenant burst line 44
-WO-5|tenant burst line 45
-WO-1|tenant burst line 46
-WO-2|tenant burst line 47
-WO-3|tenant burst line 48
-WO-4|tenant burst line 49
-WO-5|tenant burst line 50
-WO-1|tenant burst line 51
-WO-2|tenant burst line 52
-WO-3|tenant burst line 53
-WO-4|tenant burst line 54
-WO-5|tenant burst line 55
-WO-1|tenant burst line 56
-WO-2|tenant burst line 57
-WO-3|tenant burst line 58
-WO-4|tenant burst line 59
-WO-5|tenant burst line 60
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 1","quote":"burst line 1"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 2","quote":"burst line 2"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 3","quote":"burst line 3"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 4","quote":"burst line 4"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 5","quote":"burst line 5"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 6","quote":"burst line 6"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 7","quote":"burst line 7"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 8","quote":"burst line 8"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 9","quote":"burst line 9"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 10","quote":"burst line 10"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 11","quote":"burst line 11"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 12","quote":"burst line 12"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 13","quote":"burst line 13"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 14","quote":"burst line 14"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 15","quote":"burst line 15"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 16","quote":"burst line 16"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 17","quote":"burst line 17"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 18","quote":"burst line 18"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 19","quote":"burst line 19"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 20","quote":"burst line 20"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 21","quote":"burst line 21"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 22","quote":"burst line 22"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 23","quote":"burst line 23"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 24","quote":"burst line 24"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 25","quote":"burst line 25"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 26","quote":"burst line 26"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 27","quote":"burst line 27"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 28","quote":"burst line 28"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 29","quote":"burst line 29"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 30","quote":"burst line 30"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 31","quote":"burst line 31"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 32","quote":"burst line 32"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 33","quote":"burst line 33"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 34","quote":"burst line 34"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 35","quote":"burst line 35"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 36","quote":"burst line 36"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 37","quote":"burst line 37"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 38","quote":"burst line 38"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 39","quote":"burst line 39"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 40","quote":"burst line 40"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 41","quote":"burst line 41"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 42","quote":"burst line 42"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 43","quote":"burst line 43"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 44","quote":"burst line 44"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 45","quote":"burst line 45"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 46","quote":"burst line 46"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 47","quote":"burst line 47"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 48","quote":"burst line 48"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 49","quote":"burst line 49"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 50","quote":"burst line 50"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 51","quote":"burst line 51"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 52","quote":"burst line 52"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 53","quote":"burst line 53"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 54","quote":"burst line 54"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 55","quote":"burst line 55"}
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 56","quote":"burst line 56"}
+WO-2|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 57","quote":"burst line 57"}
+WO-3|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 58","quote":"burst line 58"}
+WO-4|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 59","quote":"burst line 59"}
+WO-5|tenant {"intent":"question","times":[],"exclusions":[],"question":"burst line 60","quote":"burst line 60"}
 # stdout results
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
@@ -88,66 +88,66 @@ REASON:No reply was received before the end of input.
 0
 # trace
 {"event_type":"csv_loaded"}
-{"event_type":"line_classified","detail":{"classification":"message","seq":1,"body":"burst line 1"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":2,"body":"burst line 2"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":3,"body":"burst line 3"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":4,"body":"burst line 4"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":5,"body":"burst line 5"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":6,"body":"burst line 6"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":7,"body":"burst line 7"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":8,"body":"burst line 8"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":9,"body":"burst line 9"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":10,"body":"burst line 10"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":11,"body":"burst line 11"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":12,"body":"burst line 12"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":13,"body":"burst line 13"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":14,"body":"burst line 14"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":15,"body":"burst line 15"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":16,"body":"burst line 16"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":17,"body":"burst line 17"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":18,"body":"burst line 18"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":19,"body":"burst line 19"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":20,"body":"burst line 20"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":21,"body":"burst line 21"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":22,"body":"burst line 22"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":23,"body":"burst line 23"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":24,"body":"burst line 24"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":25,"body":"burst line 25"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":26,"body":"burst line 26"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":27,"body":"burst line 27"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":28,"body":"burst line 28"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":29,"body":"burst line 29"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":30,"body":"burst line 30"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":31,"body":"burst line 31"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":32,"body":"burst line 32"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":33,"body":"burst line 33"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":34,"body":"burst line 34"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":35,"body":"burst line 35"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":36,"body":"burst line 36"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":37,"body":"burst line 37"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":38,"body":"burst line 38"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":39,"body":"burst line 39"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":40,"body":"burst line 40"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":41,"body":"burst line 41"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":42,"body":"burst line 42"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":43,"body":"burst line 43"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":44,"body":"burst line 44"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":45,"body":"burst line 45"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":46,"body":"burst line 46"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":47,"body":"burst line 47"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":48,"body":"burst line 48"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":49,"body":"burst line 49"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":50,"body":"burst line 50"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":51,"body":"burst line 51"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":52,"body":"burst line 52"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":53,"body":"burst line 53"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":54,"body":"burst line 54"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":55,"body":"burst line 55"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":56,"body":"burst line 56"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":57,"body":"burst line 57"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":58,"body":"burst line 58"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":59,"body":"burst line 59"}}
-{"event_type":"line_classified","detail":{"classification":"message","seq":60,"body":"burst line 60"}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":1}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":2}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":3}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":4}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":5}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":6}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":7}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":8}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":9}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":10}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":11}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":12}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":13}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":14}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":15}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":16}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":17}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":18}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":19}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":20}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":21}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":22}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":23}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":24}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":25}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":26}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":27}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":28}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":29}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":30}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":31}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":32}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":33}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":34}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":35}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":36}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":37}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":38}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":39}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":40}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":41}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":42}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":43}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":44}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":45}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":46}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":47}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":48}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":49}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":50}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":51}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":52}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":53}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":54}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":55}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":56}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":57}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":58}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":59}}
+{"event_type":"line_classified","detail":{"classification":"message","seq":60}}
 {"event_type":"eof"}
 {"event_type":"result","work_order_id":"WO-1"}
 {"event_type":"result","work_order_id":"WO-5"}

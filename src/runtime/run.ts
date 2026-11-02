@@ -3,6 +3,8 @@
 import { readFileSync } from 'node:fs';
 import type { Fact } from '../core/facts.js';
 import { allTerminal, initialState, step, type Output, type State } from '../core/state.js';
+import { interpretReply } from '../interpreter/interpreter.js';
+import type { Interpreter } from '../interpreter/types.js';
 import { parseCsv } from '../orders/csv.js';
 import { readRows, validateRows } from '../orders/validate.js';
 import { resolveReferenceTime } from '../time/reference.js';
@@ -18,6 +20,8 @@ export interface RunOptions {
   lines: AsyncIterable<string>;
   write: (text: string) => void;
   tracer: Tracer;
+  /** Injected (ADR 0004): the real adapter in production, the fake in tests. */
+  interpreter: Interpreter;
 }
 
 function describeError(error: unknown): { message: string; stack?: string } {
@@ -33,20 +37,32 @@ export async function run(options: RunOptions): Promise<number> {
 
   const emit = (output: Output): void => {
     if (output.kind === 'stdout') write(output.text);
-    else tracer.trace({ work_order_id: output.work_order_id, event_type: output.event_type, detail: output.detail });
+    else if (output.kind === 'trace') tracer.trace({ work_order_id: output.work_order_id, event_type: output.event_type, detail: output.detail });
+    // `interpret` requests are effects handled by the line loop, not projections.
   };
 
-  /** Traces the fact, folds it, and emits what the fold derived. An exception never ends the run (RUN-1). */
-  const record = (fact: Fact): void => {
+  /** Traces the fact, folds it, emits what the fold derived and returns it. An exception never ends the run (RUN-1). */
+  const record = (fact: Fact, work_order_id: string | null = null): Output[] => {
     const { type, ...detail } = fact;
-    tracer.trace({ work_order_id: null, event_type: type, detail });
+    tracer.trace({ work_order_id, event_type: type, detail });
     try {
       const next = step(state, fact);
       state = next.state;
       for (const output of next.outputs) emit(output);
+      return next.outputs;
     } catch (error) {
-      tracer.trace({ work_order_id: null, event_type: 'run_error', detail: { during: type, ...describeError(error) } });
+      tracer.trace({ work_order_id, event_type: 'run_error', detail: { during: type, ...describeError(error) } });
+      return [];
     }
+  };
+
+  /** Answers an `interpret` request through the injected interpreter and records the outcome as a fact (LLM-1). */
+  const interpret = async (output: Output & { kind: 'interpret' }): Promise<void> => {
+    const { request } = output;
+    const outcome = await interpretReply(request, options.interpreter);
+    for (const call of outcome.calls) tracer.trace({ work_order_id: request.woid, event_type: 'model_call', detail: { seq: request.seq, ...call } });
+    if (outcome.kind === 'interpretation') record(outcome.fact, request.woid);
+    else record({ type: 'llm_error', seq: request.seq, woid: request.woid, role: request.role, message: outcome.message }, request.woid);
   };
 
   let text: string;
@@ -81,7 +97,10 @@ export async function run(options: RunOptions): Promise<number> {
   let seq = 0;
   for await (const raw of options.lines) {
     seq += 1;
-    record({ type: 'msg_in', seq, raw });
+    const outputs = record({ type: 'msg_in', seq, raw });
+    for (const output of outputs) {
+      if (output.kind === 'interpret') await interpret(output);
+    }
     if (allTerminal(state)) return 0;
   }
   record({ type: 'eof' });

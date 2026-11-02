@@ -47,3 +47,10 @@ export function invalidRowSentence(problem: RowProblem): string {
 }
 
 export const NO_RESPONSE_SENTENCE = 'No reply was received before the end of input.';
+
+/** Sentences for the review reasons this feature closes with (REQ-NG-8, REQ-RB-1). */
+export const REVIEW_SENTENCES: Record<'contradictory_replies' | 'interpretation_failed' | 'llm_unavailable', (party: 'tenant' | 'handyman') => string> = {
+  contradictory_replies: (party) => `The ${party} gave two consecutive replies that could not be reconciled with the proposed visit.`,
+  interpretation_failed: (party) => `Two consecutive replies from the ${party} could not be understood.`,
+  llm_unavailable: () => 'The reply interpreter was unavailable twice in a row for this order.',
+};

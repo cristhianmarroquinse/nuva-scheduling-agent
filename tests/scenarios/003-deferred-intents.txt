@@ -1,0 +1,27 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-1,Leaking tap,Calle Mayor 1,The kitchen tap drips all night.,2026-11-02T09:00:00,Medium
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+WO-1|tenant {"intent":"decline","times":[],"exclusions":[],"quote":"no, I can't that day"}
+WO-1|handyman {"intent":"question","times":[],"exclusions":[],"question":"¿Hay aparcamiento?","quote":"¿Hay aparcamiento?"}
+WO-1|tenant {"intent":"cross_reference","times":[],"exclusions":[],"cross_reference":"WO-2","quote":"about the other order"}
+# stdout
+WOID:WO-1|ROLE:tenant
+Hello. We are writing about your report "Leaking tap". We propose the handyman's visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1|ROLE:handyman
+Nueva visita propuesta para el aviso «Leaking tap» (urgencia media) en Calle Mayor 1. Propuesta: miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"deferred","party":"tenant","intent":"decline"}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"deferred","party":"handyman","intent":"question"}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"deferred","party":"tenant","intent":"cross_reference"}}
+{"event_type":"eof"}
+{"event_type":"result","work_order_id":"WO-1","detail":{"code":"no_response"}}

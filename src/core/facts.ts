@@ -1,9 +1,14 @@
 // Facts: the only events that are inputs to the fold (ADR 0002). Everything else is a projection.
 
+import type { Interpretation } from '../interpreter/schema.js';
+import type { Role } from '../io/frames.js';
+
 export type ReferenceSource = 'agent_now' | 'clock' | 'fixture';
 
 /** A CSV record keyed by header column, exactly as read. */
 export type RawRow = Record<string, string>;
+
+export type InterpretationSource = 'regex' | 'model' | 'fake';
 
 export type Fact =
   | {
@@ -16,6 +21,24 @@ export type Fact =
     }
   | { type: 'csv_loaded'; rows: RawRow[] }
   | { type: 'msg_in'; seq: number; raw: string }
+  | {
+      /** The validated interpretation of the message with `seq` (ADR 0004, LLM-1). */
+      type: 'interpretation';
+      seq: number;
+      woid: string;
+      role: Role;
+      source: InterpretationSource;
+      prompt_version: string;
+      result: Interpretation;
+    }
+  | {
+      /** The model failed after the SDK's retries for the message with `seq` (REQ-RB-1). */
+      type: 'llm_error';
+      seq: number;
+      woid: string;
+      role: Role;
+      message: string;
+    }
   | { type: 'eof' };
 
 export type FactType = Fact['type'];

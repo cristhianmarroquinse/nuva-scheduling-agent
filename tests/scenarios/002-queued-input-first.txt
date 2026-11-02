@@ -6,8 +6,8 @@ WO-3,Squeaky door,Calle Mayor 3,The bedroom door squeaks.,2026-11-02T08:00:00,Lo
 # env
 AGENT_NOW=2026-11-04T10:00
 # stdin
-WO-1|tenant Sí, me viene bien
-WO-2|handyman Vale
+WO-1|tenant {"intent":"question","times":[],"exclusions":[],"question":"Do I need to be at home?","quote":"Do I need to be at home?"}
+WO-2|handyman {"intent":"question","times":[],"exclusions":[],"question":"¿Hay aparcamiento?","quote":"¿Hay aparcamiento?"}
 WO-3|tenant <NO RESPONSE>
 # stdout
 WOID:WO-2|ROLE:tenant
@@ -46,7 +46,7 @@ REASON:No reply was received before the end of input.
 {"event_type":"msg_out","work_order_id":"WO-2","detail":{"to":"handyman"}}
 {"event_type":"hold_taken","work_order_id":"WO-1"}
 {"event_type":"hold_taken","work_order_id":"WO-3"}
-{"event_type":"msg_in","detail":{"seq":1,"raw":"WO-1|tenant Sí, me viene bien"}}
+{"event_type":"msg_in","detail":{"seq":1}}
 {"event_type":"line_classified","work_order_id":"WO-1","detail":{"classification":"message","role":"tenant"}}
 {"event_type":"msg_in","detail":{"seq":2}}
 {"event_type":"line_classified","work_order_id":"WO-2","detail":{"classification":"message","role":"handyman"}}

@@ -1,0 +1,38 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-1,Leaking tap,Calle Mayor 1,The kitchen tap drips all night.,2026-11-02T09:00:00,Medium
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+WO-1|tenant Hmm, the thing with the thing
+WO-1|tenant Yes
+WO-1|handyman Ehh, lo de aquello
+WO-1|handyman Pues eso, lo que te dije
+# stdout
+WOID:WO-1|ROLE:tenant
+Hello. We are writing about your report "Leaking tap". We propose the handyman's visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1|ROLE:handyman
+Nueva visita propuesta para el aviso «Leaking tap» (urgencia media) en Calle Mayor 1. Propuesta: miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1|ROLE:tenant
+Sorry, we did not understand your reply. The proposed visit for "Leaking tap" is on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time). Does that work for you? If not, please give us another date and time.
+
+WOID:WO-1|ROLE:tenant
+Thank you, noted. We are waiting for the handyman to confirm and will let you know as soon as we have it.
+
+WOID:WO-1|ROLE:handyman
+Perdona, no he entendido tu respuesta. La visita propuesta por «Leaking tap» es el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
+
+WOID:WO-1|RESULT:requires_review
+REASON:Two consecutive replies from the handyman could not be understood.
+
+# exit
+0
+# trace
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"clarify","party":"tenant"}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"accepted","party":"tenant"}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"clarify","party":"handyman"}}
+{"event_type":"msg_out","work_order_id":"WO-1","detail":{"to":"handyman","language":"es"}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"review","reason":"interpretation_failed","party":"handyman"}}
+{"event_type":"result","work_order_id":"WO-1","detail":{"code":"interpretation_failed"}}

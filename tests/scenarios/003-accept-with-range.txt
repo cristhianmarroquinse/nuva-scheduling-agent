@@ -1,0 +1,35 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-1,Leaking tap,Calle Mayor 1,The kitchen tap drips all night.,2026-11-02T09:00:00,Medium
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+WO-1|tenant {"intent":"accept","times":[{"date":"2026-11-04","start":"12:00","end":"18:00"}],"exclusions":[],"quote":"Wednesday afternoon works"}
+WO-1|handyman Sí
+# stdout
+WOID:WO-1|ROLE:tenant
+Hello. We are writing about your report "Leaking tap". We propose the handyman's visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1|ROLE:handyman
+Nueva visita propuesta para el aviso «Leaking tap» (urgencia media) en Calle Mayor 1. Propuesta: miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1|ROLE:tenant
+Thank you, noted. We are waiting for the handyman to confirm and will let you know as soon as we have it.
+
+WOID:WO-1|ROLE:tenant
+Confirmed: the handyman's visit for "Leaking tap" is set for Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time). Thank you.
+
+WOID:WO-1|ROLE:handyman
+Confirmado: visita por «Leaking tap» en Calle Mayor 1, miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). Gracias.
+
+WOID:WO-1|RESULT:scheduled
+SCHEDULED_FOR:2026-11-04T12:00:00+01:00
+
+# exit
+0
+# trace
+{"event_type":"model_call","work_order_id":"WO-1","detail":{"seq":1,"attempt":1,"model":"fake","prompt_version":"1","outcome":"ok"}}
+{"event_type":"interpretation","work_order_id":"WO-1","detail":{"seq":1,"source":"fake","result":{"intent":"accept","times":[{"date":"2026-11-04","start":"12:00","end":"18:00"}]}}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"accepted","party":"tenant"}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"scheduled","party":"handyman"}}
+{"event_type":"result","work_order_id":"WO-1","detail":{"kind":"scheduled","scheduledFor":"2026-11-04T12:00:00+01:00"}}

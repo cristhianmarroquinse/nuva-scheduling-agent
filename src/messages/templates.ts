@@ -2,7 +2,7 @@
 // (COM-2); every date absolute with weekday and time range in Madrid time (COM-3). No model text here.
 
 import type { Slot } from '../calendar/calendar.js';
-import { singleLine } from '../io/frames.js';
+import { singleLine, type Role } from '../io/frames.js';
 import type { Urgency } from '../orders/validate.js';
 import { timeRange, weekdayDate, type Language } from '../time/format.js';
 import { parseLocalOrOffset } from '../time/time.js';
@@ -51,4 +51,54 @@ export interface HandymanProposal {
 /** First message to the handyman, always Spanish: the job, its urgency, where, one concrete slot, how to answer. */
 export function initialProposalToHandyman({ title, address, urgency, slot }: HandymanProposal): string {
   return `Nueva visita propuesta para el aviso «${singleLine(title)}» (urgencia ${URGENCY_ES[urgency]}) en ${singleLine(address)}. Propuesta: ${slotText(slot, 'es')}. ¿Te viene bien? Si no, dime qué disponibilidad tienes.`;
+}
+
+/** The message recipient: the tenant is addressed formally (usted), the handyman informally (tú). */
+export interface Addressed {
+  language: Language;
+  to: Role;
+}
+
+/** Brief acknowledgement to the first party that accepts (REQ-NG-6): the other party is being awaited. */
+export function acknowledgement({ language, to }: Addressed): string {
+  if (to === 'handyman') return 'Gracias, anotado. Estamos pendientes de la confirmación del inquilino y te avisamos en cuanto la tengamos.';
+  return language === 'es'
+    ? 'Gracias, queda anotado. Estamos pendientes de la confirmación del técnico y le avisaremos en cuanto la tengamos.'
+    : 'Thank you, noted. We are waiting for the handyman to confirm and will let you know as soon as we have it.';
+}
+
+export interface SlotMessage extends Addressed {
+  title: string;
+  slot: Slot;
+}
+
+/** One-line confirmation of the specific slot, asked when an acceptance also carries a constraint (REQ-NG-3). */
+export function confirmationRequest({ language, to, title, slot }: SlotMessage): string {
+  const issue = singleLine(title);
+  if (to === 'handyman') return `Para confirmar: ¿te viene bien la visita por «${issue}» el ${slotText(slot, 'es')}? Responde sí, o dime otra fecha y hora.`;
+  return language === 'es'
+    ? `Para confirmar: ¿le viene bien la visita por «${issue}» el ${slotText(slot, 'es')}? Responda sí, o indíquenos otra fecha y hora.`
+    : `To confirm: does the visit for "${issue}" on ${slotText(slot, 'en')} work for you? Please answer yes, or give us another date and time.`;
+}
+
+/** One clarification after a reply that could not be understood (REQ-NG-8): restates the slot, asks for a yes or another time. */
+export function clarification({ language, to, title, slot }: SlotMessage): string {
+  const issue = singleLine(title);
+  if (to === 'handyman') return `Perdona, no he entendido tu respuesta. La visita propuesta por «${issue}» es el ${slotText(slot, 'es')}. ¿Te viene bien? Si no, dime otra fecha y hora.`;
+  return language === 'es'
+    ? `Disculpe, no hemos entendido su respuesta. La visita propuesta por «${issue}» es el ${slotText(slot, 'es')}. ¿Le viene bien? Si no, indíquenos otra fecha y hora.`
+    : `Sorry, we did not understand your reply. The proposed visit for "${issue}" is on ${slotText(slot, 'en')}. Does that work for you? If not, please give us another date and time.`;
+}
+
+/** Confirmation to the tenant once both parties accepted (REQ-RES-1, ACC-2). */
+export function confirmationToTenant({ language, title, slot }: { language: Language; title: string; slot: Slot }): string {
+  const issue = singleLine(title);
+  return language === 'es'
+    ? `Confirmado: la visita del técnico por «${issue}» queda fijada para el ${slotText(slot, 'es')}. Gracias.`
+    : `Confirmed: the handyman's visit for "${issue}" is set for ${slotText(slot, 'en')}. Thank you.`;
+}
+
+/** Confirmation to the handyman, always Spanish (REQ-RES-1, ACC-2, COM-1). */
+export function confirmationToHandyman({ title, address, slot }: { title: string; address: string; slot: Slot }): string {
+  return `Confirmado: visita por «${singleLine(title)}» en ${singleLine(address)}, ${slotText(slot, 'es')}. Gracias.`;
 }

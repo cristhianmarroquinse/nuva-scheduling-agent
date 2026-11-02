@@ -10,10 +10,11 @@ export interface Slot {
   end: string;
 }
 
-/** A tentative reservation of a slot for a proposal version of an order. */
+/** A reservation of a slot for a proposal version of an order: tentative until both parties accept, then scheduled (SCHED-3). */
 export interface Hold {
   orderId: string;
   version: number;
+  kind: 'tentative' | 'scheduled';
   slot: Slot;
 }
 

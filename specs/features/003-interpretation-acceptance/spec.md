@@ -1,6 +1,6 @@
 # 003 · Interpretation boundary and acceptance
 
-**Status:** planned
+**Status:** implemented
 **Product requirements:** REQ-NG-2, REQ-NG-3 (acceptance with a constraint), REQ-NG-6, REQ-NG-8, REQ-RES-1, REQ-RES-3, REQ-RB-1, REQ-TR-2 (model calls, decisions), REQ-OUT-2, REQ-OUT-3
 **Invariants touched:** ACC-1, ACC-2, ACC-3, LLM-1, SCHED-2, COM-1, COM-2, COM-3, ORD-1, ORD-2, TRACE-2
 **Deferred:** replies that decline, counter-propose, ask, withdraw or refer to another order (REQ-NG-1 re-proposals, REQ-NG-3 unanswered versions, REQ-NG-4, REQ-NG-5, REQ-NG-7, REQ-NG-9, REQ-NG-10, LLM-2) → 004 negotiation; timeouts, preemption and blackouts (REQ-TO-1…3, REQ-SC-4…6, RUN-3, SCHED-3, SCHED-4) → 005; the golden-set evaluation of regex versus models (real model under `eval/`, README numbers) → its own feature after negotiation exists

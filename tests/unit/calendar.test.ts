@@ -6,7 +6,7 @@ import { parseLocalOrOffset, toIso } from '../../src/time/time.js';
 
 const at = (text: string) => parseLocalOrOffset(text)!;
 const iso = (text: string) => toIso(at(text));
-const hold = (id: string, start: string, end: string): Hold => ({ orderId: id, version: 1, slot: { start: iso(start), end: iso(end) } });
+const hold = (id: string, start: string, end: string): Hold => ({ orderId: id, version: 1, kind: 'tentative', slot: { start: iso(start), end: iso(end) } });
 
 describe('earliest start (AC-2.2, SCHED-5)', () => {
   it('is one hour after the next full hour, and the next full hour is strictly after the reference time', () => {
@@ -71,7 +71,7 @@ describe('next slot (AC-2.1, AC-2.5, SCHED-1, SCHED-2)', () => {
     expect(toIso(simNow)).toBe('2026-10-24T20:00:00+02:00');
     const critical = nextSlot({ from: earliestStart(simNow, reported), urgency: 'Critical', holds: [] });
     expect(critical).toEqual({ start: '2026-10-25T08:00:00+01:00', end: '2026-10-25T10:00:00+01:00' });
-    const high = nextSlot({ from: earliestStart(simNow, reported), urgency: 'High', holds: [{ orderId: 'C', version: 1, slot: critical }] });
+    const high = nextSlot({ from: earliestStart(simNow, reported), urgency: 'High', holds: [{ orderId: 'C', version: 1, kind: 'tentative', slot: critical }] });
     expect(high).toEqual({ start: '2026-10-26T09:00:00+01:00', end: '2026-10-26T11:00:00+01:00' });
   });
 
@@ -79,7 +79,7 @@ describe('next slot (AC-2.1, AC-2.5, SCHED-1, SCHED-2)', () => {
     const holds: Hold[] = [];
     for (let i = 0; i < 12; i += 1) {
       const slot = nextSlot({ from: at('2026-11-02T09:00'), urgency: 'Medium', holds });
-      holds.push({ orderId: `O${i}`, version: 1, slot });
+      holds.push({ orderId: `O${i}`, version: 1, kind: 'tentative', slot });
     }
     const days = holds.map((h) => h.slot.start.slice(0, 10));
     expect(days.filter((d) => d === '2026-11-02')).toHaveLength(5);
@@ -116,5 +116,12 @@ describe('priority order (AC-1.2)', () => {
   it('compares reported_at as instants, not as text', () => {
     const sorted = priorityOrder([order('later', 'High', '2026-10-04T10:00:00+02:00'), order('earlier', 'High', '2026-10-04T07:00:00Z')]);
     expect(sorted.map((o) => o.id)).toEqual(['earlier', 'later']);
+  });
+});
+
+describe('scheduled holds (AC-2.7)', () => {
+  it('a hold of kind scheduled is avoided by nextSlot like a tentative one', () => {
+    const holds: Hold[] = [{ orderId: 'S', version: 1, kind: 'scheduled', slot: { start: iso('2026-11-02T09:00'), end: iso('2026-11-02T11:00') } }];
+    expect(nextSlot({ from: at('2026-11-02T09:00'), urgency: 'Low', holds })).toEqual({ start: '2026-11-02T11:00:00+01:00', end: '2026-11-02T13:00:00+01:00' });
   });
 });
