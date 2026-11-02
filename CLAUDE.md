@@ -40,3 +40,7 @@ Hooks in `.claude/settings.json` catch mistakes on the normal edit path (credent
 ## Stack
 
 Node 22, TypeScript (strict, NodeNext; relative imports end in `.js`), pnpm, Vitest, tsx.
+
+## Language
+
+Everything committed to this repository is in English: code, comments, tests, specs, plans, ADRs, commit messages and docs. Only the product's messages to tenants and the handyman are in Spanish or English as the specs require.

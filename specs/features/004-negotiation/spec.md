@@ -1,6 +1,6 @@
 # 004 · Negotiation
 
-**Status:** clarified
+**Status:** planned
 **Product requirements:** REQ-NG-1, REQ-NG-3 (unanswered versions), REQ-NG-4, REQ-NG-5, REQ-NG-7, REQ-NG-9, REQ-NG-10, REQ-SC-4, REQ-OUT-2, REQ-OUT-3, REQ-TR-2 (decisions, model calls)
 **Invariants touched:** LLM-2, SCHED-1, SCHED-2, SCHED-5, COM-1, COM-2, COM-3, ACC-1, ORD-1, ORD-2, TRACE-2
 **Deferred to 005:** timeouts and reminders (REQ-TO-1…3, RUN-3), preemption between orders (REQ-SC-5, SCHED-3, SCHED-4), handyman unavailability that applies to every order (REQ-SC-6)
