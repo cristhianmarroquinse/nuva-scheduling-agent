@@ -1,6 +1,6 @@
 # 007 · Delivery: Docker image, README and example trace
 
-**Status:** clarified
+**Status:** planned
 **Product requirements:** REQ-DL-1, REQ-DL-2, REQ-DL-3, REQ-DL-4, REQ-IN-1, REQ-TR-1, REQ-TR-3, REQ-OUT-4
 **Invariants touched:** OUT-1, TRACE-1, TRACE-2 (the committed example must replay)
 **Deferred:** phase 2 of the roadmap (tiered agent escalation, simulator)
@@ -70,7 +70,7 @@ As the evaluator, I want the traces of a real complete run in the repository, so
 | Manual: `docker run` with the example CSV and stdin | AC-1.4, AC-1.5, AC-1.6 | Example inputs | stdout equals the committed stdout up to model wording; traces written to the mount; exit 0 |
 | Manual: inspect the image | AC-1.3 | `docker run --rm agent ls /app` | Only `dist`, `node_modules`, `package.json` |
 | `tests/delivery/example-trace.test.ts` | AC-3.1, AC-3.3, TRACE-1, TRACE-2 | The committed example | Four fields per line; replay reproduces the committed stdout; the run covers the listed situations |
-| `tests/delivery/dockerfile.test.ts` | AC-1.1, AC-1.3, AC-1.4 | The Dockerfile text | Two stages; typecheck and test in the build stage; `NODE_NO_WARNINGS=1`; non-root user; copies only `dist`, production `node_modules` and `package.json`; `.dockerignore` excludes tests, specs, eval, harness and `.env` |
+| `tests/delivery/dockerfile.test.ts` | AC-1.1, AC-1.3, AC-1.4, AC-1.6, AC-1.7 | The Dockerfile text | Two stages; typecheck and test in the build stage; `NODE_NO_WARNINGS=1`; non-root user; the runtime stage copies only `dist`, production `node_modules` and `package.json`; `.dockerignore` excludes `.env`, traces and the harness (the build stage needs the tests and the evaluation) |
 | `tests/delivery/readme.test.ts` | AC-2.1–AC-2.6 | README text | Required sections and pointers present; the eval numbers in the README match `eval/REPORT.md` |
 | Manual: `pnpm example` | AC-3.2, AC-3.4 | Example inputs with the key | Regenerated files under `traces/examples/` |
 
