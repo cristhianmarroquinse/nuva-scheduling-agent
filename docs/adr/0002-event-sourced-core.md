@@ -13,3 +13,6 @@ Traces must allow reconstructing the coordination. A log that is written next to
 - "Exactly one terminal result" and "no overlap" are properties of a pure function and can be tested directly.
 - In production the event log would move to a durable store (Temporal or a Postgres table) with one workflow per order.
 - Storing derived data as events would create two sources of truth, so it is not allowed.
+
+## Amendment (feature 004)
+`answer`, the validated model-written reply to a question (REQ-NG-7), is a seventh fact type, for the same reason `interpretation` is one: it is model output, and replay must reproduce the frame it produced without calling the model.

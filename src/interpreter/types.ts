@@ -3,6 +3,7 @@
 import type { Slot } from '../calendar/calendar.js';
 import type { Role } from '../io/frames.js';
 import type { Language } from '../time/format.js';
+import type { AnswerRequest } from './answer.js';
 
 /** What the fold knows when it asks for an interpretation of a message. */
 export interface InterpretRequest {
@@ -37,4 +38,6 @@ export interface ModelOutput {
 export interface Interpreter {
   /** Rejects when the call fails after the SDK's own retries (REQ-RB-1). */
   interpret(request: InterpretRequest, prompt: Prompt): Promise<ModelOutput>;
+  /** Free-text answer to a question (REQ-NG-7); `raw` is the text. Rejects on failure. */
+  answer(request: AnswerRequest, prompt: Prompt): Promise<ModelOutput>;
 }

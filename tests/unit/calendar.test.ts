@@ -125,3 +125,19 @@ describe('scheduled holds (AC-2.7)', () => {
     expect(nextSlot({ from: at('2026-11-02T09:00'), urgency: 'Low', holds })).toEqual({ start: '2026-11-02T11:00:00+01:00', end: '2026-11-02T13:00:00+01:00' });
   });
 });
+
+describe('next slot after a declined one (AC-1.1 of 004)', () => {
+  it('starts strictly after the given slot, still inside the window and clear of holds', () => {
+    const declined: Slot = { start: iso('2026-11-04T12:00'), end: iso('2026-11-04T14:00') };
+    expect(nextSlot({ from: at('2026-11-04T12:00'), urgency: 'Medium', holds: [], after: declined })).toEqual({ start: '2026-11-04T13:00:00+01:00', end: '2026-11-04T15:00:00+01:00' });
+    const held = [hold('OTHER', '2026-11-04T13:00', '2026-11-04T15:00')];
+    expect(nextSlot({ from: at('2026-11-04T12:00'), urgency: 'Medium', holds: held, after: declined })).toEqual({ start: '2026-11-04T15:00:00+01:00', end: '2026-11-04T17:00:00+01:00' });
+    const friday: Slot = { start: iso('2026-11-06T17:00'), end: iso('2026-11-06T19:00') };
+    expect(nextSlot({ from: at('2026-11-06T10:00'), urgency: 'High', holds: [], after: friday })).toEqual({ start: '2026-11-09T09:00:00+01:00', end: '2026-11-09T11:00:00+01:00' });
+  });
+
+  it('never goes before `from` even when `after` is earlier', () => {
+    const old: Slot = { start: iso('2026-11-02T09:00'), end: iso('2026-11-02T11:00') };
+    expect(nextSlot({ from: at('2026-11-04T12:00'), urgency: 'Low', holds: [], after: old })).toEqual({ start: '2026-11-04T12:00:00+01:00', end: '2026-11-04T14:00:00+01:00' });
+  });
+});

@@ -66,7 +66,7 @@ As the evaluator, I want every reply interpreted and traced even when this featu
 
 **Acceptance criteria (EARS):**
 
-- **AC-4.1** WHEN a reply is interpreted as `decline`, `counter`, `question`, `withdraw` or `cross_reference`, THE system SHALL record the interpretation and trace the decision `deferred` with the intent, and SHALL send nothing until 004 adds negotiation.
+- **AC-4.1** WHEN a reply is interpreted as `decline`, `counter`, `question`, `withdraw` or `cross_reference`, THE system SHALL record the interpretation and trace the decision `deferred` with the intent, and SHALL send nothing until 004 adds negotiation. Superseded by 004: every intent is acted on there and this scenario was removed.
 - **AC-4.2** THE system SHALL keep closing open orders at end of input as `no_response`, and SHALL report a `scheduled` order only once (ORD-1, ORD-2).
 - **AC-4.3** WHEN the recorded facts of a run are replayed, THE system SHALL reproduce the same interpretations' consequences, confirmations and results without calling the model (TRACE-2).
 
@@ -111,7 +111,7 @@ Scenarios run the real entry point with the fake interpreter selected by environ
 | `003-unclear-reset` | AC-3.3 | `unclear`, `Yes`, handyman `unclear` ×2 | Tenant count reset; order closed by the handyman's two unclears |
 | `003-model-invalid-output` | AC-1.5, AC-1.6, **LLM-1** | Scripted output with `Z` time, then with foreign fields | Retry traced; `unclear`; state unchanged by the foreign fields |
 | `003-model-failure` | AC-1.7, AC-3.4 | Scripted failures | First: clarification; second: `llm_unavailable` |
-| `003-deferred-intents` | AC-4.1 | Scripted `decline`, `question`, `cross_reference` | Interpretations recorded; `deferred` decisions; nothing sent |
+| `003-deferred-intents` (removed by 004) | AC-4.1 | Scripted `decline`, `question`, `cross_reference` | Interpretations recorded; `deferred` decisions; nothing sent |
 | `003-scheduled-dst` | AC-2.6, AC-2.7, TIME-1 | 002-dst-weekend CSV, both accept the Critical order | `SCHEDULED_FOR:2026-10-25T08:00:00+01:00`; the High order still `no_response` at EOF |
 | `003-closed-order-line` | ORD-2 | Line after `scheduled` | `closed_order`, nothing sent |
 | Replay (`tests/scenarios/replay.test.ts`) | AC-4.3, TRACE-2 | `003-both-accept`, `003-model-invalid-output` | Same frames and results from the facts |

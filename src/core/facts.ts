@@ -39,12 +39,23 @@ export type Fact =
       role: Role;
       message: string;
     }
+  | {
+      /** The validated model-written answer to a question (REQ-NG-7, LLM-2), or why none was accepted. */
+      type: 'answer';
+      seq: number;
+      woid: string;
+      role: Role;
+      prompt_version: string;
+      outcome: 'ok' | 'invalid' | 'error';
+      text: string | null;
+      problem?: string;
+    }
   | { type: 'eof' };
 
 export type FactType = Fact['type'];
 
 /** Every fact type of ADR 0002, including the ones later features record. Trace lines with any other `event_type` are projections. */
-export const FACT_TYPES: readonly string[] = ['run_started', 'csv_loaded', 'msg_in', 'interpretation', 'llm_error', 'eof'];
+export const FACT_TYPES: readonly string[] = ['run_started', 'csv_loaded', 'msg_in', 'interpretation', 'llm_error', 'answer', 'eof'];
 
 /** The fact a trace line records, or null when the line is a projection (TRACE-2: replay folds facts only). */
 export function factFromTrace(line: { event_type: string; detail: unknown }): Fact | null {

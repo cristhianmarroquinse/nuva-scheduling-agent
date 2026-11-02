@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import type { Fact } from '../core/facts.js';
 import { allTerminal, initialState, step, type Output, type State } from '../core/state.js';
-import { interpretReply } from '../interpreter/interpreter.js';
+import { answerQuestion, interpretReply } from '../interpreter/interpreter.js';
 import type { Interpreter } from '../interpreter/types.js';
 import { parseCsv } from '../orders/csv.js';
 import { readRows, validateRows } from '../orders/validate.js';
@@ -61,8 +61,21 @@ export async function run(options: RunOptions): Promise<number> {
     const { request } = output;
     const outcome = await interpretReply(request, options.interpreter);
     for (const call of outcome.calls) tracer.trace({ work_order_id: request.woid, event_type: 'model_call', detail: { seq: request.seq, ...call } });
-    if (outcome.kind === 'interpretation') record(outcome.fact, request.woid);
-    else record({ type: 'llm_error', seq: request.seq, woid: request.woid, role: request.role, message: outcome.message }, request.woid);
+    const outputs =
+      outcome.kind === 'interpretation'
+        ? record(outcome.fact, request.woid)
+        : record({ type: 'llm_error', seq: request.seq, woid: request.woid, role: request.role, message: outcome.message }, request.woid);
+    for (const output of outputs) {
+      if (output.kind === 'answer') await answer(output);
+    }
+  };
+
+  /** Answers a question through the model and records the validated (or rejected) answer as a fact (REQ-NG-7, LLM-2). */
+  const answer = async (output: Output & { kind: 'answer' }): Promise<void> => {
+    const { request } = output;
+    const outcome = await answerQuestion(request, options.interpreter);
+    for (const call of outcome.calls) tracer.trace({ work_order_id: request.woid, event_type: 'model_call', detail: { seq: request.seq, ...call } });
+    record(outcome.fact, request.woid);
   };
 
   let text: string;

@@ -20,5 +20,17 @@ export function createFakeInterpreter(): Interpreter {
       }
       return Promise.resolve({ raw, model: FAKE_MODEL, latencyMs: 0, tokens: { input: 0, output: 0 } });
     },
+    /** The scripted answer is the JSON body's `answer` string; `@fail` rejects; anything else is an invalid (null) answer. */
+    answer: (request): Promise<ModelOutput> => {
+      let raw: unknown = null;
+      try {
+        const parsed: unknown = JSON.parse(request.body.trim());
+        if (parsed !== null && typeof parsed === 'object' && 'answer' in parsed) raw = (parsed as { answer: unknown }).answer;
+      } catch {
+        raw = null;
+      }
+      if (raw === '@fail') return Promise.reject(new Error('fake answer failure'));
+      return Promise.resolve({ raw, model: FAKE_MODEL, latencyMs: 0, tokens: { input: 0, output: 0 } });
+    },
   };
 }

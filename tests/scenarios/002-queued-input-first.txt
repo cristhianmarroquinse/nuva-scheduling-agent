@@ -28,6 +28,12 @@ Hello. We are writing about your report "Squeaky door". We propose the handyman'
 WOID:WO-3|ROLE:handyman
 Nueva visita propuesta para el aviso «Squeaky door» (urgencia baja) en Calle Mayor 3. Propuesta: miércoles 4 de noviembre de 2026, de 16:00 a 18:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
+WOID:WO-1|ROLE:tenant
+We will check with the office and get back to you. As a reminder, the proposed visit for "Leaking tap" is on Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time). Does that work for you? If not, please give us another date and time.
+
+WOID:WO-2|ROLE:handyman
+Lo consulto con la oficina y te digo. Te recuerdo que la visita propuesta por «No hot water» es el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
+
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 

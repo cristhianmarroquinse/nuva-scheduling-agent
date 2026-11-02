@@ -42,10 +42,10 @@ describe('US2 · acceptance is decided by code', () => {
     expect(headers(output.stdout).at(-1)).toBe('WOID:WO-1|RESULT:scheduled');
   }, SPAWN_TIMEOUT);
 
-  it('003-accept-mismatch: an accept naming another date is a mismatch: nothing sent, no_response at EOF (AC-2.2)', async () => {
+  it('003-accept-mismatch: an accept naming another date is not an acceptance; since 004 it is a counter-proposal that gets a new slot (AC-2.2; 004 AC-1.7)', async () => {
     await expectScenario('003-accept-mismatch');
     const { output } = await scenarioRun('003-accept-mismatch');
-    expect(headers(output.stdout)).toEqual(['WOID:WO-1|ROLE:tenant', 'WOID:WO-1|ROLE:handyman', 'WOID:WO-1|RESULT:requires_review']);
+    expect(headers(output.stdout)).toEqual(['WOID:WO-1|ROLE:tenant', 'WOID:WO-1|ROLE:handyman', 'WOID:WO-1|ROLE:tenant', 'WOID:WO-1|ROLE:handyman', 'WOID:WO-1|RESULT:requires_review']);
   }, SPAWN_TIMEOUT);
 
   it('003-accept-with-constraint: an accept with an exclusion gets a one-line confirmation question; the bare yes after it counts (AC-2.3)', async () => {
@@ -146,11 +146,3 @@ describe('US3 · unclear replies get one chance, then review', () => {
   }, SPAWN_TIMEOUT);
 });
 
-describe('US4 · replies the system does not act on yet are recorded', () => {
-  it('003-deferred-intents: decline, question and cross_reference are interpreted, traced as deferred and answered with nothing (AC-4.1)', async () => {
-    await expectScenario('003-deferred-intents');
-    const { output } = await scenarioRun('003-deferred-intents');
-    expect(headers(output.stdout)).toEqual(['WOID:WO-1|ROLE:tenant', 'WOID:WO-1|ROLE:handyman', 'WOID:WO-1|RESULT:requires_review']);
-    expect(events(output.trace, 'interpretation')).toHaveLength(3);
-  }, SPAWN_TIMEOUT);
-});

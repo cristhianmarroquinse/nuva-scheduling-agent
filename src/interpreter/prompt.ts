@@ -32,7 +32,7 @@ export function buildPrompt(request: InterpretRequest): Prompt {
     proposalText(request),
     'Return only the structured interpretation:',
     `- intent, one of: ${INTENTS.map((intent) => `${intent} (${INTENT_MEANINGS[intent]})`).join('; ')}.`,
-    '- times: every day or time the reply states, as local Europe/Madrid values: date as YYYY-MM-DD, start and end as HH:MM in 24-hour time. A single time goes in start only; "after 17:00" is start 17:00 with no end; "mornings" is 09:00 to 13:00. Never write an offset, a Z, or a timezone name. Resolve relative words (tomorrow, Thursday) from the reference time.',
+    '- times: every day or time the reply states, as local Europe/Madrid values: date as YYYY-MM-DD, start and end as HH:MM in 24-hour time. A single time ("at 16:00") goes in start only and means a visit starting then. "after 17:00" is start 17:00 and end 22:00; "before 15:00" is start 07:00 and end 15:00; "mornings" is 09:00 to 13:00; "afternoon" is 15:00 to 20:00; a day with no time has neither start nor end. Never write an offset, a Z, or a timezone name. Resolve relative words (tomorrow, Thursday) from the reference time.',
     '- exclusions: every day or time the reply rules out (weekday in English lower case, or date, or a start/end range).',
     '- question: the question asked, if any, otherwise null. cross_reference: the other order or visit mentioned, if any, otherwise null.',
     '- quote: the exact words (at most 200 characters) that justify the intent.',

@@ -32,4 +32,6 @@ describe('replay (AC-7.3, TRACE-2)', () => {
   it('002-urgency-order: replaying the facts reproduces the holds, frames and results without the calendar being re-fed (TRACE-2)', () => replay('002-urgency-order'), 20_000);
   it('003-both-accept: replaying the interpretation facts reproduces the acknowledgement, confirmations and the scheduled result without calling the model (TRACE-2)', () => replay('003-both-accept'), 20_000);
   it('003-model-invalid-output: replaying reproduces the clarification and the acknowledgement from the recorded facts alone (TRACE-2)', () => replay('003-model-invalid-output'), 20_000);
+  it('004-counter-range: replaying reproduces the re-proposal, the moved hold and the scheduled result (TRACE-2)', () => replay('004-counter-range'), 20_000);
+  it('004-question-answered: replaying the answer fact reproduces the model-written frame without calling the model (TRACE-2)', () => replay('004-question-answered'), 20_000);
 });

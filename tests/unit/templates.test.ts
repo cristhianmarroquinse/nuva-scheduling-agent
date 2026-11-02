@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acknowledgement, clarification, confirmationRequest, confirmationToHandyman, confirmationToTenant, initialProposalToHandyman, initialProposalToTenant } from '../../src/messages/templates.js';
+import { acknowledgement, clarification, confirmationRequest, confirmationToHandyman, confirmationToTenant, initialProposalToHandyman, initialProposalToTenant, officeWillCheck, answerReply, crossReferenceClarification, reproposalToHandyman, reproposalToTenant } from '../../src/messages/templates.js';
 
 // First message of every order (REQ-ST-2, REQ-ST-4, REQ-OUT-2, REQ-OUT-3): templates, no model.
 
@@ -113,5 +113,71 @@ describe('acceptance and clarification messages (AC-2.4, AC-2.6, AC-3.1, COM-1, 
     expect(handyman).toContain('Calle Mayor 1');
     expect(handyman).toContain('jueves 5 de noviembre de 2026, de 10:00 a 12:00 (hora de Madrid)');
     expect(handyman).not.toMatch(/Thursday|Confirmed/);
+  });
+});
+
+describe('re-proposal messages (AC-1.6, AC-2.1, COM-1, COM-2, COM-3)', () => {
+  it('tells the tenant the previous proposal is cancelled and gives the new slot with weekday, date, range and title, in their language', () => {
+    const es = reproposalToTenant({ language: 'es', title, slot });
+    expect(es).toMatch(/^La propuesta anterior queda cancelada\./);
+    expect(es).toContain('«Grifo que gotea»');
+    expect(es).toContain('jueves 5 de noviembre de 2026, de 10:00 a 12:00 (hora de Madrid)');
+    expect(es).not.toContain('\n');
+    const en = reproposalToTenant({ language: 'en', title: 'Leaking tap', slot });
+    expect(en).toMatch(/^The previous proposal is cancelled\./);
+    expect(en).toContain('"Leaking tap"');
+    expect(en).toContain('Thursday 5 November 2026, 10:00 to 12:00 (Madrid time)');
+  });
+
+  it('tells the handyman in Spanish with the address', () => {
+    const body = reproposalToHandyman({ title: 'Leaking tap', address: 'Calle Mayor 1', slot });
+    expect(body).toMatch(/^La propuesta anterior queda cancelada\./);
+    expect(body).toContain('Calle Mayor 1');
+    expect(body).toContain('jueves 5 de noviembre de 2026, de 10:00 a 12:00 (hora de Madrid)');
+    expect(body).not.toMatch(/Thursday|cancelled/);
+  });
+
+  it('adds the "not available" note only when asked (AC-1.6)', () => {
+    expect(reproposalToTenant({ language: 'es', title, slot, unavailableNote: true })).toContain('Las horas que nos indica no están disponibles.');
+    expect(reproposalToTenant({ language: 'en', title, slot, unavailableNote: true })).toContain('The times you suggested are not available.');
+    expect(reproposalToHandyman({ title, address: 'x', slot, unavailableNote: true })).toContain('Las horas que indicas no están disponibles.');
+    expect(reproposalToTenant({ language: 'en', title, slot })).not.toContain('not available');
+  });
+});
+
+describe('answers to questions (AC-5.2, COM-1, COM-2)', () => {
+  it('sends the answer followed by a reminder of the slot and how to reply, in the asker language', () => {
+    const es = answerReply({ language: 'es', to: 'tenant', title, slot, answer: 'Sí, hay aparcamiento.' });
+    expect(es).toMatch(/^Sí, hay aparcamiento\. /);
+    expect(es).toContain('jueves 5 de noviembre de 2026, de 10:00 a 12:00');
+    expect(es).toContain('«Grifo que gotea»');
+    expect(es).toMatch(/¿Le viene bien\?/);
+    const handyman = answerReply({ language: 'es', to: 'handyman', title, slot, answer: 'Sí, hay aparcamiento.' });
+    expect(handyman).toMatch(/¿Te viene bien\?/);
+    const en = answerReply({ language: 'en', to: 'tenant', title: 'Leaking tap', slot, answer: 'Yes, there is parking.' });
+    expect(en).toMatch(/^Yes, there is parking\. /);
+    expect(en).toContain('Thursday 5 November 2026, 10:00 to 12:00');
+    expect(en).toMatch(/Does that work for you\?/);
+  });
+
+  it('has a fixed sentence for what the facts do not cover', () => {
+    expect(officeWillCheck({ language: 'es', to: 'tenant' })).toBe('Lo consultaremos con la oficina y le responderemos.');
+    expect(officeWillCheck({ language: 'es', to: 'handyman' })).toBe('Lo consulto con la oficina y te digo.');
+    expect(officeWillCheck({ language: 'en', to: 'tenant' })).toBe('We will check with the office and get back to you.');
+  });
+});
+
+describe('cross-reference clarification (AC-6.1)', () => {
+  it('asks the sender to answer about this order, restating the title and the slot, in their language', () => {
+    const es = crossReferenceClarification({ language: 'es', to: 'tenant', title, slot });
+    expect(es).toContain('«Grifo que gotea»');
+    expect(es).toContain('jueves 5 de noviembre de 2026, de 10:00 a 12:00');
+    expect(es).toMatch(/otro aviso|otra orden/i);
+    expect(es).toMatch(/¿Le viene bien\?/);
+    expect(crossReferenceClarification({ language: 'es', to: 'handyman', title, slot })).toMatch(/¿Te viene bien\?/);
+    const en = crossReferenceClarification({ language: 'en', to: 'tenant', title: 'Leaking tap', slot });
+    expect(en).toContain('"Leaking tap"');
+    expect(en).toContain('Thursday 5 November 2026, 10:00 to 12:00');
+    expect(en).toMatch(/another work order|other work order/i);
   });
 });

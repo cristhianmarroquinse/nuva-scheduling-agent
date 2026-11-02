@@ -109,10 +109,18 @@ describe('US4 · startup frames come first and the run still ends cleanly', () =
     await expectScenario('002-queued-input-first');
     const { output } = await scenarioRun('002-queued-input-first');
     const blocks = stdoutBlocks(output.stdout);
-    const lastFrame = blocks.map(isFrame).lastIndexOf(true);
+    // The six initial proposals come first (allocation order); answers to the queued lines and the results follow.
+    expect(blocks.slice(0, 6).map((block) => block.split('\n')[0])).toEqual([
+      'WOID:WO-2|ROLE:tenant',
+      'WOID:WO-2|ROLE:handyman',
+      'WOID:WO-1|ROLE:tenant',
+      'WOID:WO-1|ROLE:handyman',
+      'WOID:WO-3|ROLE:tenant',
+      'WOID:WO-3|ROLE:handyman',
+    ]);
     const firstResult = blocks.findIndex((block) => !isFrame(block));
-    expect(lastFrame).toBe(5);
-    expect(firstResult).toBe(6);
+    expect(firstResult).toBeGreaterThanOrEqual(6);
+    expect(blocks.slice(firstResult).every((block) => !isFrame(block))).toBe(true);
     expect(output.trace.filter((line) => line.event_type === 'hold_released')).toHaveLength(3);
   }, SPAWN_TIMEOUT);
 

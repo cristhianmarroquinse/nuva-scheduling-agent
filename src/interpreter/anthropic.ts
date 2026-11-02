@@ -36,5 +36,22 @@ export function createAnthropicInterpreter(options: AnthropicInterpreterOptions)
         tokens: { input: response.usage.input_tokens, output: response.usage.output_tokens },
       };
     },
+    answer: async (_request, prompt): Promise<ModelOutput> => {
+      const started = options.elapsed();
+      const response = await client.messages.create({
+        model,
+        max_tokens: 300,
+        system: prompt.system,
+        messages: [{ role: 'user', content: prompt.user }],
+        output_config: { effort: 'low' },
+      });
+      const text = response.content.map((block) => (block.type === 'text' ? block.text : '')).join('');
+      return {
+        raw: text,
+        model: response.model,
+        latencyMs: Math.round(options.elapsed() - started),
+        tokens: { input: response.usage.input_tokens, output: response.usage.output_tokens },
+      };
+    },
   };
 }

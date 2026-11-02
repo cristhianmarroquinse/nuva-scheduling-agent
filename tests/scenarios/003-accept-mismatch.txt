@@ -12,6 +12,12 @@ Hello. We are writing about your report "Leaking tap". We propose the handyman's
 WOID:WO-1|ROLE:handyman
 Nueva visita propuesta para el aviso «Leaking tap» (urgencia media) en Calle Mayor 1. Propuesta: miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
+WOID:WO-1|ROLE:tenant
+The previous proposal is cancelled. New proposal for "Leaking tap": Thursday 5 November 2026, 07:00 to 09:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1|ROLE:handyman
+La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: jueves 5 de noviembre de 2026, de 07:00 a 09:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
 
@@ -20,6 +26,9 @@ REASON:No reply was received before the end of input.
 # trace
 {"event_type":"interpretation","work_order_id":"WO-1","detail":{"seq":1,"source":"fake","result":{"intent":"accept"}}}
 {"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"mismatch","party":"tenant","times":[{"date":"2026-11-05"}]}}
+{"event_type":"hold_released","work_order_id":"WO-1","detail":{"version":1,"reason":"reproposed"}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"repropose","cause":"counter","version":2,"start":"2026-11-05T07:00:00+01:00"}}
+{"event_type":"hold_taken","work_order_id":"WO-1","detail":{"version":2}}
 {"event_type":"eof"}
-{"event_type":"hold_released","work_order_id":"WO-1","detail":{"version":1,"reason":"closed"}}
+{"event_type":"hold_released","work_order_id":"WO-1","detail":{"version":2,"reason":"closed"}}
 {"event_type":"result","work_order_id":"WO-1","detail":{"code":"no_response"}}

@@ -2,13 +2,29 @@
 
 import type { Fact } from './facts.js';
 import { parseLine } from './protocol.js';
-import { NO_RESPONSE_SENTENCE, REVIEW_SENTENCES, invalidRowSentence } from './reasons.js';
+import { NO_RESPONSE_SENTENCE, REVIEW_SENTENCES, invalidRowSentence, type ReviewByReply } from './reasons.js';
 import { earliestStart, nextSlot, priorityOrder, type Hold, type Slot } from '../calendar/calendar.js';
+import type { Interpretation } from '../interpreter/schema.js';
+import { slotInside, windowsFrom } from '../policy/availability.js';
 import { formatFrame, formatResult, type Result, type Role } from '../io/frames.js';
-import { acknowledgement, clarification, confirmationRequest, confirmationToHandyman, confirmationToTenant, initialProposalToHandyman, initialProposalToTenant } from '../messages/templates.js';
+import {
+  acknowledgement,
+  clarification,
+  confirmationRequest,
+  confirmationToHandyman,
+  confirmationToTenant,
+  initialProposalToHandyman,
+  initialProposalToTenant,
+  answerReply,
+  crossReferenceClarification,
+  officeWillCheck,
+  reproposalToHandyman,
+  reproposalToTenant,
+} from '../messages/templates.js';
 import { evaluateAcceptance } from '../policy/acceptance.js';
 import { inferLanguage } from '../orders/language.js';
 import { validateRows, type WorkOrder } from '../orders/validate.js';
+import { factsFor, type AnswerRequest } from '../interpreter/answer.js';
 import type { InterpretRequest } from '../interpreter/types.js';
 import type { Language } from '../time/format.js';
 import { parseLocalOrOffset } from '../time/time.js';
@@ -32,17 +48,35 @@ export interface OrderState {
   accepted: Partial<Record<Role, number>>;
   /** Parties asked to confirm a constrained acceptance (REQ-NG-3). */
   awaitingConfirmation: Partial<Record<Role, true>>;
-  /** Consecutive unclear or contradictory replies per party (REQ-NG-8). */
-  unclearStreak: Record<Role, { count: number; contradictory: boolean }>;
+  /** Consecutive unclear, contradictory or cross-referencing replies per party (REQ-NG-8, REQ-NG-10). */
+  unclearStreak: Record<Role, { count: number; contradictory: boolean; crossReference: boolean }>;
   /** Consecutive model failures for this order (REQ-RB-1). */
   llmFailures: number;
+  /** Proposals each party declined, countered or withdrew from (REQ-NG-9). */
+  refusals: Record<Role, number>;
+  /** Proposal versions sent to each party since their last reply (REQ-NG-3). */
+  unanswered: Record<Role, number>;
+  /** Each party's last message body: the asker's goes to the answer prompt as data, the other's must not be echoed (LLM-2). */
+  lastBody: Partial<Record<Role, string>>;
   result?: Result;
 }
 
-const FRESH_STREAK = { tenant: { count: 0, contradictory: false }, handyman: { count: 0, contradictory: false } } as const;
+const NO_STREAK = { count: 0, contradictory: false, crossReference: false } as const;
+const FRESH_STREAK = { tenant: NO_STREAK, handyman: NO_STREAK } as const;
+const PROBLEM_INTENTS = new Set(['unclear', 'contradictory', 'cross_reference']);
 
 function newOrderState(id: string): OrderState {
-  return { id, status: 'open', accepted: {}, awaitingConfirmation: {}, unclearStreak: { ...FRESH_STREAK }, llmFailures: 0 };
+  return {
+    id,
+    status: 'open',
+    accepted: {},
+    awaitingConfirmation: {},
+    unclearStreak: { ...FRESH_STREAK },
+    llmFailures: 0,
+    refusals: { tenant: 0, handyman: 0 },
+    unanswered: { tenant: 0, handyman: 0 },
+    lastBody: {},
+  };
 }
 
 export interface State {
@@ -59,7 +93,9 @@ export type Output =
   | { kind: 'stdout'; text: string }
   | { kind: 'trace'; work_order_id: string | null; event_type: string; detail: unknown }
   /** An effect for the runner: ask the interpreter; its answer comes back as an `interpretation` or `llm_error` fact. */
-  | { kind: 'interpret'; request: InterpretRequest };
+  | { kind: 'interpret'; request: InterpretRequest }
+  /** An effect for the runner: ask the model to answer a question; the result comes back as an `answer` fact. */
+  | { kind: 'answer'; request: AnswerRequest };
 
 export interface StepResult {
   state: State;
@@ -124,7 +160,7 @@ function allocate(state: State, orders: Map<string, OrderState>, outputs: Output
     const version = 1;
     holds.push({ orderId: order.id, version, kind: 'tentative', slot });
     const current = orders.get(order.id)!;
-    orders.set(order.id, { ...current, proposal: { version, slot } });
+    orders.set(order.id, { ...current, proposal: { version, slot }, unanswered: { tenant: 1, handyman: 1 } });
     outputs.push(trace(order.id, 'hold_taken', { version, start: slot.start, end: slot.end }));
     const language: Language = current.language ?? 'en';
     send(outputs, order.id, 'tenant', language, version, slot, initialProposalToTenant({ language, title: order.title, slot, critical: order.urgency === 'Critical' }));
@@ -134,10 +170,10 @@ function allocate(state: State, orders: Map<string, OrderState>, outputs: Output
 }
 
 /** One outgoing message: traced as `msg_out`, then written as exactly one frame (OUT-2). */
-function send(outputs: Output[], id: string, to: Role, language: Language, version: number, slot: Slot, body: string): void {
+function send(outputs: Output[], id: string, to: Role, language: Language, version: number, slot: Slot, body: string, source: 'template' | 'model' = 'template'): void {
   const text = formatFrame(id, to, body);
   const written = text.slice(text.indexOf('\n') + 1).trimEnd();
-  outputs.push(trace(id, 'msg_out', { to, language, version, start: slot.start, end: slot.end, body: written }));
+  outputs.push(trace(id, 'msg_out', { to, language, version, start: slot.start, end: slot.end, source, body: written }));
   outputs.push({ kind: 'stdout', text });
 }
 
@@ -159,9 +195,10 @@ function receiveLine(state: State, fact: Fact & { type: 'msg_in' }): StepResult 
   if (!ROLES.includes(parsed.role as Role)) return classified(order.id, { classification: 'invalid_role', role: parsed.role });
   if (order.status === 'closed') return classified(order.id, { classification: 'closed_order', role: parsed.role });
   if (parsed.timeout) return classified(order.id, { classification: 'timeout', role: parsed.role });
-  const message = classified(order.id, { classification: 'message', role: parsed.role, body: parsed.body });
-  if (order.proposal === undefined || state.simNow === null) return message;
   const role = parsed.role as Role;
+  const remembered = new Map(state.orders).set(order.id, { ...order, lastBody: { ...order.lastBody, [role]: parsed.body } });
+  const message: StepResult = { state: { ...state, orders: remembered }, outputs: classified(order.id, { classification: 'message', role, body: parsed.body }).outputs };
+  if (order.proposal === undefined || state.simNow === null) return message;
   const request: InterpretRequest = {
     woid: order.id,
     seq: fact.seq,
@@ -171,7 +208,7 @@ function receiveLine(state: State, fact: Fact & { type: 'msg_in' }): StepResult 
     proposal: order.proposal,
     simNow: state.simNow,
   };
-  return { state, outputs: [...message.outputs, { kind: 'interpret', request }] };
+  return { state: message.state, outputs: [...message.outputs, { kind: 'interpret', request }] };
 }
 
 const OTHER: Record<Role, Role> = { tenant: 'handyman', handyman: 'tenant' };
@@ -201,18 +238,41 @@ function applyInterpretation(state: State, fact: Fact & { type: 'interpretation'
     outputs.push(trace(order.id, 'decision', { outcome, party, intent: result.intent, version: proposal.version, ...extra }));
   };
   const current: OrderState = { ...order, llmFailures: 0 };
-  if (result.intent !== 'unclear' && result.intent !== 'contradictory') {
-    current.unclearStreak = { ...current.unclearStreak, [party]: { count: 0, contradictory: false } };
+  if (!PROBLEM_INTENTS.has(result.intent)) {
+    current.unclearStreak = { ...current.unclearStreak, [party]: NO_STREAK };
+  }
+
+  const ctx: ReplyContext = { state, orders, holds, outputs, current, party, language, decision, send };
+  const bareYes = result.intent === 'accept' && result.times.length === 0 && result.exclusions.length === 0;
+  const unansweredVersions = current.unanswered[party];
+  current.unanswered = { ...current.unanswered, [party]: 0 };
+
+  if (result.intent === 'decline') return refusal(ctx, 'decline', null);
+  if (result.intent === 'counter') return refusal(ctx, 'counter', result);
+  if (result.intent === 'withdraw') {
+    const { [party]: _withdrawn, ...stillAccepted } = current.accepted;
+    current.accepted = stillAccepted;
+    return refusal(ctx, 'withdraw', result.times.length > 0 ? result : null);
   }
 
   if (result.intent === 'accept') {
+    if (bareYes && unansweredVersions >= 2) {
+      // Two or more proposal versions reached this party without a reply: a bare yes could answer either (REQ-NG-3).
+      current.awaitingConfirmation = { ...current.awaitingConfirmation, [party]: true };
+      decision('needs_confirmation', { reason: 'unanswered_versions', unanswered: unansweredVersions });
+      send(outputs, order.id, party, language, proposal.version, proposal.slot, confirmationRequest({ language, to: party, title, slot: proposal.slot }));
+      orders.set(order.id, current);
+      return { state: { ...state, orders, holds }, outputs };
+    }
     const verdict = evaluateAcceptance(result, proposal.slot);
     if (verdict === 'needs_confirmation') {
       current.awaitingConfirmation = { ...current.awaitingConfirmation, [party]: true };
       decision('needs_confirmation', { exclusions: result.exclusions });
       send(outputs, order.id, party, language, proposal.version, proposal.slot, confirmationRequest({ language, to: party, title, slot: proposal.slot }));
     } else if (verdict === 'mismatch') {
+      // A yes to another day or time is a counter-proposal with those times (AC-1.7 of 004).
       decision('mismatch', { times: result.times });
+      return refusal(ctx, 'counter', result);
     } else {
       const { [party]: _asked, ...stillAwaiting } = current.awaitingConfirmation;
       current.awaitingConfirmation = stillAwaiting;
@@ -239,14 +299,98 @@ function applyInterpretation(state: State, fact: Fact & { type: 'interpretation'
     return { state: { ...state, orders, holds }, outputs };
   }
 
-  if (result.intent === 'unclear' || result.intent === 'contradictory') {
-    return unclearReply({ state, orders, holds, outputs, current, party, language, decision, send }, result.intent);
+  if (result.intent === 'unclear' || result.intent === 'contradictory' || result.intent === 'cross_reference') {
+    return unclearReply(ctx, result.intent);
   }
 
-  // decline, counter, question, withdraw, cross_reference: recorded now, acted on by the negotiation feature (AC-4.1).
-  decision('deferred');
-  orders.set(order.id, current);
-  return { state: { ...state, orders, holds }, outputs };
+  if (result.intent === 'question') {
+    // Answered by the model from the closed facts list, to the asker only (REQ-NG-7, LLM-2); counts toward nothing.
+    decision('question', { question: result.question ?? null });
+    const request: AnswerRequest = {
+      woid: order.id,
+      seq: fact.seq,
+      role: party,
+      language,
+      body: current.lastBody[party] ?? result.quote,
+      question: result.question ?? result.quote,
+      facts: factsFor({ role: party, language, title, address, slot: proposal.slot, urgency: order.order.urgency }),
+      slot: proposal.slot,
+      ...(current.lastBody[OTHER[party]] !== undefined ? { otherPartyText: current.lastBody[OTHER[party]] } : {}),
+    };
+    outputs.push({ kind: 'answer', request });
+    orders.set(order.id, current);
+    return { state: { ...state, orders, holds }, outputs };
+  }
+
+  throw new Error(`Unhandled intent ${String(result.intent)}`);
+}
+
+/** The recorded answer (model text or none) becomes one frame to the asker, with the slot reminder (LLM-2). */
+function applyAnswer(state: State, fact: Fact & { type: 'answer' }): StepResult {
+  const order = state.orders.get(fact.woid);
+  if (order === undefined || order.status === 'closed' || order.order === undefined || order.proposal === undefined) {
+    return { state, outputs: [trace(fact.woid, 'ignored_fact', { type: fact.type, reason: order?.status === 'closed' ? 'closed_order' : 'no_open_proposal' })] };
+  }
+  const outputs: Output[] = [];
+  const party = fact.role;
+  const language = languageFor(order, party);
+  const source = fact.outcome === 'ok' && fact.text !== null ? 'model' : 'template';
+  const answer = source === 'model' && fact.text !== null ? fact.text : officeWillCheck({ language, to: party });
+  outputs.push(trace(order.id, 'decision', { outcome: 'answered', party, source, version: order.proposal.version }));
+  send(outputs, order.id, party, language, order.proposal.version, order.proposal.slot, answerReply({ language, to: party, title: order.order.title, slot: order.proposal.slot, answer }), source);
+  return { state, outputs };
+}
+
+const REFUSAL_LIMIT = 3;
+
+/** A decline, counter or withdrawal counts against the party (REQ-NG-9); the third closes the order, otherwise a new proposal follows. */
+function refusal(ctx: ReplyContext, cause: 'decline' | 'counter' | 'withdraw', availability: Interpretation | null): StepResult {
+  const { current, party } = ctx;
+  current.refusals = { ...current.refusals, [party]: current.refusals[party] + 1 };
+  if (current.refusals[party] >= REFUSAL_LIMIT) {
+    ctx.decision('review', { reason: 'no_mutual_slot', refusals: current.refusals[party] });
+    return review(ctx, 'no_mutual_slot', REVIEW_SENTENCES.no_mutual_slot(party));
+  }
+  return repropose(ctx, cause, availability);
+}
+
+/**
+ * A new proposal (REQ-NG-1, REQ-NG-4): the current hold is released, the slot is chosen inside the stated availability
+ * when one fits (else the next free slot after the current one, with a note to the party), the version rises, both
+ * acceptances are forgotten and both parties are told the previous proposal is cancelled.
+ */
+function repropose(ctx: ReplyContext, cause: 'decline' | 'counter' | 'withdraw', availability: Interpretation | null): StepResult {
+  const { current, party } = ctx;
+  const order = current.order;
+  const proposal = current.proposal;
+  const simNow = ctx.state.simNow === null ? null : parseLocalOrOffset(ctx.state.simNow);
+  if (order === undefined || proposal === undefined || simNow === null) throw new Error(`Cannot re-propose for ${current.id}: no open proposal or reference time`);
+  for (const hold of ctx.holds.filter((candidate) => candidate.orderId === current.id && candidate.kind === 'tentative')) {
+    ctx.outputs.push(trace(current.id, 'hold_released', { version: hold.version, reason: 'reproposed' }));
+  }
+  const others = ctx.holds.filter((candidate) => !(candidate.orderId === current.id && candidate.kind === 'tentative'));
+  const earliest = earliestStart(simNow, parseLocalOrOffset(order.reportedAt)!);
+  let effectiveCause: 'decline' | 'counter' | 'withdraw' | 'no_fit' = cause;
+  let slot: Slot | null = null;
+  if (availability !== null) {
+    slot = slotInside(windowsFrom(availability.times, availability.exclusions), { earliest, holds: others });
+    if (slot === null) effectiveCause = 'no_fit';
+  }
+  if (slot === null) slot = nextSlot({ from: earliest, urgency: order.urgency, holds: others, after: proposal.slot });
+  const version = proposal.version + 1;
+  const holds: Hold[] = [...others, { orderId: current.id, version, kind: 'tentative', slot }];
+  current.proposal = { version, slot };
+  current.accepted = {};
+  current.awaitingConfirmation = {};
+  current.unanswered = { tenant: current.unanswered.tenant + 1, handyman: current.unanswered.handyman + 1 };
+  ctx.decision('repropose', { cause: effectiveCause, version, start: slot.start, end: slot.end });
+  ctx.outputs.push(trace(current.id, 'hold_taken', { version, start: slot.start, end: slot.end }));
+  const tenantLanguage = languageFor(current, 'tenant');
+  const note = effectiveCause === 'no_fit';
+  send(ctx.outputs, current.id, 'tenant', tenantLanguage, version, slot, reproposalToTenant({ language: tenantLanguage, title: order.title, slot, unavailableNote: note && party === 'tenant' }));
+  send(ctx.outputs, current.id, 'handyman', 'es', version, slot, reproposalToHandyman({ title: order.title, address: order.address, slot, unavailableNote: note && party === 'handyman' }));
+  ctx.orders.set(current.id, current);
+  return { state: { ...ctx.state, orders: ctx.orders, holds }, outputs: ctx.outputs };
 }
 
 interface ReplyContext {
@@ -261,28 +405,42 @@ interface ReplyContext {
   send: typeof send;
 }
 
-/** One clarification for the first unclear or contradictory reply of a party; the second in a row goes to review (REQ-NG-8). */
-function unclearReply(ctx: ReplyContext, intent: 'unclear' | 'contradictory'): StepResult {
+/**
+ * One clarification for the first unclear, contradictory or cross-referencing reply of a party; the second in a row goes
+ * to review (REQ-NG-8, REQ-NG-10), with the code chosen by precedence: contradictory, then cross-reference, then unclear.
+ */
+function unclearReply(ctx: ReplyContext, intent: 'unclear' | 'contradictory' | 'cross_reference'): StepResult {
   const { current, party } = ctx;
   const streak = current.unclearStreak[party];
-  const next = { count: streak.count + 1, contradictory: streak.contradictory || intent === 'contradictory' };
+  const next = {
+    count: streak.count + 1,
+    contradictory: streak.contradictory || intent === 'contradictory',
+    crossReference: streak.crossReference || intent === 'cross_reference',
+  };
   current.unclearStreak = { ...current.unclearStreak, [party]: next };
   if (next.count >= 2) {
-    const code = next.contradictory ? 'contradictory_replies' : 'interpretation_failed';
+    const code = next.contradictory ? 'contradictory_replies' : next.crossReference ? 'cross_reference' : 'interpretation_failed';
     ctx.decision('review', { reason: code });
     return review(ctx, code, REVIEW_SENTENCES[code](party));
   }
-  ctx.decision('clarify');
   const { proposal, order } = current;
-  if (proposal !== undefined && order !== undefined) {
-    ctx.send(ctx.outputs, current.id, party, ctx.language, proposal.version, proposal.slot, clarification({ language: ctx.language, to: party, title: order.title, slot: proposal.slot }));
+  if (intent === 'cross_reference') {
+    ctx.decision('clarify_cross_reference');
+    if (proposal !== undefined && order !== undefined) {
+      ctx.send(ctx.outputs, current.id, party, ctx.language, proposal.version, proposal.slot, crossReferenceClarification({ language: ctx.language, to: party, title: order.title, slot: proposal.slot }));
+    }
+  } else {
+    ctx.decision('clarify');
+    if (proposal !== undefined && order !== undefined) {
+      ctx.send(ctx.outputs, current.id, party, ctx.language, proposal.version, proposal.slot, clarification({ language: ctx.language, to: party, title: order.title, slot: proposal.slot }));
+    }
   }
   ctx.orders.set(current.id, current);
   return { state: { ...ctx.state, orders: ctx.orders, holds: ctx.holds }, outputs: ctx.outputs };
 }
 
 /** Closes an open order for review: its tentative holds are released first, then the result is written once (ORD-1). */
-function review(ctx: ReplyContext, code: 'contradictory_replies' | 'interpretation_failed' | 'llm_unavailable', sentence: string): StepResult {
+function review(ctx: ReplyContext, code: ReviewByReply, sentence: string): StepResult {
   const { current } = ctx;
   for (const hold of ctx.holds.filter((candidate) => candidate.orderId === current.id && candidate.kind === 'tentative')) {
     ctx.outputs.push(trace(current.id, 'hold_released', { version: hold.version, reason: 'closed' }));
@@ -344,6 +502,8 @@ export function step(state: State, fact: Fact): StepResult {
       return applyInterpretation(state, fact);
     case 'llm_error':
       return applyLlmError(state, fact);
+    case 'answer':
+      return applyAnswer(state, fact);
     case 'eof':
       return endInput(state);
   }

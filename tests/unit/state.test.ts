@@ -167,7 +167,8 @@ describe('msg_in (AC-4.1, AC-4.2, AC-4.3, AC-4.5)', () => {
   it('never changes an order status: lines only produce traces in this feature', () => {
     const before = fold(loaded).state;
     const after = step(before, lineOf('WO-1|tenant hello'));
-    expect(after.state.orders).toEqual(before.orders);
+    const statuses = (orders: Map<string, { status: string }>) => [...orders.values()].map((order) => order.status);
+    expect(statuses(after.state.orders)).toEqual(statuses(before.orders));
   });
 });
 
@@ -397,10 +398,9 @@ describe('acceptance rules (AC-2.4, AC-2.5, AC-2.6, AC-2.7, AC-2.8, AC-4.2, ACC-
     expect(stdoutOf(outputs)).toBe('');
   });
 
-  it('an accept whose stated time does not fit is a mismatch: nothing sent, nothing recorded (AC-2.2)', () => {
+  it('an accept whose stated time does not fit is a mismatch: not an acceptance, it becomes a counter-proposal (AC-2.2; 004 AC-1.7)', () => {
     const { state, outputs } = step(fold(loaded).state, interp('WO-1', 'tenant', { times: [{ date: '2026-10-08' }] }));
-    expect(decisions(outputs)).toEqual(['mismatch']);
-    expect(stdoutOf(outputs)).toBe('');
+    expect(decisions(outputs)).toEqual(['mismatch', 'repropose']);
     expect(state.orders.get('WO-1')?.accepted).toEqual({});
   });
 
@@ -526,14 +526,288 @@ describe('unclear replies, model failures and deferred intents (AC-3.1, AC-3.2, 
     expect(state).toEqual(closed);
     expect(tracesOf(outputs, 'ignored_fact')).toHaveLength(1);
   });
+});
 
-  it('decline, counter, question, withdraw and cross_reference are recorded as deferred, send nothing and reset the streak (AC-4.1)', () => {
-    for (const intent of ['decline', 'counter', 'question', 'withdraw', 'cross_reference'] as const) {
-      const { state, outputs } = step(fold([...loaded, interp('tenant', {})]).state, interp('tenant', { intent, quote: 'later' }));
-      expect(decisions(outputs), intent).toEqual(['deferred']);
-      expect(tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as Record<string, unknown>)['intent']), intent).toEqual([intent]);
-      expect(stdoutOf(outputs), intent).toBe('');
-      expect(state.orders.get('WO-1'), intent).toMatchObject({ status: 'open', unclearStreak: { tenant: { count: 0 } } });
+describe('negotiation: declines, counters, re-proposals, limits and withdrawals (004)', () => {
+  // sim_now Wed 2026-11-04 10:00 +01:00. WO-1 (en, Medium, reported 02 Nov 09:00) → v1 Wed 12:00–14:00; WO-2 (Low) → v1 Wed 14:00–16:00.
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const loaded: Fact[] = [
+    startedNov,
+    {
+      type: 'csv_loaded',
+      rows: [
+        row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' }),
+        row({ work_order_id: 'WO-2', work_order: 'Squeaky door', address: 'Calle Mayor 2', urgency: 'Low', reported_at: '2026-11-02T10:00:00' }),
+      ],
+    },
+  ];
+  type Result = import('../../src/interpreter/schema.js').Interpretation;
+  let seq = 100;
+  const interp = (woid: string, role: 'tenant' | 'handyman', result: Partial<Result>): Fact => ({
+    type: 'interpretation',
+    seq: (seq += 1),
+    woid,
+    role,
+    source: 'fake',
+    prompt_version: '2',
+    result: { intent: 'accept', times: [], exclusions: [], quote: 'q', ...result },
+  });
+  const decisionsOf = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as Record<string, unknown>));
+  const outcomes = (outputs: Output[]) => decisionsOf(outputs).map((detail) => detail && detail['outcome']);
+  const headersOf = (outputs: Output[]) => stdoutOf(outputs).split('\n\n').filter(Boolean).map((block) => block.split('\n')[0]);
+  const holdOf = (state: import('../../src/core/state.js').State, id: string) => state.holds.find((hold) => hold.orderId === id);
+  const noOverlap = (state: import('../../src/core/state.js').State) => {
+    for (const a of state.holds) for (const b of state.holds) if (a !== b) expect(a.slot.start < b.slot.end && b.slot.start < a.slot.end, `${a.orderId} vs ${b.orderId}`).toBe(false);
+  };
+
+  describe('declines and counters (AC-1.1, AC-1.2, AC-1.6, AC-1.7, AC-1.8, SCHED-1)', () => {
+    it('a decline re-proposes the next free slot after the declined one, skipping other holds, to both parties', () => {
+      const { state, outputs } = step(fold(loaded).state, interp('WO-1', 'tenant', { intent: 'decline' }));
+      expect(outcomes(outputs)).toEqual(['repropose']);
+      expect(decisionsOf(outputs)[0]).toMatchObject({ cause: 'decline', party: 'tenant', version: 2, start: '2026-11-04T16:00:00+01:00' });
+      expect(headersOf(outputs)).toEqual(['WOID:WO-1|ROLE:tenant', 'WOID:WO-1|ROLE:handyman']);
+      expect(stdoutOf(outputs)).toContain('The previous proposal is cancelled. New proposal for "Leaking tap": Wednesday 4 November 2026, 16:00 to 18:00 (Madrid time).');
+      expect(stdoutOf(outputs)).toContain('La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: miércoles 4 de noviembre de 2026, de 16:00 a 18:00 (hora de Madrid).');
+      expect(tracesOf(outputs, 'hold_released').map((output) => output.kind === 'trace' && output.detail)).toEqual([{ version: 1, reason: 'reproposed' }]);
+      expect(holdOf(state, 'WO-1')).toMatchObject({ version: 2, kind: 'tentative', slot: { start: '2026-11-04T16:00:00+01:00' } });
+      expect(holdOf(state, 'WO-2')).toMatchObject({ version: 1, slot: { start: '2026-11-04T14:00:00+01:00' } });
+      expect(state.orders.get('WO-1')).toMatchObject({ proposal: { version: 2 }, accepted: {} });
+      noOverlap(state);
+    });
+
+    it('a counter with a fitting window gets a slot inside it (AC-1.2)', () => {
+      const { state, outputs } = step(fold(loaded).state, interp('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-05', start: '15:00', end: '20:00' }] }));
+      expect(decisionsOf(outputs)[0]).toMatchObject({ outcome: 'repropose', cause: 'counter', version: 2, start: '2026-11-05T15:00:00+01:00', end: '2026-11-05T17:00:00+01:00' });
+      expect(stdoutOf(outputs)).not.toContain('not available');
+      expect(holdOf(state, 'WO-1')?.slot.start).toBe('2026-11-05T15:00:00+01:00');
+    });
+
+    it('a counter with no fit gets the next free slot and the note goes only to that party (AC-1.6)', () => {
+      const { outputs } = step(fold(loaded).state, interp('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-05', start: '21:00' }] }));
+      expect(decisionsOf(outputs)[0]).toMatchObject({ outcome: 'repropose', cause: 'no_fit', start: '2026-11-04T16:00:00+01:00' });
+      const [tenantFrame, handymanFrame] = stdoutOf(outputs).split('\n\n');
+      expect(tenantFrame).toContain('The times you suggested are not available.');
+      expect(handymanFrame).not.toContain('no están disponibles');
+    });
+
+    it('a mismatched acceptance is a counter with its stated times (AC-1.7)', () => {
+      const { outputs } = step(fold(loaded).state, interp('WO-1', 'tenant', { intent: 'accept', times: [{ date: '2026-11-05' }] }));
+      expect(decisionsOf(outputs).map((detail) => detail && [detail['outcome'], detail['cause']])).toEqual([['mismatch', undefined], ['repropose', 'counter']]);
+      expect(decisionsOf(outputs)[1]).toMatchObject({ start: '2026-11-05T07:00:00+01:00' });
+    });
+
+    it('the handyman is handled by the same rules; his availability applies to this order only (AC-1.8)', () => {
+      const declined = step(fold(loaded).state, interp('WO-1', 'handyman', { intent: 'decline' }));
+      expect(decisionsOf(declined.outputs)[0]).toMatchObject({ outcome: 'repropose', cause: 'decline', party: 'handyman', version: 2 });
+      expect(headersOf(declined.outputs)).toEqual(['WOID:WO-1|ROLE:tenant', 'WOID:WO-1|ROLE:handyman']);
+      const countered = step(fold(loaded).state, interp('WO-1', 'handyman', { intent: 'counter', times: [{ date: '2026-11-05', start: '09:00' }] }));
+      expect(decisionsOf(countered.outputs)[0]).toMatchObject({ cause: 'counter', start: '2026-11-05T09:00:00+01:00' });
+      expect(holdOf(countered.state, 'WO-2')?.slot.start).toBe('2026-11-04T14:00:00+01:00');
+    });
+
+    it("a counter onto another order's held hour does not take it (SCHED-1)", () => {
+      const { state, outputs } = step(fold(loaded).state, interp('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '14:00', end: '16:00' }] }));
+      expect(decisionsOf(outputs)[0]).toMatchObject({ cause: 'no_fit' });
+      expect(holdOf(state, 'WO-2')).toMatchObject({ orderId: 'WO-2', slot: { start: '2026-11-04T14:00:00+01:00' } });
+      noOverlap(state);
+    });
+  });
+
+  describe('re-proposals cancel the previous one for both parties (AC-2.1, AC-2.2, AC-2.3, AC-2.4, ACC-1)', () => {
+    it('forgets both acceptances: the order is scheduled only when both accept the new version', () => {
+      const afterDecline = fold([...loaded, interp('WO-1', 'handyman', {}), interp('WO-1', 'tenant', { intent: 'decline' })]).state;
+      expect(afterDecline.orders.get('WO-1')?.accepted).toEqual({});
+      const handymanAgain = step(afterDecline, interp('WO-1', 'handyman', {}));
+      expect(outcomes(handymanAgain.outputs)).toEqual(['accepted']);
+      expect(handymanAgain.state.orders.get('WO-1')?.status).toBe('open');
+      const tenant = step(handymanAgain.state, interp('WO-1', 'tenant', {}));
+      expect(outcomes(tenant.outputs)).toEqual(['scheduled']);
+      expect(stdoutOf(tenant.outputs)).toContain('SCHEDULED_FOR:2026-11-04T16:00:00+01:00');
+      expect(holdOf(tenant.state, 'WO-1')).toMatchObject({ version: 2, kind: 'scheduled' });
+    });
+
+    it('a bare yes from a party with two unanswered versions gets a confirmation request; a yes naming the slot counts at once (AC-2.3)', () => {
+      const twoVersions = fold([...loaded, interp('WO-1', 'handyman', { intent: 'decline' })]).state; // tenant has v1 and v2 unanswered
+      expect(twoVersions.orders.get('WO-1')?.unanswered).toEqual({ tenant: 2, handyman: 1 });
+      const bare = step(twoVersions, interp('WO-1', 'tenant', {}));
+      expect(decisionsOf(bare.outputs)[0]).toMatchObject({ outcome: 'needs_confirmation', reason: 'unanswered_versions' });
+      expect(stdoutOf(bare.outputs)).toContain('To confirm: does the visit for "Leaking tap" on Wednesday 4 November 2026, 16:00 to 18:00');
+      expect(bare.state.orders.get('WO-1')?.unanswered).toEqual({ tenant: 0, handyman: 1 });
+      const confirmed = step(bare.state, interp('WO-1', 'tenant', {}));
+      expect(outcomes(confirmed.outputs)).toEqual(['accepted']);
+      const named = step(twoVersions, interp('WO-1', 'tenant', { times: [{ date: '2026-11-04', start: '16:00' }] }));
+      expect(outcomes(named.outputs)).toEqual(['accepted']);
+    });
+
+    it('live holds never overlap across repeated re-proposals of two orders (SCHED-1)', () => {
+      const { state } = fold([
+        ...loaded,
+        interp('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '14:00' }] }),
+        interp('WO-2', 'tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '16:00' }] }),
+        interp('WO-1', 'handyman', { intent: 'decline' }),
+        interp('WO-2', 'handyman', { intent: 'counter', times: [{ date: '2026-11-05' }] }),
+      ]);
+      expect(state.holds).toHaveLength(2);
+      noOverlap(state);
+    });
+  });
+
+  describe('refusal limit (AC-3.1, AC-3.2, AC-3.3, AC-3.4, ORD-1)', () => {
+    it('the third refusal by one party closes the order as no_mutual_slot without a new proposal', () => {
+      const two = fold([...loaded, interp('WO-1', 'tenant', { intent: 'decline' }), interp('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-06' }] })]).state;
+      expect(two.orders.get('WO-1')?.refusals).toEqual({ tenant: 2, handyman: 0 });
+      const { state, outputs } = step(two, interp('WO-1', 'tenant', { intent: 'decline' }));
+      expect(outcomes(outputs)).toEqual(['review']);
+      expect(stdoutOf(outputs)).toBe('WOID:WO-1|RESULT:requires_review\nREASON:The tenant declined or countered three proposals.\n\n');
+      expect(state.orders.get('WO-1')).toMatchObject({ status: 'closed', result: { code: 'no_mutual_slot' } });
+      expect(holdOf(state, 'WO-1')).toBeUndefined();
+      expect(tracesOf(outputs, 'result')).toHaveLength(1);
+    });
+
+    it('limits are per party', () => {
+      const { state } = fold([...loaded, interp('WO-1', 'tenant', { intent: 'decline' }), interp('WO-1', 'tenant', { intent: 'decline' }), interp('WO-1', 'handyman', { intent: 'decline' })]);
+      expect(state.orders.get('WO-1')).toMatchObject({ status: 'open', proposal: { version: 4 }, refusals: { tenant: 2, handyman: 1 } });
+    });
+
+    it('questions, clarifications and confirmation requests do not count; mismatched accepts, no-fit counters and withdrawals do', () => {
+      const soft = fold([...loaded, interp('WO-1', 'tenant', { intent: 'unclear' }), interp('WO-1', 'tenant', { intent: 'question', question: 'Parking?' }), interp('WO-1', 'tenant', { exclusions: [{ weekday: 'friday' }] })]).state;
+      expect(soft.orders.get('WO-1')?.refusals).toEqual({ tenant: 0, handyman: 0 });
+      const hard = fold([
+        ...loaded,
+        interp('WO-1', 'tenant', { times: [{ date: '2026-11-06' }] }),
+        interp('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-05', start: '21:00' }] }),
+      ]).state;
+      expect(hard.orders.get('WO-1')?.refusals).toEqual({ tenant: 2, handyman: 0 });
+      const closed = step(hard, interp('WO-1', 'tenant', { intent: 'withdraw' }));
+      expect(outcomes(closed.outputs)).toEqual(['review']);
+    });
+  });
+
+  describe('withdrawals (AC-4.1, AC-4.2, ORD-2)', () => {
+    it('a withdrawal before scheduling forgets the acceptance, counts and re-proposes', () => {
+      const accepted = fold([...loaded, interp('WO-1', 'tenant', {})]).state;
+      const { state, outputs } = step(accepted, interp('WO-1', 'tenant', { intent: 'withdraw' }));
+      expect(decisionsOf(outputs)[0]).toMatchObject({ outcome: 'repropose', cause: 'withdraw', version: 2 });
+      expect(state.orders.get('WO-1')).toMatchObject({ accepted: {}, refusals: { tenant: 1, handyman: 0 } });
+      const withTimes = step(accepted, interp('WO-1', 'tenant', { intent: 'withdraw', times: [{ date: '2026-11-05', start: '10:00' }] }));
+      expect(decisionsOf(withTimes.outputs)[0]).toMatchObject({ cause: 'withdraw', start: '2026-11-05T10:00:00+01:00' });
+    });
+
+    it('a withdrawal after scheduling is ignored (ORD-2)', () => {
+      const scheduled = fold([...loaded, interp('WO-1', 'tenant', {}), interp('WO-1', 'handyman', {})]).state;
+      const { state, outputs } = step(scheduled, interp('WO-1', 'tenant', { intent: 'withdraw' }));
+      expect(state).toEqual(scheduled);
+      expect(stdoutOf(outputs)).toBe('');
+      expect(tracesOf(outputs, 'ignored_fact')).toHaveLength(1);
+    });
+  });
+});
+
+describe('questions and answers (AC-5.2, AC-5.5, LLM-2, ORD-2)', () => {
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const loaded: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' })] }];
+  const asked: Fact[] = [
+    ...loaded,
+    { type: 'msg_in', seq: 1, raw: 'WO-1|tenant The tap drips all night, please hurry' },
+    { type: 'msg_in', seq: 2, raw: 'WO-1|handyman ¿Hay aparcamiento?' },
+    { type: 'interpretation', seq: 2, woid: 'WO-1', role: 'handyman', source: 'fake', prompt_version: '2', result: { intent: 'question', times: [], exclusions: [], question: '¿Hay aparcamiento?', quote: '¿Hay aparcamiento?' } },
+  ];
+  const answerFact = (outcome: 'ok' | 'invalid' | 'error', text: string | null): Fact => ({ type: 'answer', seq: 2, woid: 'WO-1', role: 'handyman', prompt_version: '1', outcome, text });
+
+  it('remembers the last message body of each party', () => {
+    const { state } = fold(asked);
+    expect(state.orders.get('WO-1')?.lastBody).toEqual({ tenant: 'The tap drips all night, please hurry', handyman: '¿Hay aparcamiento?' });
+  });
+
+  it('a question emits one answer request with the facts, the slot and the other party text, counts nothing and sends nothing yet (AC-5.5)', () => {
+    const { state, outputs } = step(fold(asked.slice(0, -1)).state, asked.at(-1)!);
+    const requests = outputs.filter((output) => output.kind === 'answer');
+    expect(requests).toHaveLength(1);
+    expect(requests[0]!.kind === 'answer' && requests[0]!.request).toMatchObject({
+      woid: 'WO-1',
+      seq: 2,
+      role: 'handyman',
+      language: 'es',
+      body: '¿Hay aparcamiento?',
+      question: '¿Hay aparcamiento?',
+      slot: { start: '2026-11-04T12:00:00+01:00' },
+      otherPartyText: 'The tap drips all night, please hurry',
+    });
+    expect(tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as { outcome: string }).outcome)).toEqual(['question']);
+    expect(state.orders.get('WO-1')).toMatchObject({ refusals: { tenant: 0, handyman: 0 }, proposal: { version: 1 } });
+    expect(stdoutOf(outputs)).not.toContain('|ROLE:');
+  });
+
+  it('a valid answer goes to the asker only, with the slot reminder (LLM-2)', () => {
+    const { outputs } = step(fold(asked).state, answerFact('ok', 'Sí, hay aparcamiento en la calle.'));
+    expect(stdoutOf(outputs).split('\n\n').filter(Boolean).map((block) => block.split('\n')[0])).toEqual(['WOID:WO-1|ROLE:handyman']);
+    expect(stdoutOf(outputs)).toContain('Sí, hay aparcamiento en la calle. Te recuerdo que la visita propuesta por «Leaking tap» es el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid).');
+    expect(tracesOf(outputs, 'msg_out').map((output) => output.kind === 'trace' && (output.detail as { to: string; source: string }))).toEqual([expect.objectContaining({ to: 'handyman', source: 'model' })]);
+    expect(tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as { outcome: string; source: string }))).toEqual([{ outcome: 'answered', party: 'handyman', source: 'model', version: 1 }]);
+  });
+
+  it('a rejected or failed answer becomes the fixed office sentence, still to the asker only', () => {
+    for (const fact of [answerFact('invalid', null), answerFact('error', null)]) {
+      const { outputs } = step(fold(asked).state, fact);
+      expect(stdoutOf(outputs)).toContain('WOID:WO-1|ROLE:handyman\nLo consulto con la oficina y te digo. Te recuerdo que la visita propuesta');
+      expect(tracesOf(outputs, 'msg_out').map((output) => output.kind === 'trace' && (output.detail as { source: string }).source)).toEqual(['template']);
     }
+  });
+
+  it('an answer for a closed order is ignored (ORD-2)', () => {
+    const closed = fold([...asked, { type: 'eof' }]).state;
+    const { state, outputs } = step(closed, answerFact('ok', 'Sí.'));
+    expect(state).toEqual(closed);
+    expect(tracesOf(outputs, 'ignored_fact')).toHaveLength(1);
+    expect(stdoutOf(outputs)).toBe('');
+  });
+});
+
+describe('cross-references (AC-6.1, AC-6.2, AC-6.3)', () => {
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const loaded: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' })] }];
+  type Result = import('../../src/interpreter/schema.js').Interpretation;
+  let seq = 200;
+  const interp = (role: 'tenant' | 'handyman', result: Partial<Result>): Fact => ({
+    type: 'interpretation',
+    seq: (seq += 1),
+    woid: 'WO-1',
+    role,
+    source: 'fake',
+    prompt_version: '2',
+    result: { intent: 'cross_reference', times: [], exclusions: [], cross_reference: 'WO-7', quote: 'about the other one', ...result },
+  });
+  const outcomes = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as { outcome: string }).outcome);
+  const reasons = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as { reason?: string }).reason);
+
+  it('the first cross-reference gets a clarification that restates this order and its slot (AC-6.1)', () => {
+    const { state, outputs } = step(fold(loaded).state, interp('tenant', {}));
+    expect(outcomes(outputs)).toEqual(['clarify_cross_reference']);
+    expect(stdoutOf(outputs)).toContain('WOID:WO-1|ROLE:tenant\n');
+    expect(stdoutOf(outputs)).toContain('"Leaking tap"');
+    expect(stdoutOf(outputs)).toContain('Wednesday 4 November 2026, 12:00 to 14:00');
+    expect(state.orders.get('WO-1')).toMatchObject({ status: 'open', refusals: { tenant: 0, handyman: 0 } });
+  });
+
+  it('a second consecutive cross-reference closes the order as cross_reference (AC-6.2)', () => {
+    const { state, outputs } = step(fold([...loaded, interp('tenant', {})]).state, interp('tenant', {}));
+    expect(reasons(outputs)).toEqual(['cross_reference']);
+    expect(stdoutOf(outputs)).toBe('WOID:WO-1|RESULT:requires_review\nREASON:The tenant kept referring to a different work order.\n\n');
+    expect(state.holds).toEqual([]);
+  });
+
+  it('precedence over two consecutive problem replies: contradictory, then cross_reference, then interpretation_failed (AC-6.3)', () => {
+    const crossThenUnclear = step(fold([...loaded, interp('tenant', {})]).state, interp('tenant', { intent: 'unclear' }));
+    expect(reasons(crossThenUnclear.outputs)).toEqual(['cross_reference']);
+    const unclearThenCross = step(fold([...loaded, interp('tenant', { intent: 'unclear' })]).state, interp('tenant', {}));
+    expect(reasons(unclearThenCross.outputs)).toEqual(['cross_reference']);
+    const crossThenContradictory = step(fold([...loaded, interp('tenant', {})]).state, interp('tenant', { intent: 'contradictory' }));
+    expect(reasons(crossThenContradictory.outputs)).toEqual(['contradictory_replies']);
+  });
+
+  it('a clear reply in between resets the streak', () => {
+    const { state, outputs } = step(fold([...loaded, interp('tenant', {}), interp('tenant', { intent: 'question', question: 'Parking?' })]).state, interp('tenant', {}));
+    expect(outcomes(outputs)).toEqual(['clarify_cross_reference']);
+    expect(state.orders.get('WO-1')?.status).toBe('open');
   });
 });

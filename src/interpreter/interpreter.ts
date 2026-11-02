@@ -2,6 +2,7 @@
 // The result is a fact for the fold (LLM-1); the model calls are traced separately.
 
 import type { Fact } from '../core/facts.js';
+import { buildAnswerPrompt, validateAnswer, type AnswerRequest } from './answer.js';
 import { FAKE_MODEL } from './fake.js';
 import { fastPath } from './fast-path.js';
 import { buildPrompt } from './prompt.js';
@@ -59,4 +60,37 @@ export async function interpretReply(request: InterpretRequest, interpreter: Int
   }
   const unclear: Interpretation = { intent: 'unclear', times: [], exclusions: [], quote: request.body.slice(0, 200) };
   return { kind: 'interpretation', fact: fact(request, source, unclear), calls };
+}
+
+export type AnswerFact = Fact & { type: 'answer' };
+
+export interface AnswerCall extends ModelCall {
+  purpose: 'answer';
+}
+
+/**
+ * One model call to answer a question (REQ-NG-7); the text is validated before it becomes a fact (LLM-2). A wrong or
+ * missing answer is not re-asked: the fold sends the fixed office sentence instead.
+ */
+export async function answerQuestion(request: AnswerRequest, interpreter: Interpreter): Promise<{ fact: AnswerFact; calls: AnswerCall[] }> {
+  const prompt = buildAnswerPrompt(request);
+  const base = { type: 'answer' as const, seq: request.seq, woid: request.woid, role: request.role, prompt_version: prompt.version };
+  let output;
+  try {
+    output = await interpreter.answer(request, prompt);
+  } catch (error) {
+    return { fact: { ...base, outcome: 'error', text: null, problem: error instanceof Error ? error.message : String(error) }, calls: [] };
+  }
+  const validation = validateAnswer(output.raw, request);
+  const call: AnswerCall = {
+    purpose: 'answer',
+    attempt: 1,
+    model: output.model,
+    prompt_version: prompt.version,
+    latency_ms: output.latencyMs,
+    tokens: output.tokens,
+    outcome: validation.ok ? 'ok' : 'invalid',
+  };
+  if (validation.ok) return { fact: { ...base, outcome: 'ok', text: validation.text }, calls: [call] };
+  return { fact: { ...base, outcome: 'invalid', text: null, problem: validation.problem }, calls: [{ ...call, problem: validation.problem }] };
 }
