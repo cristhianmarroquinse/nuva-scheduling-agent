@@ -103,29 +103,39 @@ export function confirmationToHandyman({ title, address, slot }: { title: string
   return `Confirmado: visita por «${singleLine(title)}» en ${singleLine(address)}, ${slotText(slot, 'es')}. Gracias.`;
 }
 
+/** Why the previous proposal was cancelled, when it needs saying: no fit for stated times, taken by a more urgent job, or a blackout. */
+export type ReproposalNote = 'unavailable' | 'preempted' | 'blackout';
+
+const NOTE_TENANT: Record<Language, Record<ReproposalNote, string>> = {
+  es: { unavailable: 'Las horas que nos indica no están disponibles.', preempted: 'Hemos tenido que dar ese hueco a un aviso más urgente.', blackout: 'El técnico no está disponible en el hueco anterior.' },
+  en: { unavailable: 'The times you suggested are not available.', preempted: 'That slot had to be given to a more urgent job.', blackout: 'The handyman is not available at the previous slot.' },
+};
+const NOTE_HANDYMAN: Record<ReproposalNote, string> = {
+  unavailable: 'Las horas que indicas no están disponibles.',
+  preempted: 'Ese hueco se ha dado a un aviso más urgente.',
+  blackout: 'Movemos la visita por tu indisponibilidad.',
+};
+
 export interface Reproposal {
   language: Language;
   title: string;
   slot: Slot;
-  /** The party stated times that could not be honoured (REQ-NG-4 with no fit). */
-  unavailableNote?: boolean;
+  note?: ReproposalNote;
 }
 
 /** A new proposal to the tenant: the previous one is cancelled in writing (REQ-NG-1). */
-export function reproposalToTenant({ language, title, slot, unavailableNote }: Reproposal): string {
+export function reproposalToTenant({ language, title, slot, note }: Reproposal): string {
   const issue = singleLine(title);
-  if (language === 'es') {
-    const note = unavailableNote ? ' Las horas que nos indica no están disponibles.' : '';
-    return `La propuesta anterior queda cancelada.${note} Nueva propuesta para «${issue}»: ${slotText(slot, 'es')}. ¿Le viene bien? Si no, indíquenos qué días y horas le vendrían bien.`;
-  }
-  const note = unavailableNote ? ' The times you suggested are not available.' : '';
-  return `The previous proposal is cancelled.${note} New proposal for "${issue}": ${slotText(slot, 'en')}. Does that work for you? If not, please tell us which days and times would suit you.`;
+  const why = note === undefined ? '' : ` ${NOTE_TENANT[language][note]}`;
+  return language === 'es'
+    ? `La propuesta anterior queda cancelada.${why} Nueva propuesta para «${issue}»: ${slotText(slot, 'es')}. ¿Le viene bien? Si no, indíquenos qué días y horas le vendrían bien.`
+    : `The previous proposal is cancelled.${why} New proposal for "${issue}": ${slotText(slot, 'en')}. Does that work for you? If not, please tell us which days and times would suit you.`;
 }
 
 /** A new proposal to the handyman, always Spanish (REQ-NG-1, COM-1). */
-export function reproposalToHandyman({ title, address, slot, unavailableNote }: { title: string; address: string; slot: Slot; unavailableNote?: boolean }): string {
-  const note = unavailableNote ? ' Las horas que indicas no están disponibles.' : '';
-  return `La propuesta anterior queda cancelada.${note} Nueva propuesta para el aviso «${singleLine(title)}» en ${singleLine(address)}: ${slotText(slot, 'es')}. ¿Te viene bien? Si no, dime qué disponibilidad tienes.`;
+export function reproposalToHandyman({ title, address, slot, note }: { title: string; address: string; slot: Slot; note?: ReproposalNote }): string {
+  const why = note === undefined ? '' : ` ${NOTE_HANDYMAN[note]}`;
+  return `La propuesta anterior queda cancelada.${why} Nueva propuesta para el aviso «${singleLine(title)}» en ${singleLine(address)}: ${slotText(slot, 'es')}. ¿Te viene bien? Si no, dime qué disponibilidad tienes.`;
 }
 
 /** The fixed sentence for anything the facts do not cover (REQ-NG-7). */
@@ -153,4 +163,13 @@ export function crossReferenceClarification({ language, to, title, slot }: SlotM
   return language === 'es'
     ? `Creemos que se refiere a otro aviso. Este mensaje es sobre el aviso «${issue}», con visita propuesta el ${slotText(slot, 'es')}. ¿Le viene bien? Si no, indíquenos otra fecha y hora.`
     : `We think you are referring to another work order. This message is about "${issue}", with a visit proposed on ${slotText(slot, 'en')}. Does that work for you? If not, please give us another date and time.`;
+}
+
+/** Reminder after a first timeout (REQ-TO-2): the party is still being waited on; the slot is restated. */
+export function reminder({ language, to, title, slot }: SlotMessage): string {
+  const issue = singleLine(title);
+  if (to === 'handyman') return `Te recuerdo que sigo pendiente de tu respuesta. La visita propuesta por «${issue}» es el ${slotText(slot, 'es')}. ¿Te viene bien? Si no, dime otra fecha y hora.`;
+  return language === 'es'
+    ? `Le recordamos que seguimos pendientes de su respuesta. La visita propuesta por «${issue}» es el ${slotText(slot, 'es')}. ¿Le viene bien? Si no, indíquenos otra fecha y hora.`
+    : `A reminder that we are still waiting for your reply. The proposed visit for "${issue}" is on ${slotText(slot, 'en')}. Does that work for you? If not, please give us another date and time.`;
 }

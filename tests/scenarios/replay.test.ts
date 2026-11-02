@@ -34,4 +34,6 @@ describe('replay (AC-7.3, TRACE-2)', () => {
   it('003-model-invalid-output: replaying reproduces the clarification and the acknowledgement from the recorded facts alone (TRACE-2)', () => replay('003-model-invalid-output'), 20_000);
   it('004-counter-range: replaying reproduces the re-proposal, the moved hold and the scheduled result (TRACE-2)', () => replay('004-counter-range'), 20_000);
   it('004-question-answered: replaying the answer fact reproduces the model-written frame without calling the model (TRACE-2)', () => replay('004-question-answered'), 20_000);
+  it('005-preempt-counter: replaying reproduces the takeover, both re-proposals and the holds (TRACE-2)', () => replay('005-preempt-counter'), 20_000);
+  it('005-blackout-day: replaying reproduces the blackout, the moved holds and the frames (TRACE-2)', () => replay('005-blackout-day'), 20_000);
 });

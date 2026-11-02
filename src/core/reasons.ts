@@ -58,3 +58,14 @@ export const REVIEW_SENTENCES: Record<ReviewByReply, (party: 'tenant' | 'handyma
   no_mutual_slot: (party) => `The ${party} declined or countered three proposals.`,
   cross_reference: (party) => `The ${party} kept referring to a different work order.`,
 };
+
+/** Review after two timeouts (REQ-TO-2): the silent party, the slot and whether the other party had accepted. */
+export function noResponseSentence(args: { party: 'tenant' | 'handyman'; slot: { start: string }; otherAccepted: boolean }): string {
+  const other = args.party === 'tenant' ? 'handyman' : 'tenant';
+  return `The ${args.party} did not reply after a reminder; the proposed visit was ${args.slot.start}, ${args.otherAccepted ? 'accepted' : 'not yet accepted'} by the ${other}.`;
+}
+
+/** Immediate review for a Critical order whose tenant went silent (REQ-TO-3): what is known, nothing from free text. */
+export function criticalNoResponseSentence(args: { slot: { start: string }; handymanAccepted: boolean }): string {
+  return `The tenant of a critical order did not reply; the proposed visit is ${args.slot.start}, ${args.handymanAccepted ? 'accepted' : 'not yet accepted'} by the handyman.`;
+}

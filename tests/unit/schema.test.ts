@@ -64,3 +64,17 @@ describe('interpretation schema (AC-1.2, AC-1.6, AC-1.9)', () => {
     expect(PROMPT_VERSION).toMatch(/^\d+$/);
   });
 });
+
+describe('scope of a stated unavailability (005)', () => {
+  it('accepts this_order and all, leaves it absent (this order) when not given, rejects anything else', () => {
+    expect(validateInterpretation({ intent: 'decline', quote: 'x', scope: 'all' })).toMatchObject({ ok: true, value: { scope: 'all' } });
+    expect(validateInterpretation({ intent: 'decline', quote: 'x', scope: 'this_order' })).toMatchObject({ ok: true, value: { scope: 'this_order' } });
+    const absent = validateInterpretation({ intent: 'decline', quote: 'x' });
+    expect(absent.ok && absent.value.scope).toBeUndefined();
+    expect(validateInterpretation({ intent: 'decline', quote: 'x', scope: 'everyone' }).ok).toBe(false);
+  });
+
+  it('is prompt version 3', () => {
+    expect(PROMPT_VERSION).toBe('3');
+  });
+});

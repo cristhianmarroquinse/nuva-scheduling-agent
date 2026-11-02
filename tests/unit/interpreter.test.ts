@@ -39,7 +39,7 @@ describe('interpretReply (AC-1.4, AC-1.5, AC-1.7)', () => {
     expect(interpreter.prompts).toEqual([]);
     expect(outcome).toEqual({
       kind: 'interpretation',
-      fact: { type: 'interpretation', seq: 1, woid: 'WO-1', role: 'tenant', source: 'regex', prompt_version: '2', result: { intent: 'accept', times: [], exclusions: [], quote: 'Sí' } },
+      fact: { type: 'interpretation', seq: 1, woid: 'WO-1', role: 'tenant', source: 'regex', prompt_version: '3', result: { intent: 'accept', times: [], exclusions: [], quote: 'Sí' } },
       calls: [],
     });
   });
@@ -48,8 +48,8 @@ describe('interpretReply (AC-1.4, AC-1.5, AC-1.7)', () => {
     const outcome = await interpretReply(request, scripted([valid]));
     expect(outcome.kind).toBe('interpretation');
     if (outcome.kind !== 'interpretation') return;
-    expect(outcome.fact).toMatchObject({ type: 'interpretation', source: 'model', prompt_version: '2', result: valid });
-    expect(outcome.calls).toEqual([{ attempt: 1, model: 'scripted', prompt_version: '2', latency_ms: 5, tokens: { input: 10, output: 4 }, outcome: 'ok' }]);
+    expect(outcome.fact).toMatchObject({ type: 'interpretation', source: 'model', prompt_version: '3', result: valid });
+    expect(outcome.calls).toEqual([{ attempt: 1, model: 'scripted', prompt_version: '3', latency_ms: 5, tokens: { input: 10, output: 4 }, outcome: 'ok' }]);
   });
 
   it('re-asks once on invalid output, telling the model what failed, and accepts a valid second answer', async () => {

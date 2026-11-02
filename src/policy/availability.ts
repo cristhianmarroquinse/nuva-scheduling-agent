@@ -2,7 +2,8 @@
 // stated exclusions; the visit is fitted by code, never by the model. Pure.
 
 import { DateTime } from 'luxon';
-import { VISIT_HOURS, overlaps, type Hold, type Slot } from '../calendar/calendar.js';
+import { URGENCY_RANK, VISIT_HOURS, overlaps, type Hold, type Slot } from '../calendar/calendar.js';
+import type { Urgency } from '../orders/validate.js';
 import type { ExclusionValue, StatedTimeValue } from '../interpreter/schema.js';
 import { ZONE, toIso } from '../time/time.js';
 
@@ -90,14 +91,70 @@ function ceilHour(dt: DateTime): DateTime {
 }
 
 /** The first on-the-hour 2-hour slot inside any window, at or after `earliest`, overlapping no hold (SCHED-1); null if none. */
-export function slotInside(windows: readonly Window[], args: { earliest: DateTime; holds: readonly Hold[] }): Slot | null {
+export function slotInside(windows: readonly Window[], args: { earliest: DateTime; holds: readonly Hold[]; blocked?: readonly Slot[] }): Slot | null {
   for (const window of windows) {
     let cursor = ceilHour(later(window.start, args.earliest.setZone(ZONE)));
     while (cursor.plus({ hours: VISIT_HOURS }) <= window.end) {
       const slot: Slot = { start: toIso(cursor), end: toIso(cursor.plus({ hours: VISIT_HOURS })) };
-      if (!args.holds.some((hold) => overlaps(hold.slot, slot))) return slot;
+      if (!args.holds.some((hold) => overlaps(hold.slot, slot)) && !(args.blocked ?? []).some((blocked) => overlaps(blocked, slot))) return slot;
       cursor = cursor.plus({ hours: 1 });
     }
   }
   return null;
+}
+
+/**
+ * Preemption (REQ-SC-5, SCHED-4): the earliest tentative hold inside the windows that belongs to an order of strictly
+ * lower urgency, starts at or after `earliest`, and overlaps no other hold or blackout. Scheduled visits are never
+ * candidates (SCHED-3). Null when there is none.
+ */
+export function takeoverCandidate(
+  windows: readonly Window[],
+  args: { earliest: DateTime; holds: readonly Hold[]; blocked?: readonly Slot[]; urgency: Urgency; urgencyOf: (orderId: string) => Urgency | undefined },
+): Hold | null {
+  const rank = URGENCY_RANK[args.urgency];
+  const earliest = args.earliest.setZone(ZONE);
+  const candidates = args.holds
+    .filter((hold) => hold.kind === 'tentative')
+    .filter((hold) => {
+      const victimUrgency = args.urgencyOf(hold.orderId);
+      return victimUrgency !== undefined && URGENCY_RANK[victimUrgency] > rank;
+    })
+    .filter((hold) => {
+      const start = DateTime.fromISO(hold.slot.start, { zone: ZONE });
+      const end = DateTime.fromISO(hold.slot.end, { zone: ZONE });
+      if (start < earliest) return false;
+      if (!windows.some((window) => start >= window.start && end <= window.end)) return false;
+      if (args.holds.some((other) => other !== hold && overlaps(other.slot, hold.slot))) return false;
+      return !(args.blocked ?? []).some((blocked) => overlaps(blocked, hold.slot));
+    })
+    .sort((a, b) => a.slot.start.localeCompare(b.slot.start));
+  return candidates[0] ?? null;
+}
+
+function nextOccurrence(weekday: string, simNow: DateTime): string | null {
+  const target = WEEKDAY_INDEX[weekday];
+  if (target === undefined) return null;
+  const today = simNow.setZone(ZONE).startOf('day');
+  const delta = (target - today.weekday + 7) % 7;
+  return today.plus({ days: delta }).toISODate();
+}
+
+/**
+ * Handyman blackouts (REQ-SC-6): the stated days and hours as slots. A date alone is the whole day; a weekday without a
+ * date is its next occurrence from the reference time, that day included, and only that one (AC-3.7 of 005).
+ */
+export function blackoutWindows(exclusions: readonly ExclusionValue[], simNow: DateTime): Slot[] {
+  const windows: Slot[] = [];
+  for (const exclusion of exclusions) {
+    const date = exclusion.date ?? (exclusion.weekday !== undefined ? nextOccurrence(exclusion.weekday, simNow) : null);
+    if (date === null) continue;
+    const dayStart = DateTime.fromISO(date, { zone: ZONE });
+    if (!dayStart.isValid) continue;
+    const dayEnd = dayStart.plus({ days: 1 });
+    const start = exclusion.start !== undefined ? (dayAt(date, exclusion.start) ?? dayStart) : dayStart;
+    const end = exclusion.end !== undefined ? (dayAt(date, exclusion.end) ?? dayEnd) : dayEnd;
+    if (start < end) windows.push({ start: toIso(start), end: toIso(end) });
+  }
+  return windows;
 }

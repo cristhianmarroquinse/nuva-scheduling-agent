@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Hold } from '../../src/calendar/calendar.js';
-import { slotInside, windowsFrom } from '../../src/policy/availability.js';
+import { blackoutWindows, slotInside, takeoverCandidate, windowsFrom } from '../../src/policy/availability.js';
 import { parseLocalOrOffset, toIso } from '../../src/time/time.js';
 
 // Availability stated by a party (REQ-NG-4, REQ-SC-4): windows between 07:00 and 22:00 on any day; code fits the 2-hour visit.
@@ -76,5 +76,70 @@ describe('slot inside stated availability (AC-1.2, AC-1.5, SCHED-1, SCHED-2, SCH
 
   it('crosses 2026-10-25 with the right offset (TIME-1)', () => {
     expect(slotInside(windowsFrom([{ date: '2026-10-25' }], []), { earliest: at('2026-10-24T22:00'), holds: [] })).toEqual({ start: '2026-10-25T07:00:00+01:00', end: '2026-10-25T09:00:00+01:00' });
+  });
+});
+
+describe('blocked slots inside stated availability (AC-3.3 of 005)', () => {
+  it('slotInside skips blackout windows', () => {
+    const blocked = [{ start: iso('2026-11-05T07:00'), end: iso('2026-11-05T13:00') }];
+    expect(slotInside(windowsFrom([{ date: '2026-11-05' }], []), { earliest: at('2026-11-04T12:00'), holds: [], blocked })).toEqual({ start: '2026-11-05T13:00:00+01:00', end: '2026-11-05T15:00:00+01:00' });
+    expect(slotInside(windowsFrom([{ date: '2026-11-05', start: '10:00' }], []), { earliest: at('2026-11-04T12:00'), holds: [], blocked })).toBeNull();
+  });
+});
+
+describe('takeover candidate (AC-2.1, AC-2.2, SCHED-3, SCHED-4)', () => {
+  const urgencies: Record<string, 'Critical' | 'High' | 'Medium' | 'Low'> = { A: 'Low', B: 'Medium', C: 'Low', D: 'High' };
+  const urgencyOf = (id: string) => urgencies[id];
+  const holds = [hold('A', '2026-11-05T10:00', '2026-11-05T12:00'), hold('B', '2026-11-05T12:00', '2026-11-05T14:00'), hold('C', '2026-11-05T14:00', '2026-11-05T16:00', 'scheduled'), hold('D', '2026-11-05T16:00', '2026-11-05T18:00')];
+  const thursday = windowsFrom([{ date: '2026-11-05', start: '09:00', end: '18:00' }], []);
+  const earliest = at('2026-11-04T12:00');
+
+  it('returns the earliest tentative hold of strictly lower urgency inside the windows (SCHED-4)', () => {
+    expect(takeoverCandidate(thursday, { earliest, holds, urgency: 'Critical', urgencyOf })?.orderId).toBe('A');
+    expect(takeoverCandidate(thursday, { earliest, holds, urgency: 'Medium', urgencyOf })?.orderId).toBe('A');
+    expect(takeoverCandidate(thursday, { earliest, holds, urgency: 'High', urgencyOf })?.orderId).toBe('A');
+    expect(takeoverCandidate(windowsFrom([{ date: '2026-11-05', start: '12:00', end: '18:00' }], []), { earliest, holds, urgency: 'Critical', urgencyOf })?.orderId).toBe('B');
+  });
+
+  it('never takes equal or higher urgency, nor a scheduled visit (SCHED-3)', () => {
+    expect(takeoverCandidate(thursday, { earliest, holds, urgency: 'Low', urgencyOf })).toBeNull();
+    expect(takeoverCandidate(windowsFrom([{ date: '2026-11-05', start: '12:00', end: '14:00' }], []), { earliest, holds, urgency: 'Medium', urgencyOf })).toBeNull();
+    expect(takeoverCandidate(windowsFrom([{ date: '2026-11-05', start: '14:00', end: '16:00' }], []), { earliest, holds, urgency: 'Critical', urgencyOf })).toBeNull();
+    expect(takeoverCandidate(windowsFrom([{ date: '2026-11-05', start: '16:00', end: '18:00' }], []), { earliest, holds, urgency: 'High', urgencyOf })).toBeNull();
+  });
+
+  it('respects the earliest start, the window bounds and blackouts', () => {
+    expect(takeoverCandidate(thursday, { earliest: at('2026-11-05T11:00'), holds, urgency: 'Critical', urgencyOf })?.orderId).toBe('B');
+    expect(takeoverCandidate(thursday, { earliest: at('2026-11-05T17:00'), holds, urgency: 'Critical', urgencyOf })).toBeNull();
+    expect(takeoverCandidate(windowsFrom([{ date: '2026-11-05', start: '10:00', end: '11:00' }], []), { earliest, holds, urgency: 'Critical', urgencyOf })).toBeNull();
+    // A and B overlap the blackout; D is High, equal to the asker, so nothing is left for a High order.
+    expect(takeoverCandidate(thursday, { earliest, holds, urgency: 'High', urgencyOf, blocked: [{ start: iso('2026-11-05T11:00'), end: iso('2026-11-05T13:00') }] })).toBeNull();
+  });
+});
+
+describe('blackout windows (AC-3.1, AC-3.7 of 005)', () => {
+  const simNow = at('2026-11-04T10:00');
+  const spanOf = (slots: { start: string; end: string }[]) => slots.map((slot) => [slot.start, slot.end]);
+
+  it('a date alone is the whole day; a date with times is that range', () => {
+    expect(spanOf(blackoutWindows([{ date: '2026-11-05' }], simNow))).toEqual([['2026-11-05T00:00:00+01:00', '2026-11-06T00:00:00+01:00']]);
+    expect(spanOf(blackoutWindows([{ date: '2026-11-05', start: '14:00', end: '18:00' }], simNow))).toEqual([['2026-11-05T14:00:00+01:00', '2026-11-05T18:00:00+01:00']]);
+    expect(spanOf(blackoutWindows([{ date: '2026-11-05', start: '18:00' }], simNow))).toEqual([['2026-11-05T18:00:00+01:00', '2026-11-06T00:00:00+01:00']]);
+    expect(spanOf(blackoutWindows([{ date: '2026-11-05', end: '12:00' }], simNow))).toEqual([['2026-11-05T00:00:00+01:00', '2026-11-05T12:00:00+01:00']]);
+  });
+
+  it('a weekday without a date is the next occurrence from the reference time, the same day included, and only that one (AC-3.7)', () => {
+    expect(spanOf(blackoutWindows([{ weekday: 'thursday' }], simNow))).toEqual([['2026-11-05T00:00:00+01:00', '2026-11-06T00:00:00+01:00']]);
+    expect(spanOf(blackoutWindows([{ weekday: 'wednesday' }], simNow))).toEqual([['2026-11-04T00:00:00+01:00', '2026-11-05T00:00:00+01:00']]);
+    expect(spanOf(blackoutWindows([{ weekday: 'tuesday' }], simNow))).toEqual([['2026-11-10T00:00:00+01:00', '2026-11-11T00:00:00+01:00']]);
+    expect(spanOf(blackoutWindows([{ weekday: 'friday', start: '09:00', end: '13:00' }], simNow))).toEqual([['2026-11-06T09:00:00+01:00', '2026-11-06T13:00:00+01:00']]);
+  });
+
+  it('ignores exclusions with neither date nor weekday and unreadable dates', () => {
+    expect(blackoutWindows([{ start: '09:00', end: '13:00' }, { date: '2026-13-40' }], simNow)).toEqual([]);
+  });
+
+  it('carries the offsets across 2026-10-25 (TIME-1)', () => {
+    expect(spanOf(blackoutWindows([{ date: '2026-10-25' }], at('2026-10-24T20:00')))).toEqual([['2026-10-25T00:00:00+02:00', '2026-10-26T00:00:00+01:00']]);
   });
 });

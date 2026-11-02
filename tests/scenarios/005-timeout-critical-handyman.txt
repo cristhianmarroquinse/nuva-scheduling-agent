@@ -1,0 +1,25 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-C,Gas smell,Calle Mayor 1,There is a strong smell of gas in the kitchen.,2026-11-03T09:00:00,Critical
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+WO-C|handyman <NO RESPONSE>
+# stdout
+WOID:WO-C|ROLE:tenant
+Hello. We are writing about your report "Gas smell". We propose the handyman's visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you. If there is immediate danger, call 112.
+
+WOID:WO-C|ROLE:handyman
+Nueva visita propuesta para el aviso «Gas smell» (urgencia crítica) en Calle Mayor 1. Propuesta: miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-C|ROLE:handyman
+Te recuerdo que sigo pendiente de tu respuesta. La visita propuesta por «Gas smell» es el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
+
+WOID:WO-C|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"decision","work_order_id":"WO-C","detail":{"outcome":"remind","party":"handyman","timeouts":1}}
+{"event_type":"eof"}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acknowledgement, clarification, confirmationRequest, confirmationToHandyman, confirmationToTenant, initialProposalToHandyman, initialProposalToTenant, officeWillCheck, answerReply, crossReferenceClarification, reproposalToHandyman, reproposalToTenant } from '../../src/messages/templates.js';
+import { acknowledgement, clarification, confirmationRequest, confirmationToHandyman, confirmationToTenant, initialProposalToHandyman, initialProposalToTenant, officeWillCheck, answerReply, crossReferenceClarification, reminder, reproposalToHandyman, reproposalToTenant } from '../../src/messages/templates.js';
 
 // First message of every order (REQ-ST-2, REQ-ST-4, REQ-OUT-2, REQ-OUT-3): templates, no model.
 
@@ -138,9 +138,9 @@ describe('re-proposal messages (AC-1.6, AC-2.1, COM-1, COM-2, COM-3)', () => {
   });
 
   it('adds the "not available" note only when asked (AC-1.6)', () => {
-    expect(reproposalToTenant({ language: 'es', title, slot, unavailableNote: true })).toContain('Las horas que nos indica no están disponibles.');
-    expect(reproposalToTenant({ language: 'en', title, slot, unavailableNote: true })).toContain('The times you suggested are not available.');
-    expect(reproposalToHandyman({ title, address: 'x', slot, unavailableNote: true })).toContain('Las horas que indicas no están disponibles.');
+    expect(reproposalToTenant({ language: 'es', title, slot, note: 'unavailable' })).toContain('Las horas que nos indica no están disponibles.');
+    expect(reproposalToTenant({ language: 'en', title, slot, note: 'unavailable' })).toContain('The times you suggested are not available.');
+    expect(reproposalToHandyman({ title, address: 'x', slot, note: 'unavailable' })).toContain('Las horas que indicas no están disponibles.');
     expect(reproposalToTenant({ language: 'en', title, slot })).not.toContain('not available');
   });
 });
@@ -179,5 +179,27 @@ describe('cross-reference clarification (AC-6.1)', () => {
     expect(en).toContain('"Leaking tap"');
     expect(en).toContain('Thursday 5 November 2026, 10:00 to 12:00');
     expect(en).toMatch(/another work order|other work order/i);
+  });
+});
+
+describe('reminders and re-proposal notes (AC-1.3, AC-2.3, AC-3.2, COM-1, COM-2, COM-3)', () => {
+  it('reminds the party in their language, restating the slot and how to reply', () => {
+    const es = reminder({ language: 'es', to: 'tenant', title, slot });
+    expect(es).toMatch(/pendientes de su respuesta/);
+    expect(es).toContain('jueves 5 de noviembre de 2026, de 10:00 a 12:00 (hora de Madrid)');
+    expect(es).toContain('«Grifo que gotea»');
+    expect(reminder({ language: 'es', to: 'handyman', title, slot })).toMatch(/pendiente de tu respuesta/);
+    const en = reminder({ language: 'en', to: 'tenant', title: 'Leaking tap', slot });
+    expect(en).toMatch(/still waiting for your reply/);
+    expect(en).toContain('Thursday 5 November 2026, 10:00 to 12:00 (Madrid time)');
+  });
+
+  it('explains a takeover or a blackout in the re-proposal, to both parties', () => {
+    expect(reproposalToTenant({ language: 'es', title, slot, note: 'preempted' })).toContain('Hemos tenido que dar ese hueco a un aviso más urgente.');
+    expect(reproposalToTenant({ language: 'en', title, slot, note: 'preempted' })).toContain('That slot had to be given to a more urgent job.');
+    expect(reproposalToHandyman({ title, address: 'x', slot, note: 'preempted' })).toContain('Ese hueco se ha dado a un aviso más urgente.');
+    expect(reproposalToTenant({ language: 'es', title, slot, note: 'blackout' })).toContain('El técnico no está disponible en el hueco anterior.');
+    expect(reproposalToTenant({ language: 'en', title, slot, note: 'blackout' })).toContain('The handyman is not available at the previous slot.');
+    expect(reproposalToHandyman({ title, address: 'x', slot, note: 'blackout' })).toContain('Movemos la visita por tu indisponibilidad.');
   });
 });

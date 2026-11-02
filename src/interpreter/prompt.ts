@@ -36,6 +36,7 @@ export function buildPrompt(request: InterpretRequest): Prompt {
     '- exclusions: every day or time the reply rules out (weekday in English lower case, or date, or a start/end range).',
     '- question: the question asked, if any, otherwise null. cross_reference: the other order or visit mentioned, if any, otherwise null.',
     '- quote: the exact words (at most 200 characters) that justify the intent.',
+    '- scope: "all" only when the sender is the handyman and the unavailability he states applies to all his work ("mañana no puedo nada", "estoy enfermo", "el viernes libro"); otherwise "this_order". A tenant\'s reply is always "this_order".',
     'Polite idioms such as "no problem" or "sin problema" are not refusals. A reply that accepts but adds a condition keeps intent accept and lists the condition in exclusions or times.',
   ].join('\n');
 

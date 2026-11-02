@@ -1,6 +1,6 @@
 # 005 · Timeouts, preemption and handyman blackouts
 
-**Status:** planned
+**Status:** implemented
 **Product requirements:** REQ-TO-1, REQ-TO-2, REQ-TO-3, REQ-SC-5, REQ-SC-6, REQ-NG-9 (system-caused re-proposals do not count), REQ-OUT-2, REQ-OUT-3, REQ-TR-2
 **Invariants touched:** RUN-3, SCHED-3, SCHED-4, SCHED-1, SCHED-2, SCHED-5, ORD-1, ORD-2, COM-1, COM-2, COM-3, ACC-1, TRACE-2
 **Deferred:** the golden-set evaluation against the real model, the Dockerfile and the README with a committed trace → delivery features

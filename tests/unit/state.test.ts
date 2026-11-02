@@ -133,7 +133,6 @@ describe('msg_in (AC-4.1, AC-4.2, AC-4.3, AC-4.5)', () => {
   const lineOf = (raw: string, seq = 1): Fact => ({ type: 'msg_in', seq, raw });
   const classify = (raw: string): unknown => {
     const { outputs } = step(fold(loaded).state, lineOf(raw));
-    expect(outputs.filter((output) => output.kind === 'stdout')).toEqual([]);
     const [classified] = tracesOf(outputs, 'line_classified');
     return classified?.kind === 'trace' ? { work_order_id: classified.work_order_id, ...(classified.detail as object) } : undefined;
   };
@@ -143,11 +142,13 @@ describe('msg_in (AC-4.1, AC-4.2, AC-4.3, AC-4.5)', () => {
     expect(classify('WO-1|handyman Vale')).toMatchObject({ classification: 'message', role: 'handyman' });
   });
 
-  it('records <NO RESPONSE> as a timeout from that sender', () => {
+  it('records <NO RESPONSE> as a timeout from that sender; since 005 an awaited party gets a reminder', () => {
     expect(classify('WO-1|tenant <NO RESPONSE>')).toEqual({ work_order_id: 'WO-1', classification: 'timeout', role: 'tenant', seq: 1 });
+    expect(stdoutOf(step(fold(loaded).state, lineOf('WO-1|tenant <NO RESPONSE>')).outputs)).toContain('A reminder that we are still waiting for your reply.');
   });
 
   it('traces malformed, unknown-order and invalid-role lines with the reason and emits nothing', () => {
+    for (const raw of ['garbage', 'WO-9|tenant hello', 'WO-1|landlord hello', 'WO-1|tenant hello']) expect(stdoutOf(step(fold(loaded).state, lineOf(raw)).outputs), raw).toBe('');
     expect(classify('garbage')).toEqual({ work_order_id: null, classification: 'malformed', reason: 'no_separator', seq: 1 });
     expect(classify('WO-9|tenant hello')).toEqual({ work_order_id: null, classification: 'unknown_order', woid: 'WO-9', seq: 1 });
     expect(classify('WO-1|landlord hello')).toEqual({ work_order_id: 'WO-1', classification: 'invalid_role', role: 'landlord', seq: 1 });
@@ -605,8 +606,9 @@ describe('negotiation: declines, counters, re-proposals, limits and withdrawals 
       expect(holdOf(countered.state, 'WO-2')?.slot.start).toBe('2026-11-04T14:00:00+01:00');
     });
 
-    it("a counter onto another order's held hour does not take it (SCHED-1)", () => {
-      const { state, outputs } = step(fold(loaded).state, interp('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '14:00', end: '16:00' }] }));
+    it("a counter onto another order's held hour of equal urgency does not take it (SCHED-1; takeover of lower urgency is 005)", () => {
+      const twoMediums: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' }), row({ work_order_id: 'WO-2', work_order: 'Squeaky door', address: 'Calle Mayor 2', reported_at: '2026-11-02T10:00:00' })] }];
+      const { state, outputs } = step(fold(twoMediums).state, interp('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '14:00', end: '16:00' }] }));
       expect(decisionsOf(outputs)[0]).toMatchObject({ cause: 'no_fit' });
       expect(holdOf(state, 'WO-2')).toMatchObject({ orderId: 'WO-2', slot: { start: '2026-11-04T14:00:00+01:00' } });
       noOverlap(state);
@@ -809,5 +811,231 @@ describe('cross-references (AC-6.1, AC-6.2, AC-6.3)', () => {
     const { state, outputs } = step(fold([...loaded, interp('tenant', {}), interp('tenant', { intent: 'question', question: 'Parking?' })]).state, interp('tenant', {}));
     expect(outcomes(outputs)).toEqual(['clarify_cross_reference']);
     expect(state.orders.get('WO-1')?.status).toBe('open');
+  });
+});
+
+describe('timeouts (AC-1.1, AC-1.2, AC-1.3, AC-1.4, AC-1.5, AC-1.6, AC-1.7, AC-1.8, RUN-3, ORD-1, ORD-2)', () => {
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const loaded: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' })] }];
+  const critical: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-C', work_order: 'Gas smell', urgency: 'Critical', reported_at: '2026-11-03T09:00:00' })] }];
+  let seq = 300;
+  const timeout = (woid: string, role: 'tenant' | 'handyman'): Fact => ({ type: 'msg_in', seq: (seq += 1), raw: `${woid}|${role} <NO RESPONSE>` });
+  const accept = (woid: string, role: 'tenant' | 'handyman'): Fact => ({ type: 'interpretation', seq: (seq += 1), woid, role, source: 'regex', prompt_version: '3', result: { intent: 'accept', times: [], exclusions: [], quote: 'yes' } });
+  const decline = (woid: string, role: 'tenant' | 'handyman'): Fact => ({ type: 'interpretation', seq: (seq += 1), woid, role, source: 'regex', prompt_version: '3', result: { intent: 'decline', times: [], exclusions: [], quote: 'no' } });
+  const outcomes = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as { outcome: string }).outcome);
+
+  it('a timeout from an awaited party counts and gets a reminder restating the slot (AC-1.1, AC-1.2, AC-1.3)', () => {
+    const { state, outputs } = step(fold(loaded).state, timeout('WO-1', 'handyman'));
+    expect(outcomes(outputs)).toEqual(['remind']);
+    expect(stdoutOf(outputs)).toContain('WOID:WO-1|ROLE:handyman\nTe recuerdo que sigo pendiente de tu respuesta. La visita propuesta por «Leaking tap» es el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid).');
+    expect(state.orders.get('WO-1')).toMatchObject({ status: 'open', timeouts: { tenant: 0, handyman: 1 }, refusals: { tenant: 0, handyman: 0 } });
+  });
+
+  it('a timeout from a party that already accepted is traced as not counted and sends nothing (RUN-3)', () => {
+    const accepted = fold([...loaded, accept('WO-1', 'tenant')]).state;
+    const { state, outputs } = step(accepted, timeout('WO-1', 'tenant'));
+    expect(outcomes(outputs)).toEqual(['timeout_ignored']);
+    expect(stdoutOf(outputs)).toBe('');
+    expect(state.orders.get('WO-1')?.timeouts).toEqual({ tenant: 0, handyman: 0 });
+  });
+
+  it('a second timeout closes the order as no_response naming the party and the other side acceptance, releasing the hold (AC-1.4)', () => {
+    const once = fold([...loaded, accept('WO-1', 'tenant'), timeout('WO-1', 'handyman')]).state;
+    const { state, outputs } = step(once, timeout('WO-1', 'handyman'));
+    expect(outcomes(outputs)).toEqual(['review']);
+    expect(stdoutOf(outputs)).toBe('WOID:WO-1|RESULT:requires_review\nREASON:The handyman did not reply after a reminder; the proposed visit was 2026-11-04T12:00:00+01:00, accepted by the tenant.\n\n');
+    expect(state.orders.get('WO-1')).toMatchObject({ status: 'closed', result: { code: 'no_response' } });
+    expect(state.holds).toEqual([]);
+  });
+
+  it('a real reply resets the count (AC-1.5)', () => {
+    const { state, outputs } = step(fold([...loaded, timeout('WO-1', 'handyman'), decline('WO-1', 'handyman')]).state, timeout('WO-1', 'handyman'));
+    expect(outcomes(outputs)).toEqual(['remind']);
+    expect(state.orders.get('WO-1')?.timeouts).toEqual({ tenant: 0, handyman: 1 });
+  });
+
+  it('a silent tenant on a Critical order goes to review at once, stating the slot and the handyman state (AC-1.6)', () => {
+    const { state, outputs } = step(fold([...critical, accept('WO-C', 'handyman')]).state, timeout('WO-C', 'tenant'));
+    expect(outcomes(outputs)).toEqual(['review']);
+    expect(stdoutOf(outputs)).toBe('WOID:WO-C|RESULT:requires_review\nREASON:The tenant of a critical order did not reply; the proposed visit is 2026-11-04T12:00:00+01:00, accepted by the handyman.\n\n');
+    expect(state.orders.get('WO-C')?.status).toBe('closed');
+    const alone = step(fold(critical).state, timeout('WO-C', 'tenant'));
+    expect(stdoutOf(alone.outputs)).toContain('not yet accepted by the handyman.');
+  });
+
+  it('a silent handyman on a Critical order gets a reminder (AC-1.7)', () => {
+    const { outputs } = step(fold(critical).state, timeout('WO-C', 'handyman'));
+    expect(outcomes(outputs)).toEqual(['remind']);
+  });
+
+  it('both parties silent: two reminders, then one result only (ORD-1)', () => {
+    const { state, outputs } = fold([...loaded, timeout('WO-1', 'tenant'), timeout('WO-1', 'handyman'), timeout('WO-1', 'tenant'), timeout('WO-1', 'handyman')]);
+    expect(tracesOf(outputs, 'result')).toHaveLength(1);
+    expect(stdoutOf(outputs).match(/\|RESULT:/g)).toHaveLength(1);
+    expect(state.orders.get('WO-1')?.status).toBe('closed');
+  });
+
+  it('a timeout for a closed order is classified closed_order and changes nothing (AC-1.8, ORD-2)', () => {
+    const closed = fold([...loaded, accept('WO-1', 'tenant'), accept('WO-1', 'handyman')]).state;
+    const { state, outputs } = step(closed, timeout('WO-1', 'tenant'));
+    expect(state).toEqual(closed);
+    expect(stdoutOf(outputs)).toBe('');
+    expect(tracesOf(outputs, 'line_classified').map((output) => output.kind === 'trace' && (output.detail as { classification: string }).classification)).toEqual(['closed_order']);
+  });
+});
+
+describe('preemption (AC-2.1, AC-2.2, AC-2.3, AC-2.4, AC-2.5, AC-2.6, SCHED-3, SCHED-4, ACC-1, SCHED-1)', () => {
+  // Priority at startup: WO-C (Critical) 12:00–14:00, WO-M (Medium) 14:00–16:00, WO-L (Low) 16:00–18:00.
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const rows = [
+    row({ work_order_id: 'WO-L', work_order: 'Squeaky door', urgency: 'Low', reported_at: '2026-11-02T08:00:00' }),
+    row({ work_order_id: 'WO-M', work_order: 'Leaking tap', urgency: 'Medium', reported_at: '2026-11-02T09:00:00' }),
+    row({ work_order_id: 'WO-C', work_order: 'Gas smell', urgency: 'Critical', reported_at: '2026-11-03T09:00:00' }),
+  ];
+  const loaded: Fact[] = [startedNov, { type: 'csv_loaded', rows }];
+  let seq = 400;
+  const counter = (woid: string, start: string, end: string, role: 'tenant' | 'handyman' = 'tenant'): Fact => ({
+    type: 'interpretation', seq: (seq += 1), woid, role, source: 'fake', prompt_version: '3',
+    result: { intent: 'counter', times: [{ date: '2026-11-04', start, end }], exclusions: [], quote: 'later' },
+  });
+  const accept = (woid: string, role: 'tenant' | 'handyman'): Fact => ({ type: 'interpretation', seq: (seq += 1), woid, role, source: 'regex', prompt_version: '3', result: { intent: 'accept', times: [], exclusions: [], quote: 'yes' } });
+  const decisionsOf = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as Record<string, unknown>));
+  const holdOf = (state: import('../../src/core/state.js').State, id: string) => state.holds.find((hold) => hold.orderId === id);
+
+  it('a Critical counter onto a Low hold takes it over; the Low order is re-proposed with the note and no penalty (AC-2.1, AC-2.3, AC-2.4, AC-2.5, SCHED-4)', () => {
+    const { state, outputs } = step(fold([...loaded, accept('WO-L', 'tenant')]).state, counter('WO-C', '16:00', '18:00'));
+    const decisions = decisionsOf(outputs);
+    expect(decisions.map((d) => d && [d['outcome'], d['cause'] ?? d['from']])).toEqual([
+      ['takeover', 'WO-L'],
+      ['repropose', 'counter'],
+      ['repropose', 'preempted'],
+    ]);
+    expect(decisions[0]).toMatchObject({ outcome: 'takeover', from: 'WO-L', urgency: 'Critical', victim_urgency: 'Low', slot: { start: '2026-11-04T16:00:00+01:00' } });
+    expect(holdOf(state, 'WO-C')).toMatchObject({ version: 2, slot: { start: '2026-11-04T16:00:00+01:00' } });
+    expect(holdOf(state, 'WO-L')).toMatchObject({ version: 2, kind: 'tentative' });
+    expect(holdOf(state, 'WO-L')?.slot.start).not.toBe('2026-11-04T16:00:00+01:00');
+    expect(state.orders.get('WO-L')).toMatchObject({ refusals: { tenant: 0, handyman: 0 }, accepted: {}, proposal: { version: 2 } });
+    expect(tracesOf(outputs, 'hold_released').map((output) => output.kind === 'trace' && [output.work_order_id, (output.detail as { reason: string }).reason])).toEqual([
+      ['WO-L', 'preempted'],
+      ['WO-C', 'reproposed'],
+    ]);
+    const frames = stdoutOf(outputs).split('\n\n').filter(Boolean);
+    expect(frames.filter((frame) => frame.startsWith('WOID:WO-L|')).map((frame) => frame.split('\n')[0])).toEqual(['WOID:WO-L|ROLE:tenant', 'WOID:WO-L|ROLE:handyman']);
+    expect(frames.find((frame) => frame.startsWith('WOID:WO-L|ROLE:tenant'))).toContain('That slot had to be given to a more urgent job.');
+    expect(frames.find((frame) => frame.startsWith('WOID:WO-L|ROLE:handyman'))).toContain('Ese hueco se ha dado a un aviso más urgente.');
+    for (const a of state.holds) for (const b of state.holds) if (a !== b) expect(a.slot.start < b.slot.end && b.slot.start < a.slot.end).toBe(false);
+  });
+
+  it('equal urgency never takes over: the no-fit rule applies (AC-2.2)', () => {
+    const twoMediums: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-A', reported_at: '2026-11-02T09:00:00' }), row({ work_order_id: 'WO-B', reported_at: '2026-11-02T10:00:00' })] }];
+    const { state, outputs } = step(fold(twoMediums).state, counter('WO-B', '12:00', '14:00'));
+    expect(decisionsOf(outputs).map((d) => d && d['outcome'])).toEqual(['repropose']);
+    expect(decisionsOf(outputs)[0]).toMatchObject({ cause: 'no_fit' });
+    expect(holdOf(state, 'WO-A')?.slot.start).toBe('2026-11-04T12:00:00+01:00');
+  });
+
+  it('a scheduled visit is never taken over, whatever the urgency (AC-2.2, AC-2.6, SCHED-3)', () => {
+    const scheduledLow = fold([...loaded, accept('WO-L', 'tenant'), accept('WO-L', 'handyman')]).state;
+    expect(holdOf(scheduledLow, 'WO-L')?.kind).toBe('scheduled');
+    const { state, outputs } = step(scheduledLow, counter('WO-C', '16:00', '18:00'));
+    expect(decisionsOf(outputs).map((d) => d && d['outcome'])).toEqual(['repropose']);
+    expect(decisionsOf(outputs)[0]).toMatchObject({ cause: 'no_fit' });
+    expect(holdOf(state, 'WO-L')).toEqual(holdOf(scheduledLow, 'WO-L'));
+    expect(state.orders.get('WO-L')?.status).toBe('closed');
+  });
+
+  it("a preempted order's re-proposal never takes over in turn (AC-2.5)", () => {
+    const { state, outputs } = step(fold(loaded).state, counter('WO-C', '14:00', '16:00'));
+    expect(decisionsOf(outputs)[0]).toMatchObject({ outcome: 'takeover', from: 'WO-M', victim_urgency: 'Medium' });
+    // 15:00 and 16:00 overlap the new WO-C hold or WO-L's; 17:00 would end past 19:00 after overlapping WO-L: Thursday morning it is.
+    expect(holdOf(state, 'WO-M')?.slot.start).toBe('2026-11-05T09:00:00+01:00');
+    expect(holdOf(state, 'WO-L')).toMatchObject({ version: 1, slot: { start: '2026-11-04T16:00:00+01:00' } });
+    expect(tracesOf(outputs, 'decision').filter((output) => output.kind === 'trace' && (output.detail as { outcome: string }).outcome === 'takeover')).toHaveLength(1);
+  });
+
+  it('a hostile sequence against a scheduled order leaves its hold untouched (SCHED-3)', () => {
+    const scheduledLow = fold([...loaded, accept('WO-L', 'tenant'), accept('WO-L', 'handyman')]).state;
+    const before = holdOf(scheduledLow, 'WO-L');
+    const after = fold([
+      ...loaded, accept('WO-L', 'tenant'), accept('WO-L', 'handyman'),
+      counter('WO-C', '16:00', '18:00'),
+      counter('WO-M', '16:00', '18:00', 'handyman'),
+      { type: 'msg_in', seq: (seq += 1), raw: 'WO-C|tenant <NO RESPONSE>' },
+      { type: 'eof' },
+    ]).state;
+    expect(holdOf(after, 'WO-L')).toEqual(before);
+    expect(after.orders.get('WO-L')).toMatchObject({ status: 'closed', result: { kind: 'scheduled' } });
+  });
+});
+
+describe('handyman blackouts (AC-3.1, AC-3.2, AC-3.3, AC-3.4, AC-3.5, AC-3.6, SCHED-3)', () => {
+  // WO-1 (Medium) v1 Wed 12:00–14:00; WO-2 (Low) v1 Wed 14:00–16:00; sim_now Wed 4 Nov 10:00.
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const loaded: Fact[] = [
+    startedNov,
+    { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' }), row({ work_order_id: 'WO-2', work_order: 'Squeaky door', address: 'Calle Mayor 2', urgency: 'Low', reported_at: '2026-11-02T10:00:00' })] },
+  ];
+  type Result = import('../../src/interpreter/schema.js').Interpretation;
+  let seq = 500;
+  const interp = (woid: string, role: 'tenant' | 'handyman', result: Partial<Result>): Fact => ({
+    type: 'interpretation', seq: (seq += 1), woid, role, source: 'fake', prompt_version: '3',
+    result: { intent: 'decline', times: [], exclusions: [], quote: 'no', ...result },
+  });
+  const accept = (woid: string, role: 'tenant' | 'handyman'): Fact => interp(woid, role, { intent: 'accept', quote: 'yes' });
+  const wednesdayOff = (woid: string, extra: Partial<Result> = {}): Fact => interp(woid, 'handyman', { intent: 'decline', exclusions: [{ date: '2026-11-04' }], scope: 'all', quote: 'mañana no puedo nada', ...extra });
+  const decisionsOf = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as Record<string, unknown>));
+  const holdOf = (state: import('../../src/core/state.js').State, id: string) => state.holds.find((hold) => hold.orderId === id);
+
+  it('records the blackout, moves every other tentative hold outside it without penalty, then handles the current order by its own intent (AC-3.1, AC-3.2, AC-3.5)', () => {
+    const { state, outputs } = step(fold(loaded).state, wednesdayOff('WO-1'));
+    expect(state.blackouts).toEqual([{ start: '2026-11-04T00:00:00+01:00', end: '2026-11-05T00:00:00+01:00' }]);
+    expect(tracesOf(outputs, 'blackout_recorded')).toHaveLength(1);
+    expect(tracesOf(outputs, 'hold_released').map((output) => output.kind === 'trace' && [output.work_order_id, (output.detail as { reason: string }).reason])).toEqual([
+      ['WO-2', 'blackout'],
+      ['WO-1', 'reproposed'],
+    ]);
+    expect(decisionsOf(outputs).map((d) => d && [d['outcome'], d['cause']])).toEqual([
+      ['repropose', 'blackout'],
+      ['repropose', 'decline'],
+    ]);
+    expect(holdOf(state, 'WO-2')?.slot.start).toBe('2026-11-05T09:00:00+01:00');
+    expect(holdOf(state, 'WO-1')?.slot.start).toBe('2026-11-05T11:00:00+01:00');
+    expect(state.orders.get('WO-2')).toMatchObject({ refusals: { tenant: 0, handyman: 0 }, proposal: { version: 2 } });
+    expect(state.orders.get('WO-1')).toMatchObject({ refusals: { tenant: 0, handyman: 1 }, proposal: { version: 2 } });
+    const frames = stdoutOf(outputs).split('\n\n').filter(Boolean);
+    expect(frames.find((frame) => frame.startsWith('WOID:WO-2|ROLE:tenant'))).toContain('The handyman is not available at the previous slot.');
+    expect(frames.find((frame) => frame.startsWith('WOID:WO-2|ROLE:handyman'))).toContain('Movemos la visita por tu indisponibilidad.');
+    expect(frames.find((frame) => frame.startsWith('WOID:WO-1|ROLE:tenant'))).not.toContain('not available at the previous slot');
+  });
+
+  it('later proposals avoid the blackout for every order (AC-3.3)', () => {
+    const blacked = fold([...loaded, wednesdayOff('WO-1')]).state;
+    const { outputs } = step(blacked, interp('WO-2', 'tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '16:00' }], quote: 'today at 4' }));
+    expect(decisionsOf(outputs)[0]).toMatchObject({ outcome: 'repropose', cause: 'no_fit' });
+    expect((decisionsOf(outputs)[0] as { start: string })['start']).not.toMatch(/^2026-11-04/);
+  });
+
+  it('keeps a scheduled visit that overlaps the blackout and traces the conflict (AC-3.4, SCHED-3)', () => {
+    const scheduled = fold([...loaded, accept('WO-2', 'tenant'), accept('WO-2', 'handyman')]).state;
+    const before = holdOf(scheduled, 'WO-2');
+    const { state, outputs } = step(scheduled, wednesdayOff('WO-1'));
+    expect(holdOf(state, 'WO-2')).toEqual(before);
+    expect(tracesOf(outputs, 'blackout_conflict').map((output) => output.kind === 'trace' && output.work_order_id)).toEqual(['WO-2']);
+    expect(tracesOf(outputs, 'hold_released').map((output) => output.kind === 'trace' && output.work_order_id)).toEqual(['WO-1']);
+  });
+
+  it('a statement scoped to this order, or from a tenant, creates no blackout (AC-3.6)', () => {
+    const own = step(fold(loaded).state, wednesdayOff('WO-1', { scope: 'this_order' }));
+    expect(own.state.blackouts).toEqual([]);
+    expect(holdOf(own.state, 'WO-2')?.slot.start).toBe('2026-11-04T14:00:00+01:00');
+    const tenant = step(fold(loaded).state, interp('WO-1', 'tenant', { exclusions: [{ date: '2026-11-04' }], scope: 'all' }));
+    expect(tenant.state.blackouts).toEqual([]);
+  });
+
+  it('a weekday blackout covers the next occurrence only (AC-3.7)', () => {
+    const { state } = step(fold(loaded).state, interp('WO-1', 'handyman', { intent: 'counter', times: [{ date: '2026-11-06', start: '09:00' }], exclusions: [{ weekday: 'thursday' }], scope: 'all', quote: 'el jueves no, el viernes a las 9' }));
+    expect(state.blackouts).toEqual([{ start: '2026-11-05T00:00:00+01:00', end: '2026-11-06T00:00:00+01:00' }]);
+    expect(holdOf(state, 'WO-1')?.slot.start).toBe('2026-11-06T09:00:00+01:00');
+    expect(holdOf(state, 'WO-2')?.slot.start).toBe('2026-11-04T14:00:00+01:00');
   });
 });

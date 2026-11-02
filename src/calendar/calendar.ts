@@ -27,7 +27,7 @@ const WINDOWS: Record<Urgency, { open: number; close: number; weekdaysOnly: bool
   Low: { open: 9, close: 19, weekdaysOnly: true },
 };
 
-const URGENCY_RANK: Record<Urgency, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+export const URGENCY_RANK: Record<Urgency, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
 
 /** Safety net against an unbounded search; a full year of holds is not a realistic CSV. */
 const MAX_SEARCH_DAYS = 366;
@@ -68,9 +68,10 @@ export function overlaps(a: Slot, b: Slot): boolean {
 
 /**
  * The first on-the-hour 2-hour slot at or after `from` that fits the urgency's window and overlaps no hold (SCHED-1).
- * With `after`, the search also starts strictly after that slot's start (the next slot after a declined one).
+ * With `after`, the search also starts strictly after that slot's start (the next slot after a declined one). `blocked`
+ * slots (handyman blackouts) are avoided like holds.
  */
-export function nextSlot(args: { from: DateTime; urgency: Urgency; holds: readonly Hold[]; after?: Slot }): Slot {
+export function nextSlot(args: { from: DateTime; urgency: Urgency; holds: readonly Hold[]; after?: Slot; blocked?: readonly Slot[] }): Slot {
   let cursor = ceilHour(args.from.setZone(ZONE));
   if (args.after !== undefined) {
     const afterStart = parseLocalOrOffset(args.after.start);
@@ -80,7 +81,7 @@ export function nextSlot(args: { from: DateTime; urgency: Urgency; holds: readon
   while (cursor < limit) {
     if (fitsWindow(cursor, args.urgency)) {
       const slot: Slot = { start: toIso(cursor), end: toIso(cursor.plus({ hours: VISIT_HOURS })) };
-      if (!args.holds.some((hold) => overlaps(hold.slot, slot))) return slot;
+      if (!args.holds.some((hold) => overlaps(hold.slot, slot)) && !(args.blocked ?? []).some((blocked) => overlaps(blocked, slot))) return slot;
     }
     cursor = cursor.plus({ hours: 1 });
   }

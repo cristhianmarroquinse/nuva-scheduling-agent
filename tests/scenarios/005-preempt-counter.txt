@@ -1,0 +1,56 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-L,Squeaky door,Calle Mayor 1,The bedroom door squeaks.,2026-11-02T08:00:00,Low
+WO-C,Gas smell,Calle Mayor 2,There is a strong smell of gas in the kitchen.,2026-11-03T09:00:00,Critical
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+WO-L|tenant Yes
+WO-C|tenant {"intent":"counter","times":[{"date":"2026-11-04","start":"14:00","end":"16:00"}],"exclusions":[],"quote":"this afternoon between 2 and 4"}
+# stdout
+WOID:WO-C|ROLE:tenant
+Hello. We are writing about your report "Gas smell". We propose the handyman's visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you. If there is immediate danger, call 112.
+
+WOID:WO-C|ROLE:handyman
+Nueva visita propuesta para el aviso «Gas smell» (urgencia crítica) en Calle Mayor 2. Propuesta: miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-L|ROLE:tenant
+Hello. We are writing about your report "Squeaky door". We propose the handyman's visit on Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-L|ROLE:handyman
+Nueva visita propuesta para el aviso «Squeaky door» (urgencia baja) en Calle Mayor 1. Propuesta: miércoles 4 de noviembre de 2026, de 14:00 a 16:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-L|ROLE:tenant
+Thank you, noted. We are waiting for the handyman to confirm and will let you know as soon as we have it.
+
+WOID:WO-C|ROLE:tenant
+The previous proposal is cancelled. New proposal for "Gas smell": Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-C|ROLE:handyman
+La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Gas smell» en Calle Mayor 2: miércoles 4 de noviembre de 2026, de 14:00 a 16:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-L|ROLE:tenant
+The previous proposal is cancelled. That slot had to be given to a more urgent job. New proposal for "Squeaky door": Wednesday 4 November 2026, 16:00 to 18:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-L|ROLE:handyman
+La propuesta anterior queda cancelada. Ese hueco se ha dado a un aviso más urgente. Nueva propuesta para el aviso «Squeaky door» en Calle Mayor 1: miércoles 4 de noviembre de 2026, de 16:00 a 18:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-L|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-C|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"hold_taken","work_order_id":"WO-C","detail":{"version":1,"start":"2026-11-04T12:00:00+01:00"}}
+{"event_type":"hold_taken","work_order_id":"WO-L","detail":{"version":1,"start":"2026-11-04T14:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"WO-L","detail":{"outcome":"accepted","party":"tenant"}}
+{"event_type":"decision","work_order_id":"WO-C","detail":{"outcome":"takeover","from":"WO-L","urgency":"Critical","victim_urgency":"Low","slot":{"start":"2026-11-04T14:00:00+01:00"}}}
+{"event_type":"hold_released","work_order_id":"WO-L","detail":{"version":1,"reason":"preempted"}}
+{"event_type":"decision","work_order_id":"WO-C","detail":{"outcome":"repropose","cause":"counter","version":2,"start":"2026-11-04T14:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"WO-L","detail":{"outcome":"repropose","cause":"preempted","party":null,"version":2}}
+{"event_type":"msg_out","work_order_id":"WO-L","detail":{"to":"tenant","version":2}}
+{"event_type":"msg_out","work_order_id":"WO-L","detail":{"to":"handyman","version":2}}
+{"event_type":"eof"}

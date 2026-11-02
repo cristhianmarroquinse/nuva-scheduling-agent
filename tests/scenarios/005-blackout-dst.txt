@@ -1,0 +1,47 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-C,Gas smell,Calle Mayor 1,There is a strong smell of gas in the kitchen.,2026-10-24T15:00:00,Critical
+WO-H,No hot water,Calle Mayor 2,The boiler gives no hot water.,2026-10-24T16:00:00,High
+# env
+AGENT_NOW=2026-10-24T20:00
+# stdin
+WO-H|handyman {"intent":"decline","times":[],"exclusions":[{"date":"2026-10-25"}],"quote":"el domingo no trabajo","scope":"all"}
+# stdout
+WOID:WO-C|ROLE:tenant
+Hello. We are writing about your report "Gas smell". We propose the handyman's visit on Sunday 25 October 2026, 08:00 to 10:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you. If there is immediate danger, call 112.
+
+WOID:WO-C|ROLE:handyman
+Nueva visita propuesta para el aviso «Gas smell» (urgencia crítica) en Calle Mayor 1. Propuesta: domingo 25 de octubre de 2026, de 08:00 a 10:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-H|ROLE:tenant
+Hello. We are writing about your report "No hot water". We propose the handyman's visit on Monday 26 October 2026, 09:00 to 11:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-H|ROLE:handyman
+Nueva visita propuesta para el aviso «No hot water» (urgencia alta) en Calle Mayor 2. Propuesta: lunes 26 de octubre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-C|ROLE:tenant
+The previous proposal is cancelled. The handyman is not available at the previous slot. New proposal for "Gas smell": Monday 26 October 2026, 11:00 to 13:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-C|ROLE:handyman
+La propuesta anterior queda cancelada. Movemos la visita por tu indisponibilidad. Nueva propuesta para el aviso «Gas smell» en Calle Mayor 1: lunes 26 de octubre de 2026, de 11:00 a 13:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-H|ROLE:tenant
+The previous proposal is cancelled. New proposal for "No hot water": Monday 26 October 2026, 13:00 to 15:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-H|ROLE:handyman
+La propuesta anterior queda cancelada. Nueva propuesta para el aviso «No hot water» en Calle Mayor 2: lunes 26 de octubre de 2026, de 13:00 a 15:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-C|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-H|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"hold_taken","work_order_id":"WO-C","detail":{"version":1,"start":"2026-10-25T08:00:00+01:00"}}
+{"event_type":"blackout_recorded","work_order_id":"WO-H","detail":{"windows":[{"start":"2026-10-25T00:00:00+02:00","end":"2026-10-26T00:00:00+01:00"}]}}
+{"event_type":"hold_released","work_order_id":"WO-C","detail":{"version":1,"reason":"blackout"}}
+{"event_type":"decision","work_order_id":"WO-C","detail":{"outcome":"repropose","cause":"blackout","version":2,"start":"2026-10-26T11:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"WO-H","detail":{"outcome":"repropose","cause":"decline","version":2,"start":"2026-10-26T13:00:00+01:00"}}

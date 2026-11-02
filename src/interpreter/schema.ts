@@ -2,11 +2,15 @@
 
 import { z } from 'zod';
 
-export const PROMPT_VERSION = '2';
+export const PROMPT_VERSION = '3';
 export const ANSWER_PROMPT_VERSION = '1';
 
 export const INTENTS = ['accept', 'decline', 'counter', 'question', 'withdraw', 'cross_reference', 'contradictory', 'unclear'] as const;
 export type Intent = (typeof INTENTS)[number];
+
+/** Whether a stated unavailability applies to this order only or to all the handyman's work (REQ-SC-6). */
+const SCOPES = ['this_order', 'all'] as const;
+export type Scope = (typeof SCOPES)[number];
 
 const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 
@@ -28,6 +32,7 @@ export const ModelOutputSchema = z.object({
   question: z.string().max(300).nullable(),
   cross_reference: z.string().max(100).nullable(),
   quote: z.string().max(200),
+  scope: z.enum(SCOPES),
 });
 
 /** The validated interpretation that enters the fold. Unknown keys are stripped. */
@@ -38,6 +43,8 @@ export const InterpretationSchema = z.object({
   question: z.string().max(300).optional(),
   cross_reference: z.string().max(100).optional(),
   quote: z.string().max(200),
+  /** Absent means this order only. */
+  scope: z.enum(SCOPES).optional(),
 });
 
 export type Interpretation = z.infer<typeof InterpretationSchema>;

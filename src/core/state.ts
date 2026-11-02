@@ -2,10 +2,10 @@
 
 import type { Fact } from './facts.js';
 import { parseLine } from './protocol.js';
-import { NO_RESPONSE_SENTENCE, REVIEW_SENTENCES, invalidRowSentence, type ReviewByReply } from './reasons.js';
-import { earliestStart, nextSlot, priorityOrder, type Hold, type Slot } from '../calendar/calendar.js';
+import { NO_RESPONSE_SENTENCE, REVIEW_SENTENCES, criticalNoResponseSentence, invalidRowSentence, noResponseSentence, type ReasonCode } from './reasons.js';
+import { earliestStart, nextSlot, overlaps, priorityOrder, type Hold, type Slot } from '../calendar/calendar.js';
 import type { Interpretation } from '../interpreter/schema.js';
-import { slotInside, windowsFrom } from '../policy/availability.js';
+import { blackoutWindows, slotInside, takeoverCandidate, windowsFrom } from '../policy/availability.js';
 import { formatFrame, formatResult, type Result, type Role } from '../io/frames.js';
 import {
   acknowledgement,
@@ -18,8 +18,10 @@ import {
   answerReply,
   crossReferenceClarification,
   officeWillCheck,
+  reminder,
   reproposalToHandyman,
   reproposalToTenant,
+  type ReproposalNote,
 } from '../messages/templates.js';
 import { evaluateAcceptance } from '../policy/acceptance.js';
 import { inferLanguage } from '../orders/language.js';
@@ -58,6 +60,8 @@ export interface OrderState {
   unanswered: Record<Role, number>;
   /** Each party's last message body: the asker's goes to the answer prompt as data, the other's must not be echoed (LLM-2). */
   lastBody: Partial<Record<Role, string>>;
+  /** Consecutive `<NO RESPONSE>` from each party while awaited (REQ-TO-1); reset by any real reply. */
+  timeouts: Record<Role, number>;
   result?: Result;
 }
 
@@ -76,6 +80,7 @@ function newOrderState(id: string): OrderState {
     refusals: { tenant: 0, handyman: 0 },
     unanswered: { tenant: 0, handyman: 0 },
     lastBody: {},
+    timeouts: { tenant: 0, handyman: 0 },
   };
 }
 
@@ -86,6 +91,8 @@ export interface State {
   orders: Map<string, OrderState>;
   /** Live tentative holds (SCHED-1: never overlapping). */
   holds: Hold[];
+  /** Handyman unavailability that applies to every order (REQ-SC-6); never proposed into. */
+  blackouts: Slot[];
   ended: boolean;
 }
 
@@ -103,7 +110,7 @@ export interface StepResult {
 }
 
 export function initialState(): State {
-  return { simNow: null, loaded: false, orders: new Map(), holds: [], ended: false };
+  return { simNow: null, loaded: false, orders: new Map(), holds: [], blackouts: [], ended: false };
 }
 
 function trace(work_order_id: string | null, event_type: string, detail: unknown): Output {
@@ -194,7 +201,7 @@ function receiveLine(state: State, fact: Fact & { type: 'msg_in' }): StepResult 
   if (order === undefined) return classified(null, { classification: 'unknown_order', woid: parsed.woid });
   if (!ROLES.includes(parsed.role as Role)) return classified(order.id, { classification: 'invalid_role', role: parsed.role });
   if (order.status === 'closed') return classified(order.id, { classification: 'closed_order', role: parsed.role });
-  if (parsed.timeout) return classified(order.id, { classification: 'timeout', role: parsed.role });
+  if (parsed.timeout) return applyTimeout(state, order, parsed.role as Role, classified(order.id, { classification: 'timeout', role: parsed.role }).outputs);
   const role = parsed.role as Role;
   const remembered = new Map(state.orders).set(order.id, { ...order, lastBody: { ...order.lastBody, [role]: parsed.body } });
   const message: StepResult = { state: { ...state, orders: remembered }, outputs: classified(order.id, { classification: 'message', role, body: parsed.body }).outputs };
@@ -237,9 +244,32 @@ function applyInterpretation(state: State, fact: Fact & { type: 'interpretation'
   const decision = (outcome: string, extra: Record<string, unknown> = {}): void => {
     outputs.push(trace(order.id, 'decision', { outcome, party, intent: result.intent, version: proposal.version, ...extra }));
   };
-  const current: OrderState = { ...order, llmFailures: 0 };
+  const current: OrderState = { ...order, llmFailures: 0, timeouts: { ...order.timeouts, [party]: 0 } };
   if (!PROBLEM_INTENTS.has(result.intent)) {
     current.unclearStreak = { ...current.unclearStreak, [party]: NO_STREAK };
+  }
+
+  // Unavailability that applies to all the handyman's work (REQ-SC-6): other orders move first, this one follows its intent.
+  if (party === 'handyman' && result.scope === 'all' && result.exclusions.length > 0 && state.simNow !== null) {
+    const simNow = parseLocalOrOffset(state.simNow);
+    const windows = simNow === null ? [] : blackoutWindows(result.exclusions, simNow);
+    if (windows.length > 0) {
+      state = { ...state, blackouts: [...state.blackouts, ...windows] };
+      outputs.push(trace(order.id, 'blackout_recorded', { windows, exclusions: result.exclusions }));
+      const env: StepEnv = { state, orders, holds, outputs };
+      for (const other of [...orders.values()]) {
+        if (other.id === order.id || other.status !== 'open' || other.proposal === undefined) continue;
+        const hold = env.holds.find((candidate) => candidate.orderId === other.id && candidate.kind === 'tentative');
+        if (hold === undefined || !windows.some((window) => overlaps(window, hold.slot))) continue;
+        outputs.push(trace(other.id, 'hold_released', { version: hold.version, reason: 'blackout' }));
+        env.holds = env.holds.filter((candidate) => candidate !== hold);
+        reproposeOrder(env, { ...other }, { cause: 'blackout', availability: null, allowTakeover: false });
+      }
+      for (const visit of env.holds.filter((candidate) => candidate.kind === 'scheduled' && windows.some((window) => overlaps(window, candidate.slot)))) {
+        outputs.push(trace(visit.orderId, 'blackout_conflict', { version: visit.version, slot: visit.slot }));
+      }
+      holds = env.holds;
+    }
   }
 
   const ctx: ReplyContext = { state, orders, holds, outputs, current, party, language, decision, send };
@@ -354,43 +384,90 @@ function refusal(ctx: ReplyContext, cause: 'decline' | 'counter' | 'withdraw', a
   return repropose(ctx, cause, availability);
 }
 
+/** Why an order is re-proposed; system-caused moves count toward nobody's refusal limit (REQ-NG-9). */
+type ReproposeCause = 'decline' | 'counter' | 'withdraw' | 'preempted' | 'blackout';
+
+interface ReproposeOptions {
+  cause: ReproposeCause;
+  /** Stated availability to fit the new slot into; null means the next free slot after the current one. */
+  availability: Interpretation | null;
+  /** The party whose reply caused it (gets the no-fit note); absent for system-caused moves. */
+  party?: Role;
+  /** Only a party's own counter may take over a lower-urgency hold (REQ-SC-5); victims and blackout moves never do. */
+  allowTakeover: boolean;
+}
+
+/** The shared environment of one step, so that one fact can move several orders. */
+interface StepEnv {
+  state: State;
+  orders: Map<string, OrderState>;
+  holds: Hold[];
+  outputs: Output[];
+}
+
 /**
- * A new proposal (REQ-NG-1, REQ-NG-4): the current hold is released, the slot is chosen inside the stated availability
- * when one fits (else the next free slot after the current one, with a note to the party), the version rises, both
- * acceptances are forgotten and both parties are told the previous proposal is cancelled.
+ * A new proposal for `target` (REQ-NG-1, REQ-NG-4): the slot is chosen inside the stated availability when one fits, else
+ * taken over from a strictly lower-urgency tentative hold when allowed (REQ-SC-5, SCHED-4), else the next free slot after
+ * the current one with a note to the party. The version rises, both acceptances are forgotten and both parties are told
+ * the previous proposal is cancelled. A taken-over order is re-proposed in turn, without takeover rights (AC-2.5 of 005).
  */
-function repropose(ctx: ReplyContext, cause: 'decline' | 'counter' | 'withdraw', availability: Interpretation | null): StepResult {
-  const { current, party } = ctx;
-  const order = current.order;
-  const proposal = current.proposal;
-  const simNow = ctx.state.simNow === null ? null : parseLocalOrOffset(ctx.state.simNow);
-  if (order === undefined || proposal === undefined || simNow === null) throw new Error(`Cannot re-propose for ${current.id}: no open proposal or reference time`);
-  for (const hold of ctx.holds.filter((candidate) => candidate.orderId === current.id && candidate.kind === 'tentative')) {
-    ctx.outputs.push(trace(current.id, 'hold_released', { version: hold.version, reason: 'reproposed' }));
-  }
-  const others = ctx.holds.filter((candidate) => !(candidate.orderId === current.id && candidate.kind === 'tentative'));
+function reproposeOrder(env: StepEnv, target: OrderState, options: ReproposeOptions): void {
+  const order = target.order;
+  const proposal = target.proposal;
+  const simNow = env.state.simNow === null ? null : parseLocalOrOffset(env.state.simNow);
+  if (order === undefined || proposal === undefined || simNow === null) throw new Error(`Cannot re-propose for ${target.id}: no open proposal or reference time`);
+  const blocked = env.state.blackouts;
+  let others = env.holds.filter((candidate) => !(candidate.orderId === target.id && candidate.kind === 'tentative'));
   const earliest = earliestStart(simNow, parseLocalOrOffset(order.reportedAt)!);
-  let effectiveCause: 'decline' | 'counter' | 'withdraw' | 'no_fit' = cause;
+  let effectiveCause: ReproposeCause | 'no_fit' = options.cause;
   let slot: Slot | null = null;
-  if (availability !== null) {
-    slot = slotInside(windowsFrom(availability.times, availability.exclusions), { earliest, holds: others });
+  let victimId: string | null = null;
+  if (options.availability !== null) {
+    const windows = windowsFrom(options.availability.times, options.availability.exclusions);
+    slot = slotInside(windows, { earliest, holds: others, blocked });
+    if (slot === null && options.allowTakeover) {
+      const victim = takeoverCandidate(windows, { earliest, holds: others, blocked, urgency: order.urgency, urgencyOf: (id) => env.orders.get(id)?.order?.urgency });
+      if (victim !== null) {
+        env.outputs.push(trace(target.id, 'decision', { outcome: 'takeover', from: victim.orderId, slot: victim.slot, urgency: order.urgency, victim_urgency: env.orders.get(victim.orderId)?.order?.urgency ?? null, party: options.party ?? null }));
+        env.outputs.push(trace(victim.orderId, 'hold_released', { version: victim.version, reason: 'preempted' }));
+        others = others.filter((candidate) => candidate !== victim);
+        slot = victim.slot;
+        victimId = victim.orderId;
+      }
+    }
     if (slot === null) effectiveCause = 'no_fit';
   }
-  if (slot === null) slot = nextSlot({ from: earliest, urgency: order.urgency, holds: others, after: proposal.slot });
+  if (slot === null) slot = nextSlot({ from: earliest, urgency: order.urgency, holds: others, after: proposal.slot, blocked });
+  for (const hold of env.holds.filter((candidate) => candidate.orderId === target.id && candidate.kind === 'tentative')) {
+    env.outputs.push(trace(target.id, 'hold_released', { version: hold.version, reason: 'reproposed' }));
+  }
   const version = proposal.version + 1;
-  const holds: Hold[] = [...others, { orderId: current.id, version, kind: 'tentative', slot }];
-  current.proposal = { version, slot };
-  current.accepted = {};
-  current.awaitingConfirmation = {};
-  current.unanswered = { tenant: current.unanswered.tenant + 1, handyman: current.unanswered.handyman + 1 };
-  ctx.decision('repropose', { cause: effectiveCause, version, start: slot.start, end: slot.end });
-  ctx.outputs.push(trace(current.id, 'hold_taken', { version, start: slot.start, end: slot.end }));
-  const tenantLanguage = languageFor(current, 'tenant');
-  const note = effectiveCause === 'no_fit';
-  send(ctx.outputs, current.id, 'tenant', tenantLanguage, version, slot, reproposalToTenant({ language: tenantLanguage, title: order.title, slot, unavailableNote: note && party === 'tenant' }));
-  send(ctx.outputs, current.id, 'handyman', 'es', version, slot, reproposalToHandyman({ title: order.title, address: order.address, slot, unavailableNote: note && party === 'handyman' }));
-  ctx.orders.set(current.id, current);
-  return { state: { ...ctx.state, orders: ctx.orders, holds }, outputs: ctx.outputs };
+  env.holds = [...others, { orderId: target.id, version, kind: 'tentative', slot }];
+  target.proposal = { version, slot };
+  target.accepted = {};
+  target.awaitingConfirmation = {};
+  target.unanswered = { tenant: target.unanswered.tenant + 1, handyman: target.unanswered.handyman + 1 };
+  env.outputs.push(trace(target.id, 'decision', { outcome: 'repropose', cause: effectiveCause, party: options.party ?? null, version, start: slot.start, end: slot.end }));
+  env.outputs.push(trace(target.id, 'hold_taken', { version, start: slot.start, end: slot.end }));
+  const tenantLanguage = languageFor(target, 'tenant');
+  const noteFor = (role: Role): { note: ReproposalNote } | Record<string, never> => {
+    if (effectiveCause === 'no_fit') return options.party === role ? { note: 'unavailable' } : {};
+    if (effectiveCause === 'preempted' || effectiveCause === 'blackout') return { note: effectiveCause };
+    return {};
+  };
+  send(env.outputs, target.id, 'tenant', tenantLanguage, version, slot, reproposalToTenant({ language: tenantLanguage, title: order.title, slot, ...noteFor('tenant') }));
+  send(env.outputs, target.id, 'handyman', 'es', version, slot, reproposalToHandyman({ title: order.title, address: order.address, slot, ...noteFor('handyman') }));
+  env.orders.set(target.id, target);
+  if (victimId !== null) {
+    const victim = env.orders.get(victimId);
+    if (victim !== undefined) reproposeOrder(env, { ...victim }, { cause: 'preempted', availability: null, allowTakeover: false });
+  }
+}
+
+function repropose(ctx: ReplyContext, cause: 'decline' | 'counter' | 'withdraw', availability: Interpretation | null): StepResult {
+  const env: StepEnv = { state: ctx.state, orders: ctx.orders, holds: ctx.holds, outputs: ctx.outputs };
+  reproposeOrder(env, ctx.current, { cause, availability, party: ctx.party, allowTakeover: availability !== null });
+  return { state: { ...ctx.state, orders: env.orders, holds: env.holds }, outputs: env.outputs };
 }
 
 interface ReplyContext {
@@ -440,7 +517,7 @@ function unclearReply(ctx: ReplyContext, intent: 'unclear' | 'contradictory' | '
 }
 
 /** Closes an open order for review: its tentative holds are released first, then the result is written once (ORD-1). */
-function review(ctx: ReplyContext, code: ReviewByReply, sentence: string): StepResult {
+function review(ctx: ReplyContext, code: ReasonCode, sentence: string): StepResult {
   const { current } = ctx;
   for (const hold of ctx.holds.filter((candidate) => candidate.orderId === current.id && candidate.kind === 'tentative')) {
     ctx.outputs.push(trace(current.id, 'hold_released', { version: hold.version, reason: 'closed' }));
@@ -460,7 +537,7 @@ function applyLlmError(state: State, fact: Fact & { type: 'llm_error' }): StepRe
   const outputs: Output[] = [];
   const orders = new Map(state.orders);
   const party = fact.role;
-  const current: OrderState = { ...order, llmFailures: order.llmFailures + 1 };
+  const current: OrderState = { ...order, llmFailures: order.llmFailures + 1, timeouts: { ...order.timeouts, [party]: 0 } };
   const decision = (outcome: string, extra: Record<string, unknown> = {}): void => {
     outputs.push(trace(order.id, 'decision', { outcome, party, intent: null, version: order.proposal?.version ?? null, ...extra }));
   };
@@ -471,6 +548,43 @@ function applyLlmError(state: State, fact: Fact & { type: 'llm_error' }): StepRe
     return review(ctx, 'llm_unavailable', REVIEW_SENTENCES.llm_unavailable(party));
   }
   return unclearReply(ctx, 'unclear');
+}
+
+const TIMEOUT_LIMIT = 2;
+
+/**
+ * A `<NO RESPONSE>` counts only against a party whose acceptance of the current version is missing (RUN-3, REQ-TO-1):
+ * a reminder the first time, review the second (REQ-TO-2); a Critical order's tenant goes to review at once (REQ-TO-3).
+ */
+function applyTimeout(state: State, order: OrderState, party: Role, outputs: Output[]): StepResult {
+  if (order.order === undefined || order.proposal === undefined) return { state, outputs };
+  const { proposal } = order;
+  const awaited = order.accepted[party] !== proposal.version;
+  const other = OTHER[party];
+  const decision = (outcome: string, extra: Record<string, unknown> = {}): void => {
+    outputs.push(trace(order.id, 'decision', { outcome, party, intent: null, version: proposal.version, ...extra }));
+  };
+  if (!awaited) {
+    decision('timeout_ignored', { reason: 'not_awaited' });
+    return { state, outputs };
+  }
+  const orders = new Map(state.orders);
+  const current: OrderState = { ...order, timeouts: { ...order.timeouts, [party]: order.timeouts[party] + 1 } };
+  const language = languageFor(order, party);
+  const ctx: ReplyContext = { state, orders, holds: state.holds, outputs, current, party, language, decision, send };
+  const otherAccepted = order.accepted[other] === proposal.version;
+  if (order.order.urgency === 'Critical' && party === 'tenant') {
+    decision('review', { reason: 'no_response', timeouts: current.timeouts[party], critical: true });
+    return review(ctx, 'no_response', criticalNoResponseSentence({ slot: proposal.slot, handymanAccepted: otherAccepted }));
+  }
+  if (current.timeouts[party] >= TIMEOUT_LIMIT) {
+    decision('review', { reason: 'no_response', timeouts: current.timeouts[party] });
+    return review(ctx, 'no_response', noResponseSentence({ party, slot: proposal.slot, otherAccepted }));
+  }
+  decision('remind', { timeouts: current.timeouts[party] });
+  send(outputs, order.id, party, language, proposal.version, proposal.slot, reminder({ language, to: party, title: order.order.title, slot: proposal.slot }));
+  orders.set(order.id, current);
+  return { state: { ...state, orders }, outputs };
 }
 
 /** End of input: every order still open closes as `no_response`, in CSV order (REQ-TO-4). A repeated eof changes nothing. */

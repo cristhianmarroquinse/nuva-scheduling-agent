@@ -141,3 +141,11 @@ describe('next slot after a declined one (AC-1.1 of 004)', () => {
     expect(nextSlot({ from: at('2026-11-04T12:00'), urgency: 'Low', holds: [], after: old })).toEqual({ start: '2026-11-04T12:00:00+01:00', end: '2026-11-04T14:00:00+01:00' });
   });
 });
+
+describe('blocked slots (AC-3.3 of 005)', () => {
+  it('nextSlot skips blackout windows like holds', () => {
+    const blocked: Slot[] = [{ start: iso('2026-11-04T12:00'), end: iso('2026-11-04T16:00') }];
+    expect(nextSlot({ from: at('2026-11-04T12:00'), urgency: 'Medium', holds: [], blocked })).toEqual({ start: '2026-11-04T16:00:00+01:00', end: '2026-11-04T18:00:00+01:00' });
+    expect(nextSlot({ from: at('2026-11-04T12:00'), urgency: 'Medium', holds: [], blocked: [{ start: iso('2026-11-04T00:00'), end: iso('2026-11-05T00:00') }] })).toEqual({ start: '2026-11-05T09:00:00+01:00', end: '2026-11-05T11:00:00+01:00' });
+  });
+});

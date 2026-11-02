@@ -55,3 +55,12 @@ describe('prompt assembly (AC-1.8)', () => {
     expect(prompt.version).toBe(PROMPT_VERSION);
   });
 });
+
+describe('scope instruction (005)', () => {
+  it('tells the model when a handyman statement applies to all his work', () => {
+    const prompt = buildPrompt({ ...request, role: 'handyman' });
+    expect(prompt.system).toContain('scope');
+    expect(prompt.system).toContain('this_order');
+    expect(prompt.system).toMatch(/"?all"?.*(all|every).*(work|orders|visits)/i);
+  });
+});
