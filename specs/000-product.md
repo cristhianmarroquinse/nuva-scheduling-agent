@@ -50,6 +50,7 @@ Coordinate a handyman visit for every work order between the order's tenant and 
 - **REQ-NG-8.** IF a reply is unclear or contradictory, THEN THE system SHALL ask one clarification; IF the next reply from that party is also unclear or contradictory, THEN THE system SHALL close the order as `requires_review` (reason `contradictory_replies` if either reply was contradictory, otherwise `interpretation_failed`).
 - **REQ-NG-9.** IF three proposals for an order have been declined or countered by a party, THEN THE system SHALL close it as `requires_review`. Re-proposals caused by the system (preemption, handyman blackouts) SHALL NOT count.
 - **REQ-NG-10.** IF a reply refers to a different order, THEN THE system SHALL ask the sender to clarify; IF it stays unresolved, THEN THE system SHALL close the order as `requires_review`.
+- **REQ-NG-11.** WHEN the system chooses a new slot on its own (no stated availability fits), THE slot SHALL NOT overlap any proposal already declined, countered or withdrawn from in that order; availability a party states explicitly is still honoured.
 
 ## Timeouts
 

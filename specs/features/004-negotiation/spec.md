@@ -19,7 +19,7 @@ As a tenant, I want to say "not then, Thursday afternoon works" and receive a co
 
 **Acceptance criteria (EARS):**
 
-- **AC-1.1** WHEN a party declines the current proposal without stating availability, THE system SHALL propose the next free slot after the declined one, under the calendar rules of 002, to both parties.
+- **AC-1.1** WHEN a party declines the current proposal without stating availability, THE system SHALL propose the next free slot after the declined one, under the calendar rules of 002, to both parties. *Amended by [008](../008-no-overlap-with-refused-slots/spec.md): the next slot also overlaps no refused proposal of the order.*
 - **AC-1.2** WHEN a party states availability (one or more dates, ranges or point times), THE system SHALL propose the earliest free 2-hour slot that starts on the hour inside that availability, to both parties.
 - **AC-1.3** THE system SHALL accept availability stated by a party between 07:00 and 22:00 on any day, including weekends and outside the business windows of 002, provided the whole visit fits between 07:00 and 22:00 (REQ-SC-4).
 - **AC-1.4** THE system SHALL read a date without time as that day from 07:00 to 22:00, "after HH:MM" as HH:MM to 22:00, "before HH:MM" as 07:00 to HH:MM, and a point time as a visit starting exactly then.
