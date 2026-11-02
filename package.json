@@ -9,6 +9,9 @@
   "packageManager": "pnpm@10.15.0",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "example": "tsx scripts/example.ts",
     "test": "vitest run",
     "invariants": "tsx scripts/invariant-coverage.ts",
     "eval": "tsx eval/run.ts",

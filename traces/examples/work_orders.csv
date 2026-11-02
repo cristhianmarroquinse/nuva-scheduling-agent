@@ -1,0 +1,5 @@
+work_order_id,work_order,address,description,reported_at,urgency
+WO-1001,Olor a gas en la cocina,"Calle Mayor 12, 3ºA","Desde esta mañana hay un fuerte olor a gas en la cocina, cerca de la encimera.",2026-11-04T08:30:00,Critical
+WO-1002,Leaking kitchen tap,"Calle Sol 5, 1ºB","The kitchen tap drips all night and the cupboard below is getting damp.",2026-11-02T09:15:00,Medium
+WO-1003,Puerta que chirría,"Calle Luna 8, bajo","La puerta del dormitorio chirría mucho al abrir y cerrar.",2026-11-01T18:00:00,Low
+WO-1004,No hot water,"Calle Mayor 12, 1ºC","The boiler shows an error code and there has been no hot water since yesterday.",2026-11-03T20:10:00,High

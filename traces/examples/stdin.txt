@@ -1,0 +1,11 @@
+WO-1001|tenant Sí, perfecto, cuanto antes mejor
+WO-1001|handyman Vale
+WO-1002|tenant Could you come Thursday afternoon instead? I work in the mornings.
+WO-1002|handyman ¿Hay aparcamiento cerca del portal?
+WO-1002|handyman Sí, el jueves a las 15 me va bien
+WO-1002|tenant Yes
+WO-1004|handyman No puedo a esa hora
+WO-1004|tenant <NO RESPONSE>
+WO-1004|tenant Yes, 15:00 is fine
+WO-1004|handyman Vale
+WO-1003|handyman <NO RESPONSE>

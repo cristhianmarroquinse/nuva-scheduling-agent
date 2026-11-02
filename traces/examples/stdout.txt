@@ -1,0 +1,84 @@
+WOID:WO-1001|ROLE:tenant
+Hola. Le escribimos por su aviso «Olor a gas en la cocina». Proponemos la visita del técnico el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Le viene bien? Si no, indíquenos qué días y horas le vendrían bien. Si hay peligro inmediato, llame al 112.
+
+WOID:WO-1001|ROLE:handyman
+Nueva visita propuesta para el aviso «Olor a gas en la cocina» (urgencia crítica) en Calle Mayor 12, 3ºA. Propuesta: miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1004|ROLE:tenant
+Hello. We are writing about your report "No hot water". We propose the handyman's visit on Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1004|ROLE:handyman
+Nueva visita propuesta para el aviso «No hot water» (urgencia alta) en Calle Mayor 12, 1ºC. Propuesta: miércoles 4 de noviembre de 2026, de 14:00 a 16:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1002|ROLE:tenant
+Hello. We are writing about your report "Leaking kitchen tap". We propose the handyman's visit on Wednesday 4 November 2026, 16:00 to 18:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1002|ROLE:handyman
+Nueva visita propuesta para el aviso «Leaking kitchen tap» (urgencia media) en Calle Sol 5, 1ºB. Propuesta: miércoles 4 de noviembre de 2026, de 16:00 a 18:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1003|ROLE:tenant
+Hola. Le escribimos por su aviso «Puerta que chirría». Proponemos la visita del técnico el jueves 5 de noviembre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Le viene bien? Si no, indíquenos qué días y horas le vendrían bien.
+
+WOID:WO-1003|ROLE:handyman
+Nueva visita propuesta para el aviso «Puerta que chirría» (urgencia baja) en Calle Luna 8, bajo. Propuesta: jueves 5 de noviembre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1001|ROLE:tenant
+Gracias, queda anotado. Estamos pendientes de la confirmación del técnico y le avisaremos en cuanto la tengamos.
+
+WOID:WO-1001|ROLE:tenant
+Confirmado: la visita del técnico por «Olor a gas en la cocina» queda fijada para el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). Gracias.
+
+WOID:WO-1001|ROLE:handyman
+Confirmado: visita por «Olor a gas en la cocina» en Calle Mayor 12, 3ºA, miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). Gracias.
+
+WOID:WO-1001|RESULT:scheduled
+SCHEDULED_FOR:2026-11-04T12:00:00+01:00
+
+WOID:WO-1002|ROLE:tenant
+The previous proposal is cancelled. New proposal for "Leaking kitchen tap": Thursday 5 November 2026, 15:00 to 17:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1002|ROLE:handyman
+La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking kitchen tap» en Calle Sol 5, 1ºB: jueves 5 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1002|ROLE:handyman
+La información disponible no indica si hay aparcamiento cerca del portal. La oficina lo comprobará y le responderá. Te recuerdo que la visita propuesta por «Leaking kitchen tap» es el jueves 5 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
+
+WOID:WO-1002|ROLE:handyman
+Gracias, anotado. Estamos pendientes de la confirmación del inquilino y te avisamos en cuanto la tengamos.
+
+WOID:WO-1002|ROLE:tenant
+Confirmed: the handyman's visit for "Leaking kitchen tap" is set for Thursday 5 November 2026, 15:00 to 17:00 (Madrid time). Thank you.
+
+WOID:WO-1002|ROLE:handyman
+Confirmado: visita por «Leaking kitchen tap» en Calle Sol 5, 1ºB, jueves 5 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). Gracias.
+
+WOID:WO-1002|RESULT:scheduled
+SCHEDULED_FOR:2026-11-05T15:00:00+01:00
+
+WOID:WO-1004|ROLE:tenant
+The previous proposal is cancelled. New proposal for "No hot water": Wednesday 4 November 2026, 15:00 to 17:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1004|ROLE:handyman
+La propuesta anterior queda cancelada. Nueva propuesta para el aviso «No hot water» en Calle Mayor 12, 1ºC: miércoles 4 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1004|ROLE:tenant
+A reminder that we are still waiting for your reply. The proposed visit for "No hot water" is on Wednesday 4 November 2026, 15:00 to 17:00 (Madrid time). Does that work for you? If not, please give us another date and time.
+
+WOID:WO-1004|ROLE:tenant
+Thank you, noted. We are waiting for the handyman to confirm and will let you know as soon as we have it.
+
+WOID:WO-1004|ROLE:tenant
+Confirmed: the handyman's visit for "No hot water" is set for Wednesday 4 November 2026, 15:00 to 17:00 (Madrid time). Thank you.
+
+WOID:WO-1004|ROLE:handyman
+Confirmado: visita por «No hot water» en Calle Mayor 12, 1ºC, miércoles 4 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). Gracias.
+
+WOID:WO-1004|RESULT:scheduled
+SCHEDULED_FOR:2026-11-04T15:00:00+01:00
+
+WOID:WO-1003|ROLE:handyman
+Te recuerdo que sigo pendiente de tu respuesta. La visita propuesta por «Puerta que chirría» es el jueves 5 de noviembre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
+
+WOID:WO-1003|RESULT:requires_review
+REASON:No reply was received before the end of input.
+

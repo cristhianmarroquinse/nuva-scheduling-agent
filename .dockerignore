@@ -6,7 +6,8 @@
 .env
 .env.*
 !.env.example
-traces/
+traces/*
+!traces/examples/
 node_modules/
 dist/
 coverage/
@@ -14,9 +15,12 @@ coverage/
 .DS_Store
 *.log
 
-# Development harness not needed to build or test. Invariant coverage
-# compares against git HEAD, so it runs on the host with `pnpm check`.
+# Development harness not needed to build or test, except INVARIANTS.md,
+# which the harness test suite parses. Invariant coverage compares against
+# git HEAD, so it runs on the host with `pnpm check`.
 .claude/
 CLAUDE.md
-specs/
+specs/*
+!specs/INVARIANTS.md
 docs/
+.pnpm-store/

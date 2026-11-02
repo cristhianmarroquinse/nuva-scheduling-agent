@@ -14,8 +14,8 @@ REASON:No reply was received before the end of input.
 # exit
 0
 # trace
-{"event_type":"line_classified","work_order_id":"WO-1","detail":{"classification":"message","seq":1}}
 {"event_type":"stderr","work_order_id":null,"detail":{"text":"fixture stray stderr write\n"}}
 {"event_type":"uncaught_exception","work_order_id":null,"detail":{"message":"fixture boom"}}
+{"event_type":"line_classified","work_order_id":"WO-1","detail":{"classification":"message","seq":1}}
 {"event_type":"eof"}
 {"event_type":"result","work_order_id":"WO-1","detail":{"code":"no_response"}}

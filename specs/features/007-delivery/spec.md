@@ -1,6 +1,6 @@
 # 007 · Delivery: Docker image, README and example trace
 
-**Status:** planned
+**Status:** implemented
 **Product requirements:** REQ-DL-1, REQ-DL-2, REQ-DL-3, REQ-DL-4, REQ-IN-1, REQ-TR-1, REQ-TR-3, REQ-OUT-4
 **Invariants touched:** OUT-1, TRACE-1, TRACE-2 (the committed example must replay)
 **Deferred:** phase 2 of the roadmap (tiered agent escalation, simulator)
