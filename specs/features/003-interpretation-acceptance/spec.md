@@ -1,6 +1,6 @@
 # 003 · Interpretation boundary and acceptance
 
-**Status:** clarified
+**Status:** planned
 **Product requirements:** REQ-NG-2, REQ-NG-3 (acceptance with a constraint), REQ-NG-6, REQ-NG-8, REQ-RES-1, REQ-RES-3, REQ-RB-1, REQ-TR-2 (model calls, decisions), REQ-OUT-2, REQ-OUT-3
 **Invariants touched:** ACC-1, ACC-2, ACC-3, LLM-1, SCHED-2, COM-1, COM-2, COM-3, ORD-1, ORD-2, TRACE-2
 **Deferred:** replies that decline, counter-propose, ask, withdraw or refer to another order (REQ-NG-1 re-proposals, REQ-NG-3 unanswered versions, REQ-NG-4, REQ-NG-5, REQ-NG-7, REQ-NG-9, REQ-NG-10, LLM-2) → 004 negotiation; timeouts, preemption and blackouts (REQ-TO-1…3, REQ-SC-4…6, RUN-3, SCHED-3, SCHED-4) → 005; the golden-set evaluation of regex versus models (real model under `eval/`, README numbers) → its own feature after negotiation exists
@@ -97,7 +97,7 @@ Scenarios run the real entry point with the fake interpreter selected by environ
 
 | Scenario / test | Covers | Input (summary) | Expected |
 |---|---|---|---|
-| Interpreter unit tests (`tests/unit/interpreter.test.ts`) | AC-1.2, AC-1.3, AC-1.5, AC-1.6, AC-1.8 | Trivial phrases; valid, invalid, offset-bearing and oversized model outputs; prompt assembly | Fast-path intents; validation outcomes; reply only inside the data block |
+| Interpreter unit tests (`tests/unit/schema.test.ts`, `fast-path.test.ts`, `prompt.test.ts`, `interpreter.test.ts`) | AC-1.2, AC-1.3, AC-1.4, AC-1.5, AC-1.6, AC-1.7, AC-1.8 | Trivial phrases; valid, invalid, offset-bearing and oversized model outputs; prompt assembly | Fast-path intents; validation outcomes; reply only inside the data block |
 | Acceptance unit tests (`tests/unit/acceptance.test.ts`) | AC-2.1, AC-2.2, AC-2.3 | Proposal versus stated date, range, point and constraint | `accepted`, `mismatch`, `needs_confirmation` |
 | Policy unit tests (`tests/unit/state.test.ts`) | AC-1.9, AC-2.4–AC-2.8, AC-3.1–AC-3.4, AC-4.2, **LLM-1**, **ACC-1**, **ORD-1**, **ORD-2** | Hostile interpretation facts; acceptance sequences; unclear sequences; model errors | Only the rules change state; one result per order |
 | `003-both-accept` | AC-1.1, AC-1.3, AC-2.4, AC-2.6, AC-2.8, **ACC-1**, **ACC-2**, **ACC-3** | `Sí` from the tenant, `Vale` from the handyman | Acknowledgement, two confirmations, `scheduled` with the proposal start; no model call traced |
