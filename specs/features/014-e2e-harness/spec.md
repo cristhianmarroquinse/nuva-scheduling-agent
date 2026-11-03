@@ -1,6 +1,6 @@
 # 014 · End-to-end harness with the real model
 
-**Status:** planned
+**Status:** implemented
 **Product requirements:** none (development tooling); it checks REQ-* and invariants from the outside
 **Invariants touched:** none changed; the harness re-checks ORD-1, ORD-2, ACC-2, ACC-3, SCHED-1, SCHED-2, SCHED-5, TIME-1, COM-1, COM-2, COM-3, OUT-1, OUT-2, LLM-2, TRACE-1, RUN-1 and REQ-NG-11 on every run
 

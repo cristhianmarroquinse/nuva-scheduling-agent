@@ -7,7 +7,7 @@ Status: **v1**. Every requirement of the take-home is implemented, each of the 2
 ## Try it in two minutes
 
 ```bash
-docker build -t agent .                                  # runs typecheck + 467 tests inside; fails if any fails
+docker build -t agent .                                  # runs typecheck + 478 tests inside; fails if any fails
 cp traces/examples/work_orders.csv .                     # four orders of mixed urgency
 cp .env.example .env                                     # then put your key in ANTHROPIC_API_KEY=
 mkdir -p traces
@@ -107,7 +107,7 @@ The model is called in exactly two places:
 
 The model never sets state, holds, acceptances or results, never sees the other party's text, and the parties' replies are placed in the prompt as data, never as instructions. Everything else is templates and rules, which is why the invariants are tested without a key ([ADR 0001](docs/adr/0001-deterministic-core-llm-interpreter.md)).
 
-Why Haiku, with numbers. A golden set of 64 labelled replies (Spanish and English, every intent, relative dates, ranges, exclusions, idioms, hostile text) was run against each tier through the production prompt, schema and validator. The full report with every mismatch is [`eval/REPORT.md`](eval/REPORT.md); `pnpm eval --tier <regex|haiku|sonnet>` regenerates it.
+Why Haiku, with numbers. A golden set of 64 labelled replies (Spanish and English, every intent, relative dates, ranges, exclusions, idioms, hostile text) was run against each tier through the production prompt, schema and validator. The full report with every mismatch is [`eval/REPORT.md`](eval/REPORT.md); `pnpm eval --tier <regex|haiku|sonnet>` regenerates it. Beyond single replies, [`pnpm e2e`](eval/e2e/README.md) runs 93 scripted conversations through the agent with the real model and checks every frame and trace line; on 2026-11-03 all 93 passed.
 
 | Tier | Model | Intent accuracy | Full accuracy | Resolved by regex | p50 latency | Cost for the set |
 |---|---|---|---|---|---|---|
@@ -151,9 +151,9 @@ The repository holds the product and the development harness it was built with. 
 | Part | Paths |
 |---|---|
 | Product | `src/`, `Dockerfile`, `package.json`, `tsconfig*.json`, `traces/examples/` |
-| Tests (467, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
-| Evaluation | `eval/`: golden set, scorer, report; `pnpm eval` |
-| Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–013), `scripts/` |
+| Tests (478, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
+| Evaluation | `eval/`: golden set, scorer, report (`pnpm eval`); 93 end-to-end conversations against the built agent and the real model, checked frame by frame ([`pnpm e2e`](eval/e2e/README.md)) |
+| Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–014), `scripts/` |
 | Decisions | `docs/planning/`, `docs/adr/` |
 
 Each feature went through the same pipeline with Claude Code: `/spec` (user stories and EARS criteria, clarified with at most five questions), `/plan` (design, a constitution check against the invariants and ADRs, ordered tasks), `/implement` (every test written and seen failing before its code, `pnpm check` after every task) and `/ship`. `pnpm check` is typecheck, the test suite and invariant coverage, whose baseline may only shrink and is empty now; hooks refuse to finish while it is red. Features: 001 I/O protocol and startup; 002 calendar and initial proposals; 003 interpretation and acceptance; 004 negotiation; 005 timeouts, preemption and blackouts; 006 golden set and evaluation; 007 delivery. Specs with plan and tasks are under `specs/features/`; the behaviour is specified in [001](specs/features/001-io-protocol-startup/spec.md), [002](specs/features/002-calendar-initial-proposals/spec.md), [003](specs/features/003-interpretation-acceptance/spec.md), [004](specs/features/004-negotiation/spec.md) and [005](specs/features/005-timeouts-preemption-blackouts/spec.md).

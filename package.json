@@ -15,6 +15,7 @@
     "test": "vitest run",
     "invariants": "tsx scripts/invariant-coverage.ts",
     "eval": "tsx eval/run.ts",
+    "e2e": "pnpm build && tsx --env-file-if-exists=.env eval/e2e/run.ts",
     "check": "pnpm typecheck && pnpm test && pnpm invariants"
   },
   "devDependencies": {

@@ -1,0 +1,179 @@
+{
+  "set": "calendar",
+  "date": "2026-11-03",
+  "promptVersion": "6",
+  "passed": 17,
+  "total": 17,
+  "outcomes": [
+    {
+      "name": "cal-takehome-sample",
+      "about": "Take-home sample CSV with +02:00 offsets and its example replies; counters, reminder, unanswered versions",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 7,
+      "modelFailures": 0,
+      "tokens": 18189,
+      "seconds": 11.9
+    },
+    {
+      "name": "cal-friday-rollover",
+      "about": "Fri 15:00: Critical gets Fri 17:00 then 19:00 after decline (08-21); High/Low roll to Monday; Low decline avoids refused slot",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 6,
+      "modelFailures": 0,
+      "tokens": 15463,
+      "seconds": 10.3
+    },
+    {
+      "name": "cal-weekend-two-critical",
+      "about": "Sat 19:30: two Criticals on Sunday 08:00/10:00, Critical counters to Sunday 12:00; High and Low on Monday",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 4,
+      "modelFailures": 0,
+      "tokens": 10100,
+      "seconds": 5.8
+    },
+    {
+      "name": "cal-dst-blackout-weekend",
+      "about": "Sat 24 Oct (+02:00): handyman blacks out Sat+Sun; Criticals move to Mon 26 (+01:00) around the High tentative hold (no takeover on blackout)",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 4,
+      "modelFailures": 0,
+      "tokens": 10349,
+      "seconds": 7.3
+    },
+    {
+      "name": "cal-same-hour-priority",
+      "about": "Low then High tenants ask for the same hour: High takes over the Low tentative hold; Low re-proposed without penalty",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 6,
+      "modelFailures": 0,
+      "tokens": 15658,
+      "seconds": 10.8
+    },
+    {
+      "name": "cal-takeover-skips-scheduled",
+      "about": "Critical counter range holds a scheduled Low and a tentative Medium: takes the Medium, never the scheduled visit",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 7,
+      "modelFailures": 0,
+      "tokens": 18057,
+      "seconds": 11.1
+    },
+    {
+      "name": "cal-preemption-chain",
+      "about": "Critical takes High hold; High then counters into Low hold and takes it; two takeovers, nobody penalised",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 8,
+      "modelFailures": 0,
+      "tokens": 20910,
+      "seconds": 13.5
+    },
+    {
+      "name": "cal-blackout-priority",
+      "about": "Blackout today moves High, Medium, Low (CSV order Low first): urgency must win the freed Thursday slots",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 6,
+      "modelFailures": 0,
+      "tokens": 15023,
+      "seconds": 7.5
+    },
+    {
+      "name": "cal-blackout-after-scheduled",
+      "about": "Blackout \"today from 12:00\" after A is scheduled at 12:00: A kept with blackout_conflict; B, C move to Thursday",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 5,
+      "modelFailures": 0,
+      "tokens": 12990,
+      "seconds": 7.8
+    },
+    {
+      "name": "cal-blackout-multiday",
+      "about": "Blackout Thu+Fri: three Thursday holds move to Monday; Wednesday holds untouched",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 6,
+      "modelFailures": 0,
+      "tokens": 15294,
+      "seconds": 11.1
+    },
+    {
+      "name": "cal-evaluator-seven",
+      "about": "7 orders mixed urgency, interleaved: accept, counter, reminder, takeover, decline, timeouts, EOF",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 10,
+      "modelFailures": 0,
+      "tokens": 25168,
+      "seconds": 14.6
+    },
+    {
+      "name": "cal-equal-urgency",
+      "about": "Medium counters onto another Medium tentative hold: no takeover, no-fit note, fallback avoids refused slot",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 4,
+      "modelFailures": 0,
+      "tokens": 10717,
+      "seconds": 8.7
+    },
+    {
+      "name": "cal-handyman-double-book",
+      "about": "Handyman offers the same hour for two orders: High takes it from Medium, Medium re-proposed",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 5,
+      "modelFailures": 0,
+      "tokens": 13291,
+      "seconds": 11.8
+    },
+    {
+      "name": "cal-declines-fill",
+      "about": "Declines across three orders push into Thursday; third tenant decline closes A as no_mutual_slot",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 5,
+      "modelFailures": 0,
+      "tokens": 12600,
+      "seconds": 8.5
+    },
+    {
+      "name": "cal-future-reported",
+      "about": "reported_at after AGENT_NOW: Critical Thu 08:00, Low Wed 16:00; a counter before reported_at does not fit",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 5,
+      "modelFailures": 0,
+      "tokens": 12810,
+      "seconds": 7.8
+    },
+    {
+      "name": "cal-change-after-accept",
+      "about": "Tenant accepts, then narrows to afternoons before the handyman answers; later withdraw on a scheduled order is ignored",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 4,
+      "modelFailures": 0,
+      "tokens": 10063,
+      "seconds": 6.3
+    },
+    {
+      "name": "cal-decline-excluded-day",
+      "about": "Decline that rules out a whole day (\"Wednesday is impossible\"): the next proposal should not be that day again",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 3,
+      "modelFailures": 0,
+      "tokens": 7815,
+      "seconds": 4.7
+    }
+  ]
+}

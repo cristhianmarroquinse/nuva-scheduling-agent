@@ -1,0 +1,199 @@
+{
+  "set": "language",
+  "date": "2026-11-03",
+  "promptVersion": "6",
+  "passed": 19,
+  "total": 19,
+  "outcomes": [
+    {
+      "name": "lang-takehome-after17",
+      "about": "Take-home literal \"Tomorrow after 17:00 works for me.\" = accept with mismatched times → counter Thu 17:00–22:00 (AC-1.4/AC-1.7)",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 3,
+      "modelFailures": 0,
+      "tokens": 7638,
+      "seconds": 4.3
+    },
+    {
+      "name": "lang-takehome-wed-afternoon",
+      "about": "Take-home literal \"Wednesday afternoon works.\" to Wed 12:00: either accepted (EN afternoon ≥12) or countered to Wed 15:00 (prompt afternoon 15–20); same day either way",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5180,
+      "seconds": 4.2
+    },
+    {
+      "name": "lang-takehome-manana10",
+      "about": "Take-home literal handyman \"Mañana a las 10:00 puedo.\" → v2 Thu 10:00; silent tenant bare \"Sí\" needs confirmation, then a yes naming the slot counts",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5231,
+      "seconds": 3.8
+    },
+    {
+      "name": "lang-pasado-manana",
+      "about": "\"pasado mañana por la mañana\" resolves to Fri 6 Nov morning → earliest slot 09:00 (mornings 09–13)",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5368,
+      "seconds": 3.2
+    },
+    {
+      "name": "lang-next-monday",
+      "about": "\"Next Monday at 9\" from a Wednesday resolves to Mon 9 Nov 09:00",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5220,
+      "seconds": 3.6
+    },
+    {
+      "name": "lang-es-12h",
+      "about": "Spanish 12h format \"a las 5 de la tarde\" = 17:00 tomorrow",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5323,
+      "seconds": 4.3
+    },
+    {
+      "name": "lang-mediodia-accept",
+      "about": "\"a mediodía\" names the proposal start 12:00 → plain acceptance, no counter",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 1,
+      "modelFailures": 0,
+      "tokens": 2511,
+      "seconds": 1
+    },
+    {
+      "name": "lang-slang-no-accents",
+      "about": "Typos, slang and missing accents still read as acceptance",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5006,
+      "seconds": 2.5
+    },
+    {
+      "name": "lang-emoji-only",
+      "about": "A bare thumbs-up is a chat acceptance of the slot on the table",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 4980,
+      "seconds": 2.5
+    },
+    {
+      "name": "lang-all-caps",
+      "about": "Shouted refusal with a counter: \"ONLY FRIDAY AFTERNOON\" → Fri 15:00 (afternoon 15–20)",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5331,
+      "seconds": 3.9
+    },
+    {
+      "name": "lang-rambling",
+      "about": "Long rambling reply with the acceptance buried in the middle",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 1,
+      "modelFailures": 0,
+      "tokens": 2647,
+      "seconds": 1.7
+    },
+    {
+      "name": "lang-multi-intent",
+      "about": "Acceptance plus a question in one message: acceptance must count (question has an answer)",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 1,
+      "modelFailures": 0,
+      "tokens": 2781,
+      "seconds": 2.9
+    },
+    {
+      "name": "lang-change-mind",
+      "about": "Tenant changes mind inside one message; the final position (Thursday 11:00) is a counter, not contradictory",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5096,
+      "seconds": 2.2
+    },
+    {
+      "name": "lang-injection-in-counter",
+      "about": "Injection inside a normal counter: counter honoured (Tue 10 Nov 10:00), injection ignored; handyman silent → no_response",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 1,
+      "modelFailures": 0,
+      "tokens": 2860,
+      "seconds": 2.3
+    },
+    {
+      "name": "lang-other-language",
+      "about": "English order, tenant counters in Spanish (\"el jueves sobre las 10\") → Thu 10:00; tenant frames stay English",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5318,
+      "seconds": 3.7
+    },
+    {
+      "name": "lang-before-11",
+      "about": "\"Tomorrow, but only before 11am\" → Thu 07:00–11:00 → earliest on-the-hour slot 07:00 (AC-1.4, AC-1.3)",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5323,
+      "seconds": 4.1
+    },
+    {
+      "name": "lang-whenever",
+      "about": "Vague \"whenever, I am home all week\" is not a refusal: ends scheduled at the proposed 12:00",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 1,
+      "modelFailures": 0,
+      "tokens": 2509,
+      "seconds": 1.8
+    },
+    {
+      "name": "lang-por-las-tardes",
+      "about": "Undated recurring availability \"solo puedo por las tardes\": should end in an afternoon slot (≥15:00), not v1; checked by hand",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5388,
+      "seconds": 4.8
+    },
+    {
+      "name": "lang-el-finde",
+      "about": "\"el finde cuando queráis\" → Sat 7 Nov whole day → earliest 07:00 (party times honoured 07–22 any day)",
+      "pass": true,
+      "failures": [],
+      "modelCalls": 2,
+      "modelFailures": 0,
+      "tokens": 5438,
+      "seconds": 5
+    }
+  ]
+}

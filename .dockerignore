@@ -10,6 +10,7 @@ traces/*
 !traces/examples/
 node_modules/
 dist/
+eval/e2e/out/
 coverage/
 .git/
 .DS_Store
