@@ -51,6 +51,8 @@ Coordinate a handyman visit for every work order between the order's tenant and 
 - **REQ-NG-9.** IF three proposals for an order have been declined or countered by a party, THEN THE system SHALL close it as `requires_review`. Re-proposals caused by the system (preemption, handyman blackouts) SHALL NOT count.
 - **REQ-NG-10.** IF a reply refers to a different order, THEN THE system SHALL ask the sender to clarify; IF it stays unresolved, THEN THE system SHALL close the order as `requires_review`.
 - **REQ-NG-11.** WHEN the system chooses a new slot on its own (no stated availability fits), THE slot SHALL NOT overlap any proposal already declined, countered or withdrawn from in that order; availability a party states explicitly is still honoured.
+- **REQ-NG-12.** WHEN a reply states days or times a party cannot do, THE system SHALL never again choose a slot for that order that overlaps them on its own, and SHALL say that requested times are unavailable only when the party requested times.
+- **REQ-NG-13.** IF the times a party states on a specific day do not fit, THEN THE system SHALL propose the free slot closest to them on that day before looking elsewhere.
 
 ## Timeouts
 
