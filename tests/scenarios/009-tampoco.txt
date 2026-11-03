@@ -1,0 +1,17 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-1,Leaking tap,Calle Mayor 1,The kitchen tap drips all night.,2026-11-02T09:00:00,Medium
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+WO-1|tenant No
+WO-1|tenant Tampoco
+# stdout results
+WOID:WO-1|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"interpretation","work_order_id":"WO-1","detail":{"source":"regex","result":{"intent":"decline","quote":"Tampoco"}}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"repropose","cause":"decline","version":3,"start":"2026-11-04T16:00:00+01:00"}}

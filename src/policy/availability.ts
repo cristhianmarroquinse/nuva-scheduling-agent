@@ -158,3 +158,55 @@ export function blackoutWindows(exclusions: readonly ExclusionValue[], simNow: D
   }
   return windows;
 }
+
+/** Undated time-of-day exclusions ("not before 13:00", "only afternoons") apply for this many days (AC-1.2 of 009). */
+export const CONSTRAINT_DAYS = 14;
+
+/**
+ * An order's constraints as concrete Madrid windows (AC-1.2 of 009): a date or weekday as in `blackoutWindows`; times
+ * without a day repeated on each of the next `days` days from the reference time; an exclusion with neither is ignored.
+ */
+export function constraintWindows(exclusions: readonly ExclusionValue[], simNow: DateTime, days: number = CONSTRAINT_DAYS): Slot[] {
+  const windows: Slot[] = [];
+  for (const exclusion of exclusions) {
+    if (exclusion.date !== undefined || exclusion.weekday !== undefined) {
+      windows.push(...blackoutWindows([exclusion], simNow));
+      continue;
+    }
+    if (exclusion.start === undefined && exclusion.end === undefined) continue;
+    const first = simNow.setZone(ZONE).startOf('day');
+    for (let offset = 0; offset < days; offset += 1) {
+      const date = first.plus({ days: offset }).toISODate();
+      if (date !== null) windows.push(...blackoutWindows([{ ...exclusion, date }], simNow));
+    }
+  }
+  return windows;
+}
+
+/**
+ * The free slot on a stated date whose start is closest to the stated start (AC-3.1 of 009; a date alone targets 07:00):
+ * on-the-hour 2-hour slots inside 07:00–22:00 of that date, at or after `earliest`, overlapping no hold or blocked slot;
+ * ties go to the earlier start.
+ * Null when no stated date has a free slot (AC-3.2).
+ */
+export function nearestOnDate(times: readonly StatedTimeValue[], args: { earliest: DateTime; holds: readonly Hold[]; blocked?: readonly Slot[] }): Slot | null {
+  let best: { slot: Slot; distance: number; start: DateTime } | null = null;
+  for (const stated of times) {
+    const open = dayAt(stated.date, DAY_OPEN);
+    const close = dayAt(stated.date, DAY_CLOSE);
+    if (open === null || close === null) continue;
+    const target = (stated.start !== undefined ? dayAt(stated.date, stated.start) : null) ?? open;
+    let cursor = ceilHour(later(open, args.earliest.setZone(ZONE)));
+    while (cursor.plus({ hours: VISIT_HOURS }) <= close) {
+      const end = cursor.plus({ hours: VISIT_HOURS });
+      const slot: Slot = { start: toIso(cursor), end: toIso(end) };
+      const free = !args.holds.some((hold) => overlaps(hold.slot, slot)) && !(args.blocked ?? []).some((blocked) => overlaps(blocked, slot));
+      if (free) {
+        const gap = Math.abs(cursor.diff(target, 'minutes').minutes);
+        if (best === null || gap < best.distance || (gap === best.distance && cursor < best.start)) best = { slot, distance: gap, start: cursor };
+      }
+      cursor = cursor.plus({ hours: 1 });
+    }
+  }
+  return best?.slot ?? null;
+}

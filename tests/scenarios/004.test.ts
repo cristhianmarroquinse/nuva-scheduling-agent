@@ -55,7 +55,7 @@ describe('US1 · a decline or counter-proposal leads to a new concrete proposal'
     expect(handymanFrame).not.toContain('no están disponibles');
   }, SPAWN_TIMEOUT);
 
-  it('004-counter-no-fit: a time whose visit would end after 22:00 does not fit (AC-1.6)', async () => {
+  it('004-counter-no-fit: a time whose visit would end after 22:00 does not fit; the nearest slot that day is proposed (AC-1.6; 009 AC-3.1)', async () => {
     await expectScenario('004-counter-no-fit');
     const { output } = await scenarioRun('004-counter-no-fit');
     expect(output.stdout).toContain('The times you suggested are not available.');

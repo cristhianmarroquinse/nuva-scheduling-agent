@@ -583,9 +583,9 @@ describe('negotiation: declines, counters, re-proposals, limits and withdrawals 
       expect(holdOf(state, 'WO-1')?.slot.start).toBe('2026-11-05T15:00:00+01:00');
     });
 
-    it('a counter with no fit gets the next free slot and the note goes only to that party (AC-1.6)', () => {
+    it('a counter with no fit gets the nearest slot that day and the note goes only to that party (AC-1.6; 009 AC-3.1)', () => {
       const { outputs } = step(fold(loaded).state, interp('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-05', start: '21:00' }] }));
-      expect(decisionsOf(outputs)[0]).toMatchObject({ outcome: 'repropose', cause: 'no_fit', start: '2026-11-04T16:00:00+01:00' });
+      expect(decisionsOf(outputs)[0]).toMatchObject({ outcome: 'repropose', cause: 'no_fit', start: '2026-11-05T20:00:00+01:00' });
       const [tenantFrame, handymanFrame] = stdoutOf(outputs).split('\n\n');
       expect(tenantFrame).toContain('The times you suggested are not available.');
       expect(handymanFrame).not.toContain('no están disponibles');
@@ -1126,5 +1126,124 @@ describe('008 · re-proposals never overlap a refused slot (REQ-NG-11)', () => {
       expect(startOf(highDeclined, 'WO-H')).toBe('2026-11-04T14:00:00+01:00');
       sound(highDeclined);
     });
+  });
+});
+
+describe('009 · stated constraints are honoured, and notes are true (REQ-NG-12, REQ-NG-13)', () => {
+  // sim_now Wed 2026-11-04 10:00 +01:00; one Medium order WO-1 (English) → v1 Wed 12:00–14:00.
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const one: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' })] }];
+  type Result = import('../../src/interpreter/schema.js').Interpretation;
+  type State = import('../../src/core/state.js').State;
+  let seq = 900;
+  const say = (role: 'tenant' | 'handyman', result: Partial<Result>): Fact => ({
+    type: 'interpretation', seq: (seq += 1), woid: 'WO-1', role, source: 'fake', prompt_version: '4',
+    result: { intent: 'decline', times: [], exclusions: [], quote: 'q', ...result },
+  });
+  const startOf = (state: State) => state.holds.find((hold) => hold.orderId === 'WO-1')?.slot.start;
+  const lastDecision = (outputs: Output[]) => {
+    const decisions = tracesOf(outputs, 'decision');
+    const last = decisions[decisions.length - 1];
+    return last?.kind === 'trace' ? (last.detail as Record<string, unknown>) : undefined;
+  };
+  const NOTE = 'The times you suggested are not available.';
+  const sound = (state: State) => {
+    for (const a of state.holds) {
+      expect(Date.parse(a.slot.end) - Date.parse(a.slot.start), 'SCHED-2').toBe(2 * 3600_000);
+      for (const b of state.holds) if (a !== b) expect(Date.parse(a.slot.start) < Date.parse(b.slot.end) && Date.parse(b.slot.start) < Date.parse(a.slot.end), 'SCHED-1').toBe(false);
+    }
+  };
+
+  describe('what a party rules out stays ruled out (AC-1.1, AC-1.2, AC-1.3, AC-1.4)', () => {
+    it('a decline that excludes the day moves to another day, without a note', () => {
+      const { state, outputs } = step(fold(one).state, say('tenant', { exclusions: [{ weekday: 'wednesday' }] }));
+      expect(startOf(state)).toBe('2026-11-05T09:00:00+01:00');
+      expect(lastDecision(outputs)).toMatchObject({ outcome: 'repropose', cause: 'decline' });
+      expect(stdoutOf(outputs)).not.toContain(NOTE);
+      sound(state);
+    });
+
+    it('a counter with exclusions and no times is re-proposed like a decline, avoiding them, without a note (AC-2.2)', () => {
+      const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as const;
+      const { state, outputs } = step(fold(one).state, say('tenant', { intent: 'counter', exclusions: weekdays.map((weekday) => ({ weekday })) }));
+      expect(startOf(state)).toBe('2026-11-11T09:00:00+01:00');
+      expect(lastDecision(outputs)).toMatchObject({ outcome: 'repropose', cause: 'counter' });
+      expect(stdoutOf(outputs)).not.toContain(NOTE);
+    });
+
+    it('undated times are a daily constraint: "only afternoons" never gets a morning on a later day', () => {
+      const state = fold([...one, say('tenant', { exclusions: [{ end: '14:00' }] }), say('handyman', {}), say('handyman', {})]).state;
+      expect(startOf(state)).toBe('2026-11-05T14:00:00+01:00');
+      expect(state.orders.get('WO-1')?.constraints.length).toBe(14);
+      sound(state);
+    });
+
+    it('constraints of both parties add up', () => {
+      const state = fold([...one, say('tenant', { exclusions: [{ weekday: 'wednesday' }] }), say('handyman', { exclusions: [{ weekday: 'thursday' }] })]).state;
+      expect(startOf(state)).toBe('2026-11-06T09:00:00+01:00');
+    });
+
+    it('a time the party names now wins over an earlier constraint (AC-1.4)', () => {
+      const state = fold([...one, say('tenant', { exclusions: [{ weekday: 'wednesday' }] }), say('tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '16:00' }] })]).state;
+      expect(startOf(state)).toBe('2026-11-04T16:00:00+01:00');
+    });
+  });
+
+  describe('the nearest slot on the stated day, and true notes (AC-2.1, AC-3.1, AC-3.2)', () => {
+    it('a time that cannot fit gets the nearest slot that day, with the note', () => {
+      const { state, outputs } = step(fold(one).state, say('tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '21:30' }] }));
+      expect(startOf(state)).toBe('2026-11-04T20:00:00+01:00');
+      expect(lastDecision(outputs)).toMatchObject({ outcome: 'repropose', cause: 'no_fit' });
+      expect(stdoutOf(outputs)).toContain(NOTE);
+    });
+
+    it('a stated day with nothing free falls back to the next slot, with the note', () => {
+      const { state, outputs } = step(fold(one).state, say('tenant', { intent: 'counter', times: [{ date: '2026-11-02', start: '10:00' }] }));
+      expect(startOf(state)).toBe('2026-11-04T14:00:00+01:00');
+      expect(stdoutOf(outputs)).toContain(NOTE);
+    });
+  });
+
+  describe("readings that keep the party's last word (AC-4.1, AC-4.2)", () => {
+    it('"yes, but not before 13:00" to the 12:00 slot is a counter, not a confirmation question', () => {
+      const { state, outputs } = step(fold(one).state, say('tenant', { intent: 'accept', exclusions: [{ end: '13:00' }] }));
+      expect(tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as { outcome: string }).outcome)).toEqual(['mismatch', 'repropose']);
+      expect(startOf(state)).toBe('2026-11-04T14:00:00+01:00');
+      expect(stdoutOf(outputs)).not.toContain('To confirm');
+      expect(stdoutOf(outputs)).not.toContain(NOTE);
+    });
+
+    it('a contradictory reply that states a time is a counter with that time', () => {
+      const { state, outputs } = step(fold(one).state, say('tenant', { intent: 'contradictory', times: [{ date: '2026-11-05', start: '11:00' }] }));
+      expect(tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as { outcome: string }).outcome)).toEqual(['correction', 'repropose']);
+      expect(startOf(state)).toBe('2026-11-05T11:00:00+01:00');
+      expect(state.orders.get('WO-1')?.unclearStreak.tenant.count).toBe(0);
+    });
+  });
+});
+
+describe('009 · stated availability that contains the proposal is an acceptance (AC-4.5)', () => {
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const one: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' })] }];
+  type Result = import('../../src/interpreter/schema.js').Interpretation;
+  let seq = 950;
+  const say = (result: Partial<Result>): Fact => ({ type: 'interpretation', seq: (seq += 1), woid: 'WO-1', role: 'tenant', source: 'fake', prompt_version: '4', result: { intent: 'accept', times: [], exclusions: [], quote: 'q', ...result } });
+  const outcomes = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as { outcome: string }).outcome);
+
+  it('an accept listing the whole week counts for the current proposal, without a re-proposal', () => {
+    const week = ['2026-11-04', '2026-11-05', '2026-11-06', '2026-11-07', '2026-11-08'].map((date) => ({ date }));
+    const { state, outputs } = step(fold(one).state, say({ times: week }));
+    expect(outcomes(outputs)).toEqual(['accepted']);
+    expect(state.orders.get('WO-1')).toMatchObject({ accepted: { tenant: 1 }, proposal: { version: 1 } });
+  });
+
+  it('a counter whose range contains the proposal is an acceptance; one that does not is still a counter', () => {
+    expect(outcomes(step(fold(one).state, say({ intent: 'counter', times: [{ date: '2026-11-04', start: '09:00', end: '18:00' }] })).outputs)).toEqual(['accepted']);
+    expect(outcomes(step(fold(one).state, say({ intent: 'counter', times: [{ date: '2026-11-04', start: '13:00', end: '18:00' }] })).outputs)).toEqual(['repropose']);
+  });
+
+  it('an exclusion that rules the proposal out wins over a window that contains it', () => {
+    const { outputs } = step(fold(one).state, say({ times: [{ date: '2026-11-04' }], exclusions: [{ end: '13:00' }] }));
+    expect(outcomes(outputs)).toEqual(['mismatch', 'repropose']);
   });
 });

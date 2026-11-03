@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 
-export const PROMPT_VERSION = '3';
+export const PROMPT_VERSION = '4';
 export const ANSWER_PROMPT_VERSION = '1';
 
 export const INTENTS = ['accept', 'decline', 'counter', 'question', 'withdraw', 'cross_reference', 'contradictory', 'unclear'] as const;

@@ -4,7 +4,7 @@ WO-1,Leaking tap,Calle Mayor 1,The kitchen tap drips all night.,2026-11-02T09:00
 # env
 AGENT_NOW=2026-11-04T10:00
 # stdin
-WO-1|tenant {"intent":"accept","times":[],"exclusions":[{"date":"2026-11-04","end":"13:00"}],"quote":"yes, but not before 13:00"}
+WO-1|tenant {"intent":"accept","times":[],"exclusions":[{"date":"2026-11-05"}],"quote":"yes, but not Thursday"}
 WO-1|tenant Yes
 # stdout
 WOID:WO-1|ROLE:tenant
@@ -25,7 +25,7 @@ REASON:No reply was received before the end of input.
 # exit
 0
 # trace
-{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"needs_confirmation","party":"tenant","exclusions":[{"date":"2026-11-04","end":"13:00"}]}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"needs_confirmation","party":"tenant","exclusions":[{"date":"2026-11-05"}]}}
 {"event_type":"msg_out","work_order_id":"WO-1","detail":{"to":"tenant","language":"en","version":1}}
 {"event_type":"interpretation","work_order_id":"WO-1","detail":{"seq":2,"source":"regex"}}
 {"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"accepted","party":"tenant"}}

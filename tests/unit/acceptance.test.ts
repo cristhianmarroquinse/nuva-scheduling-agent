@@ -35,7 +35,7 @@ describe('evaluateAcceptance (AC-2.1, AC-2.2, AC-2.3)', () => {
 
   it('an accept with an exclusion or constraint needs a one-line confirmation first (AC-2.3)', () => {
     expect(evaluateAcceptance(accept({ exclusions: [{ weekday: 'thursday' }] }), slot)).toBe('needs_confirmation');
-    expect(evaluateAcceptance(accept({ exclusions: [{ date: '2026-11-04', end: '15:00' }] }), slot)).toBe('needs_confirmation');
+    expect(evaluateAcceptance(accept({ exclusions: [{ date: '2026-11-04', end: '12:00' }] }), slot)).toBe('needs_confirmation');
     expect(evaluateAcceptance(accept({ times: [{ date: '2026-11-05' }], exclusions: [{ weekday: 'thursday' }] }), slot)).toBe('mismatch');
   });
 
@@ -43,5 +43,19 @@ describe('evaluateAcceptance (AC-2.1, AC-2.2, AC-2.3)', () => {
     const winter = { start: '2026-10-25T08:00:00+01:00', end: '2026-10-25T10:00:00+01:00' };
     expect(evaluateAcceptance(accept({ times: [{ date: '2026-10-25', start: '08:00' }] }), winter)).toBe('accepted');
     expect(evaluateAcceptance(accept({ times: [{ date: '2026-10-25', start: '07:00' }] }), winter)).toBe('mismatch');
+  });
+});
+
+describe('an exclusion that rules out the proposal is not an acceptance (AC-4.1 of 009)', () => {
+  it('a dated, weekday or undated exclusion overlapping the visit is a mismatch', () => {
+    expect(evaluateAcceptance(accept({ exclusions: [{ date: '2026-11-04', end: '15:00' }] }), slot)).toBe('mismatch');
+    expect(evaluateAcceptance(accept({ exclusions: [{ end: '15:00' }] }), slot)).toBe('mismatch');
+    expect(evaluateAcceptance(accept({ exclusions: [{ weekday: 'wednesday' }] }), slot)).toBe('mismatch');
+    expect(evaluateAcceptance(accept({ exclusions: [{ start: '15:30' }] }), slot)).toBe('mismatch');
+  });
+
+  it('an exclusion that only touches the visit or applies elsewhere still asks for confirmation (003 AC-2.3)', () => {
+    expect(evaluateAcceptance(accept({ exclusions: [{ end: '14:00' }] }), slot)).toBe('needs_confirmation');
+    expect(evaluateAcceptance(accept({ exclusions: [{ date: '2026-11-05' }] }), slot)).toBe('needs_confirmation');
   });
 });

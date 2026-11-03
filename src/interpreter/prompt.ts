@@ -36,8 +36,9 @@ export function buildPrompt(request: InterpretRequest): Prompt {
     '- exclusions: every day or time the reply rules out (weekday in English lower case, or date, or a start/end range).',
     '- question: the question asked, if any, otherwise null. cross_reference: the other order or visit mentioned, if any, otherwise null.',
     '- quote: the exact words (at most 200 characters) that justify the intent.',
-    '- scope: "all" only when the sender is the handyman and the unavailability he states applies to all his work ("mañana no puedo nada", "estoy enfermo", "el viernes libro"); otherwise "this_order". A tenant\'s reply is always "this_order".',
+    '- scope: "all" only when the sender is the handyman and the unavailability he states applies to all his work ("mañana no puedo nada", "estoy enfermo", "el viernes libro"); otherwise "this_order". An acceptance, a question or any reply that states no unavailability is "this_order", and a tenant\'s reply is always "this_order".',
     'Polite idioms such as "no problem" or "sin problema" are not refusals. A reply that accepts but adds a condition keeps intent accept and lists the condition in exclusions or times.',
+    'Availability that includes the proposed visit ("whenever suits you", "any time this week", "cuando queráis") is accept; a bare "whatever" or "lo que sea" that states no availability stays unclear. A correction later in the same message wins over an earlier statement: "yes... actually no, Thursday at 11 instead" is counter with Thursday 11:00, not contradictory. Days or periods the sender can do ("el finde", "this weekend", "por las tardes", "next week") go in times as concrete dates (one entry per day, with the period hours when stated), not only as exclusions of the other days.',
   ].join('\n');
 
   const safeBody = request.body.replace(/<\/reply>/gi, '&lt;/reply&gt;');

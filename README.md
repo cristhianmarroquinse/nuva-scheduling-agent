@@ -7,7 +7,7 @@ Status: **v1**. Every requirement of the take-home is implemented, each of the 2
 ## Try it in two minutes
 
 ```bash
-docker build -t agent .                                  # runs typecheck + 404 tests inside; fails if any fails
+docker build -t agent .                                  # runs typecheck + 437 tests inside; fails if any fails
 cp traces/examples/work_orders.csv .                     # four orders of mixed urgency
 cp .env.example .env                                     # then put your key in ANTHROPIC_API_KEY=
 mkdir -p traces
@@ -35,9 +35,9 @@ Environment variables:
 
 **Calendar.** One handyman, 2-hour visits on the hour, never overlapping. The agent's own proposals fall in business windows: Critical any day 08:00–21:00, other urgencies Monday to Friday 09:00–19:00, no earlier than the order's `reported_at` and at least one full hour after the next full hour. Times a party offers are honoured between 07:00 and 22:00 on any day, even outside those windows.
 
-**Explicit agreement.** A reply counts as an acceptance only when its intent is `accept` *and* the day or time it names fits the proposal (a range must contain the visit, a point time must equal its start). "Yes, Thursday at 10" to a Wednesday proposal is a counter-proposal, not a yes. "Yes, but not before 15:00" gets a one-line confirmation of the exact slot before it counts. An order is `scheduled` only when both parties accepted the same proposal version while its hold is live; confirmations go to both, then the result with `SCHEDULED_FOR`.
+**Explicit agreement.** A reply counts as an acceptance only when its intent is `accept` *and* the day or time it names fits the proposal (a range must contain the visit, a point time must equal its start). "Yes, Thursday at 10" to a Wednesday proposal is a counter-proposal, not a yes. "Yes, but not Thursday" to a Wednesday proposal gets a one-line confirmation of the exact slot before it counts; "yes, but not before 13:00" to a 12:00 visit rules the visit out, so it is a counter-proposal, not a yes. An order is `scheduled` only when both parties accepted the same proposal version while its hold is live; confirmations go to both, then the result with `SCHEDULED_FOR`.
 
-**Negotiation.** A decline, a counter-proposal or a withdrawal produces a new proposal to both parties, inside the stated availability when something fits, otherwise the next free slot that overlaps no proposal already refused in that order, with a note; the message says the previous proposal is cancelled. Questions are answered from a closed facts list and count toward nothing. A reply that references another work order gets one clarification.
+**Negotiation.** A decline, a counter-proposal or a withdrawal produces a new proposal to both parties, inside the stated availability when something fits, else the free slot closest to the stated time on the day the party named, else the next free slot that overlaps neither a proposal already refused in that order nor any day or time a party said they cannot do; the "times you suggested are not available" note goes only to a party who suggested times; the message says the previous proposal is cancelled. Questions are answered from a closed facts list and count toward nothing. A reply that references another work order gets one clarification.
 
 **Several orders at once.** All orders share one calendar, and tentative holds are the coordination primitive: a proposal reserves its slot until it is accepted by both, moved, or released. Input lines for different orders interleave freely and are processed one at a time in arrival order. When a higher-urgency order's party asks for times and the only fitting slot is held tentatively by a strictly lower-urgency order, the hold changes hands and the other order is re-proposed and told why, without penalty. A scheduled visit is never moved by anything. The example shows it: WO-1002's counter lands at Thursday 15:00 because Thursday 09:00 is held by WO-1003 ([traces/examples/README.md](traces/examples/README.md)).
 
@@ -104,15 +104,15 @@ The model is called in exactly two places:
 
 The model never sets state, holds, acceptances or results, never sees the other party's text, and the parties' replies are placed in the prompt as data, never as instructions. Everything else is templates and rules, which is why the invariants are tested without a key ([ADR 0001](docs/adr/0001-deterministic-core-llm-interpreter.md)).
 
-Why Haiku, with numbers. A golden set of 50 labelled replies (Spanish and English, every intent, relative dates, ranges, exclusions, idioms, hostile text) was run against each tier through the production prompt, schema and validator. The full report with every mismatch is [`eval/REPORT.md`](eval/REPORT.md); `pnpm eval --tier <regex|haiku|sonnet>` regenerates it.
+Why Haiku, with numbers. A golden set of 57 labelled replies (Spanish and English, every intent, relative dates, ranges, exclusions, idioms, hostile text) was run against each tier through the production prompt, schema and validator. The full report with every mismatch is [`eval/REPORT.md`](eval/REPORT.md); `pnpm eval --tier <regex|haiku|sonnet>` regenerates it.
 
 | Tier | Model | Intent accuracy | Full accuracy | Resolved by regex | p50 latency | Cost for the set |
 |---|---|---|---|---|---|---|
-| regex | — | 8% | 8% | 8% | — | $0 |
-| haiku | claude-haiku-5-5 | 88% | 72% | 8% | 1.8 s | $0.014 |
-| sonnet | claude-sonnet-5-5 | 92% | 78% | 8% | 1.5 s | $0.232 |
+| regex | — | 9% | 9% | 9% | — | $0 |
+| haiku | claude-haiku-5-5 | 82% | 68% | 9% | 1.6 s | $0.017 |
+| sonnet | claude-sonnet-5-5 | 88% | 70% | 9% | 1.3 s | $0.285 |
 
-Haiku is the default: Sonnet is four points better at seventeen times the cost. Both miss the same four intents: two withdrawals read as declines, which the policy treats identically, and two cross-references read as questions, which gets an answer from the facts instead of a clarification. Haiku misses two more: a frame-like injection read as an acceptance (which still needs the other party before anything is scheduled), and a reply with a `12:00Z` time read as a counter, where the label itself is arguable. The labels are hand-written. The regex share is low on this set because it over-represents long replies; in practice bare yes/no replies are common.
+Haiku is the default: Sonnet is six points better on intent at seventeen times the cost, and both miss the same kinds of reply: a withdrawal read as a decline and cross-references read as questions (known limitations below), "Wednesday is impossible, any other weekday is fine" read as a counter instead of a decline, which the policy handles identically since 009, and two replies with no final position read as unclear instead of contradictory, which leads to the same clarification. Haiku misses a few more: a frame-like injection read as an acceptance (which still needs the other party before anything is scheduled) and a reply with a `12:00Z` time read as a counter. Prompt version 4 (2026-11-03) added three readings found by the end-to-end runs ("whenever suits you" is a yes, a later correction in the message wins, "el finde" becomes concrete dates); on the 48 earlier cases whose labels did not change it scores as well as version 3 or better (intent 42 → 42–43, full 36 → 37–38 over two runs). The labels are hand-written; two were relabelled because spec 009 changed what is correct ("Yes that's fine. No wait, I can't do Wednesday at all." is now a decline of Wednesday, not contradictory). The regex share is low on this set because it over-represents long replies; in practice bare yes/no replies are common.
 
 ## Assumptions and trade-offs
 
@@ -120,7 +120,8 @@ Haiku is the default: Sonnet is four points better at seventeen times the cost. 
 - **No calendar horizon.** An order takes the first free slot however far ahead; the take-home defines no "no slot available" outcome.
 - **Notice.** The agent's own proposals start at least one full hour after the next full hour from the reference time, and no earlier than `reported_at`. Times offered by a party are honoured 07:00–22:00 on any day, even outside the business windows.
 - **A withdrawal counts as a refusal** toward the three-refusal limit, so a party cannot withdraw without end. The take-home names declines and counters; this is stricter and deliberate.
-- **No fit for stated availability** still produces the next free slot, with a note that the requested times are not available, so every exchange ends in a concrete proposal.
+- **No fit for stated availability** still produces a concrete proposal: the free slot closest to the stated time on the day the party named (for "only tonight at 21:30", 20:00–22:00), otherwise the next free slot, with a note that the requested times are not available ([spec 009](specs/features/009-honour-stated-constraints/spec.md)).
+- **What a party rules out stays ruled out.** Days and times a party says they cannot do ("Wednesday is impossible", "only afternoons") are recorded for that order and every slot the agent picks avoids them; a time of day without a date ("not before 13:00") applies to every day for 14 days. Times a party names later are still honoured. Decided after end-to-end runs on 2026-11-03 in which the agent re-proposed a day the tenant had just excluded, with a false note.
 - **A slot the agent picks never overlaps one already refused in that order** (declined, countered or withdrawn from, by either party), so three refusals mean three genuinely different options before `no_mutual_slot`: a decline of Wednesday 14:00–16:00 is followed by 16:00–18:00, not 15:00–17:00. The take-home only forbids overlapping visits; this was decided after a manual run in which the first version burned the three refusals on nearly the same two hours. Times a party names are still honoured even if they overlap an earlier refusal, because people change their minds ([spec 008](specs/features/008-no-overlap-with-refused-slots/spec.md)).
 - **Takeover only on stated availability.** A higher-urgency order bumps a lower-urgency tentative hold only when its party asked for times that nothing free fits. Declines never bump anyone. Scheduled visits are never taken.
 - **A weekday blackout** ("el jueves no puedo") covers the next occurrence only.
@@ -134,7 +135,7 @@ Haiku is the default: Sonnet is four points better at seventeen times the cost. 
 
 - On the golden set the model reads withdrawals as declines and cross-references as questions. The first is harmless; the second means an order whose replies keep referring to another job gets answers instead of a clarification, and closes only on timeout or end of input, never by the streak rules.
 - Hostile text can be read as a one-party acceptance by Haiku; the other party must still accept, and the validator keeps the model from touching state in any other way.
-- Exclusions with only a start or an end on a counter are read conservatively; recurring constraints ("never on Tuesdays") are not modelled.
+- Recurring constraints ("never on Tuesdays") are not modelled: a weekday exclusion covers its next occurrence, and a time-of-day exclusion lasts 14 days.
 - The run is a single process with in-memory state; durability (a workflow engine or a database) is the production step described in ADR 0002.
 - Phase 2 of the [roadmap](docs/planning/04-roadmap.md) would add a bounded agent tier for multi-intent messages ([ADR 0005](docs/adr/0005-tiered-agent-escalation.md)), an adversarial simulator and a repair loop.
 
@@ -145,9 +146,9 @@ The repository holds the product and the development harness it was built with. 
 | Part | Paths |
 |---|---|
 | Product | `src/`, `Dockerfile`, `package.json`, `tsconfig*.json`, `traces/examples/` |
-| Tests (404, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
+| Tests (437, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
 | Evaluation | `eval/`: golden set, scorer, report; `pnpm eval` |
-| Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–008), `scripts/` |
+| Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–009), `scripts/` |
 | Decisions | `docs/planning/`, `docs/adr/` |
 
 Each feature went through the same pipeline with Claude Code: `/spec` (user stories and EARS criteria, clarified with at most five questions), `/plan` (design, a constitution check against the invariants and ADRs, ordered tasks), `/implement` (every test written and seen failing before its code, `pnpm check` after every task) and `/ship`. `pnpm check` is typecheck, the test suite and invariant coverage, whose baseline may only shrink and is empty now; hooks refuse to finish while it is red. Features: 001 I/O protocol and startup; 002 calendar and initial proposals; 003 interpretation and acceptance; 004 negotiation; 005 timeouts, preemption and blackouts; 006 golden set and evaluation; 007 delivery. Specs with plan and tasks are under `specs/features/`; the behaviour is specified in [001](specs/features/001-io-protocol-startup/spec.md), [002](specs/features/002-calendar-initial-proposals/spec.md), [003](specs/features/003-interpretation-acceptance/spec.md), [004](specs/features/004-negotiation/spec.md) and [005](specs/features/005-timeouts-preemption-blackouts/spec.md).

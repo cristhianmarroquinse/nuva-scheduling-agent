@@ -1,15 +1,15 @@
 {
   "tier": "regex",
   "model": null,
-  "promptVersion": "3",
-  "date": "2026-11-02",
+  "promptVersion": "4",
+  "date": "2026-11-03",
   "metrics": {
-    "n": 50,
-    "intentAccuracy": 0.08,
-    "fullAccuracy": 0.08,
-    "fastPathShare": 0.08,
+    "n": 57,
+    "intentAccuracy": 0.08771929824561403,
+    "fullAccuracy": 0.08771929824561403,
+    "fastPathShare": 0.08771929824561403,
     "modelShare": 0,
-    "unresolvedShare": 0.92,
+    "unresolvedShare": 0.9122807017543859,
     "p50LatencyMs": null,
     "p95LatencyMs": null,
     "inputTokens": 0,
@@ -435,6 +435,67 @@
       },
       "intentMatch": true,
       "fullMatch": true,
+      "calls": 0
+    },
+    {
+      "id": "g51",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g52",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g53",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g54",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g55",
+      "resolvedBy": "regex",
+      "obtained": {
+        "intent": "decline",
+        "times": [],
+        "exclusions": [],
+        "quote": "Tampoco"
+      },
+      "intentMatch": true,
+      "fullMatch": true,
+      "calls": 0
+    },
+    {
+      "id": "g56",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g57",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
       "calls": 0
     }
   ]

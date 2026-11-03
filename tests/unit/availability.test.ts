@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Hold } from '../../src/calendar/calendar.js';
-import { blackoutWindows, slotInside, takeoverCandidate, windowsFrom } from '../../src/policy/availability.js';
+import { blackoutWindows, constraintWindows, nearestOnDate, slotInside, takeoverCandidate, windowsFrom } from '../../src/policy/availability.js';
 import { parseLocalOrOffset, toIso } from '../../src/time/time.js';
 
 // Availability stated by a party (REQ-NG-4, REQ-SC-4): windows between 07:00 and 22:00 on any day; code fits the 2-hour visit.
@@ -141,5 +141,50 @@ describe('blackout windows (AC-3.1, AC-3.7 of 005)', () => {
 
   it('carries the offsets across 2026-10-25 (TIME-1)', () => {
     expect(spanOf(blackoutWindows([{ date: '2026-10-25' }], at('2026-10-24T20:00')))).toEqual([['2026-10-25T00:00:00+02:00', '2026-10-26T00:00:00+01:00']]);
+  });
+});
+
+describe('constraint windows of an order (AC-1.2 of 009, TIME-1)', () => {
+  const now = at('2026-11-04T10:00');
+  const spans = (slots: { start: string; end: string }[]) => slots.map((slot) => [slot.start, slot.end]);
+
+  it('a date is that whole day; a weekday is its next occurrence; a dated range is that range', () => {
+    expect(spans(constraintWindows([{ date: '2026-11-05' }], now))).toEqual([['2026-11-05T00:00:00+01:00', '2026-11-06T00:00:00+01:00']]);
+    expect(spans(constraintWindows([{ weekday: 'wednesday' }], now))).toEqual([['2026-11-04T00:00:00+01:00', '2026-11-05T00:00:00+01:00']]);
+    expect(spans(constraintWindows([{ date: '2026-11-05', start: '09:00', end: '13:00' }], now))).toEqual([['2026-11-05T09:00:00+01:00', '2026-11-05T13:00:00+01:00']]);
+  });
+
+  it('undated times repeat on each of the next 14 days, with the offset of each day across the DST change', () => {
+    const windows = constraintWindows([{ end: '13:00' }], at('2026-10-24T10:00'));
+    expect(windows).toHaveLength(14);
+    expect(windows[0]).toEqual({ start: '2026-10-24T00:00:00+02:00', end: '2026-10-24T13:00:00+02:00' });
+    expect(windows[1]).toEqual({ start: '2026-10-25T00:00:00+02:00', end: '2026-10-25T13:00:00+01:00' });
+    expect(windows[13]).toEqual({ start: '2026-11-06T00:00:00+01:00', end: '2026-11-06T13:00:00+01:00' });
+  });
+
+  it('an exclusion with neither day nor times constrains nothing', () => {
+    expect(constraintWindows([{}], now)).toEqual([]);
+  });
+});
+
+describe('nearest slot on the stated day (AC-3.1, AC-3.2 of 009)', () => {
+  const earliest = at('2026-11-04T12:00');
+  it('a point that cannot fit gets the closest slot that day inside 07:00–22:00', () => {
+    expect(nearestOnDate([{ date: '2026-11-04', start: '21:30' }], { earliest, holds: [] })).toEqual({ start: '2026-11-04T20:00:00+01:00', end: '2026-11-04T22:00:00+01:00' });
+    // 21:00 cannot fit either: 20:00 starts 60 minutes away, 19:00 120, so 20:00 wins.
+    expect(nearestOnDate([{ date: '2026-11-04', start: '21:00' }], { earliest, holds: [] })).toEqual({ start: '2026-11-04T20:00:00+01:00', end: '2026-11-04T22:00:00+01:00' });
+  });
+
+  it('skips held and blocked slots and prefers the earlier of two equally close slots', () => {
+    const holds = [hold('OTHER', '2026-11-04T15:00', '2026-11-04T17:00')];
+    expect(nearestOnDate([{ date: '2026-11-04', start: '15:00', end: '17:00' }], { earliest, holds })).toEqual({ start: '2026-11-04T13:00:00+01:00', end: '2026-11-04T15:00:00+01:00' });
+    const blocked = [{ start: iso('2026-11-04T12:00'), end: iso('2026-11-04T15:00') }];
+    expect(nearestOnDate([{ date: '2026-11-04', start: '15:00', end: '17:00' }], { earliest, holds, blocked })).toEqual({ start: '2026-11-04T17:00:00+01:00', end: '2026-11-04T19:00:00+01:00' });
+  });
+
+  it('is null when the stated day has no free slot, or is in the past', () => {
+    const full = [hold('OTHER', '2026-11-04T07:00', '2026-11-04T22:00')];
+    expect(nearestOnDate([{ date: '2026-11-04', start: '21:30' }], { earliest, holds: full })).toBeNull();
+    expect(nearestOnDate([{ date: '2026-11-02', start: '10:00' }], { earliest, holds: [] })).toBeNull();
   });
 });

@@ -74,7 +74,7 @@ describe('scope of a stated unavailability (005)', () => {
     expect(validateInterpretation({ intent: 'decline', quote: 'x', scope: 'everyone' }).ok).toBe(false);
   });
 
-  it('is prompt version 3', () => {
-    expect(PROMPT_VERSION).toBe('3');
+  it('is prompt version 4 (009 AC-4.3)', () => {
+    expect(PROMPT_VERSION).toBe('4');
   });
 });

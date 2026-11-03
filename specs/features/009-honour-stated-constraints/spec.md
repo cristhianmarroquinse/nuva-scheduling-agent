@@ -1,6 +1,6 @@
 # 009 · Stated constraints are honoured, and notes are true
 
-**Status:** planned
+**Status:** implemented
 **Product requirements:** REQ-NG-12 (new), REQ-NG-13 (new), REQ-NG-2, REQ-NG-3, REQ-NG-4, REQ-NG-8, REQ-NG-11
 **Invariants touched:** SCHED-1, SCHED-2, SCHED-5, LLM-1 (unchanged; every new slot must still satisfy them)
 **Amends:** 003 AC-2.3 (an exclusion that rules out the proposal is not an acceptance), 004 AC-1.1 and AC-1.6 (exclusions and the nearest slot on the stated day), 008 AC-1.2 (the fallback also avoids stated exclusions)
@@ -50,8 +50,9 @@ As a tenant, I want "yes, but not before 1pm" and "actually no, Thursday at 11" 
 
 - **AC-4.1** IF an `accept` states an exclusion that overlaps the current proposal, THEN THE system SHALL treat it as a mismatched acceptance, that is a counter with that reply's times and exclusions (004 AC-1.7); 003 AC-2.3 (confirmation) still applies when no exclusion overlaps the proposal.
 - **AC-4.2** IF an interpretation is `contradictory` AND states at least one time, THEN THE system SHALL treat it as a counter with those times and exclusions (the later statement in the message wins), not as an unclear reply.
-- **AC-4.3** THE interpretation prompt SHALL tell the model that availability that includes the proposed slot ("whenever suits you", "any time this week") is `accept`, and that a correction later in the same message wins over an earlier statement; the prompt version rises.
+- **AC-4.3** THE interpretation prompt SHALL tell the model that availability that includes the proposed slot ("whenever suits you", "any time this week") is `accept`, that a correction later in the same message wins over an earlier statement, and that named days or periods a party can do ("el finde", "this weekend", "por las tardes") are returned as `times` with concrete dates, not only as exclusions of the other days; the prompt version rises.
 - **AC-4.4** THE regex fast path SHALL read a bare "tampoco" / "tampoco puedo" as `decline`.
+- **AC-4.5** IF an `accept` or a `counter` states availability AND one stated window contains the whole current proposal AND no exclusion in it rules the proposal out, THEN THE system SHALL count it as an acceptance of the current proposal, without a re-proposal (found in the e2e re-run: "Whenever suits you, I'm home all week" was cancelled and re-proposed as the same slot).
 
 ## Edge cases
 
@@ -68,7 +69,7 @@ As a tenant, I want "yes, but not before 1pm" and "actually no, Thursday at 11" 
 | Scenario | Covers | stdin (summary) | Expected |
 |---|---|---|---|
 | `009-decline-excluded-day` | AC-1.1, AC-1.3, AC-2.2 | Decline with exclusion Wednesday | v2 Thursday 09:00, no note |
-| `009-weekend-only` | AC-1.2, AC-1.3, AC-2.2 | Counter, no times, exclusions Monday–Friday | v2 Saturday, no note |
+| `009-weekdays-excluded` | AC-1.2, AC-1.3, AC-2.2 | Medium; counter with no times, exclusions Monday–Friday (each its next occurrence) | v2 Wed 11 Nov 09:00 (the system windows never propose a weekend for Medium), no note; the golden set checks that the model returns the weekend as `times` instead |
 | `009-afternoons-only` | AC-1.2, AC-1.3 | Decline with exclusion 07:00–14:00 (no date) | v2 Wed 14:00; after a decline of it, never before 14:00 on later days |
 | `009-constraints-add-up` | AC-1.1, AC-1.3 | Tenant excludes Wednesday, handyman excludes Thursday | next slot Friday |
 | `009-explicit-inside-constraint` | AC-1.4 | Tenant excludes Wednesday, then names Wednesday 16:00 | v3 Wed 16:00 |
@@ -77,9 +78,10 @@ As a tenant, I want "yes, but not before 1pm" and "actually no, Thursday at 11" 
 | `009-accept-excludes-proposal` | AC-4.1 | "Yes, but not before 13:00" to 12:00 | counter: v2 Wed 14:00 (12:00–14:00 is refused and 07:00–13:00 excluded), no confirmation question |
 | `009-accept-constraint-elsewhere` | AC-4.1 | "Yes, but not Thursday" to Wednesday | confirmation asked (003 AC-2.3 unchanged) |
 | `009-contradictory-with-time` | AC-4.2 | contradictory with Thursday 11:00 | v2 Thu 11:00, no clarification |
+| `009-availability-contains-proposal` | AC-4.5 | accept listing the whole week; counter "Wednesday 09:00–18:00" | accepted as the current version, no re-proposal |
 | `009-tampoco` | AC-4.4 | "Tampoco" after a re-proposal | decline via regex |
 
-Golden-set cases (eval only, real model): "Whenever suits you, I'm home all week" → `accept`; "Yes that works… actually no, something came up. Could we do Thursday at 11 instead?" → `counter` with Thursday 11:00; "Wednesday is impossible for me, any other weekday is fine" → `decline` or `counter` with the Wednesday exclusion.
+Golden-set cases (eval only, real model): "Whenever suits you, I'm home all week" → `accept`; "Yes that works… actually no, something came up. Could we do Thursday at 11 instead?" → `counter` with Thursday 11:00; "Wednesday is impossible for me, any other weekday is fine" → `decline` or `counter` with the Wednesday exclusion; "Entre semana imposible, el finde cuando queráis" → `counter` with Saturday 7 and Sunday 8 November as `times`.
 
 ## Success criteria
 
@@ -96,6 +98,8 @@ Golden-set cases (eval only, real model): "Whenever suits you, I'm home all week
 - **Exclusions are order constraints** (decided 2026-11-03 after the e2e runs). The model already extracts them; dropping them made the agent repeat what people had ruled out and claim false things.
 - **Nearest slot on the stated day** (decided 2026-11-03 with the user). When the exact times do not fit, the closest slot that day is a better offer than the next free slot elsewhere.
 - **An exclusion that rules out the proposal is not an acceptance** (decided 2026-11-03 with the user): it is a counter, so the party is not asked to confirm a time they excluded.
+- **Golden set** (2026-11-03). g33 and g34 ("Yes that's fine. No wait, I can't do Wednesday at all.") are relabelled from `contradictory` to `decline` of Wednesday, because AC-4.2/AC-4.3 make the later statement win; g56 and g57 are added as replies with no final position, which stay `contradictory`. The first version-4 prompt read a bare "lo que sea" as accept and gave the handyman `scope: all` on plain acceptances; the prompt now says both explicitly. On the 48 earlier cases with unchanged labels, version 4 scores intent 42–43 and full 37–38 over two runs, against 42 and 36 for version 3.
+- **Availability that contains the proposal is an acceptance** (AC-4.5, found in the e2e re-run of 2026-11-03): "whenever suits you" listed as the whole week had been cancelled and re-proposed as the same slot.
 
 ## Open questions
 

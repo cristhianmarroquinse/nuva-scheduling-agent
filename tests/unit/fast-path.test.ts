@@ -11,7 +11,7 @@ describe('regex fast path (AC-1.3)', () => {
   });
 
   it('reads trivial refusals', () => {
-    for (const body of ['No', 'no.', 'No puedo', 'Nope']) {
+    for (const body of ['No', 'no.', 'No puedo', 'Nope', 'Tampoco', 'tampoco puedo.']) { // tampoco: AC-4.4 of 009
       expect(fastPath(body), body).toEqual({ intent: 'decline', times: [], exclusions: [], quote: body });
     }
   });

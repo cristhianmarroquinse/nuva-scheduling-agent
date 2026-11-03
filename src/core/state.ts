@@ -5,7 +5,7 @@ import { parseLine } from './protocol.js';
 import { NO_RESPONSE_SENTENCE, REVIEW_SENTENCES, criticalNoResponseSentence, invalidRowSentence, noResponseSentence, type ReasonCode } from './reasons.js';
 import { earliestStart, nextSlot, overlaps, priorityOrder, type Hold, type Slot } from '../calendar/calendar.js';
 import type { Interpretation } from '../interpreter/schema.js';
-import { blackoutWindows, slotInside, takeoverCandidate, windowsFrom } from '../policy/availability.js';
+import { blackoutWindows, constraintWindows, nearestOnDate, slotInside, takeoverCandidate, windowsFrom } from '../policy/availability.js';
 import { formatFrame, formatResult, type Result, type Role } from '../io/frames.js';
 import {
   acknowledgement,
@@ -23,7 +23,7 @@ import {
   reproposalToTenant,
   type ReproposalNote,
 } from '../messages/templates.js';
-import { evaluateAcceptance } from '../policy/acceptance.js';
+import { availabilityContains, evaluateAcceptance } from '../policy/acceptance.js';
 import { inferLanguage } from '../orders/language.js';
 import { validateRows, type WorkOrder } from '../orders/validate.js';
 import { factsFor, type AnswerRequest } from '../interpreter/answer.js';
@@ -58,6 +58,8 @@ export interface OrderState {
   refusals: Record<Role, number>;
   /** Slots of the proposals refused in this order by either party; the fallback search never overlaps them (REQ-NG-11). */
   refused: Slot[];
+  /** Windows a party ruled out in a refusal (exclusions), avoided by every slot the system chooses for this order (REQ-NG-12). */
+  constraints: Slot[];
   /** Proposal versions sent to each party since their last reply (REQ-NG-3). */
   unanswered: Record<Role, number>;
   /** Each party's last message body: the asker's goes to the answer prompt as data, the other's must not be echoed (LLM-2). */
@@ -81,6 +83,7 @@ function newOrderState(id: string): OrderState {
     llmFailures: 0,
     refusals: { tenant: 0, handyman: 0 },
     refused: [],
+    constraints: [],
     unanswered: { tenant: 0, handyman: 0 },
     lastBody: {},
     timeouts: { tenant: 0, handyman: 0 },
@@ -280,15 +283,17 @@ function applyInterpretation(state: State, fact: Fact & { type: 'interpretation'
   const unansweredVersions = current.unanswered[party];
   current.unanswered = { ...current.unanswered, [party]: 0 };
 
-  if (result.intent === 'decline') return refusal(ctx, 'decline', null);
-  if (result.intent === 'counter') return refusal(ctx, 'counter', result);
+  if (result.intent === 'decline') return refusal(ctx, 'decline', result);
+  // Stated availability that contains the visit on the table agrees with it: no re-proposal of the same slot (AC-4.5 of 009).
+  const containsProposal = (result.intent === 'accept' || result.intent === 'counter') && availabilityContains(result, proposal.slot);
+  if (result.intent === 'counter' && !containsProposal) return refusal(ctx, 'counter', result);
   if (result.intent === 'withdraw') {
     const { [party]: _withdrawn, ...stillAccepted } = current.accepted;
     current.accepted = stillAccepted;
-    return refusal(ctx, 'withdraw', result.times.length > 0 ? result : null);
+    return refusal(ctx, 'withdraw', result);
   }
 
-  if (result.intent === 'accept') {
+  if (result.intent === 'accept' || containsProposal) {
     if (bareYes && unansweredVersions >= 2) {
       // Two or more proposal versions reached this party without a reply: a bare yes could answer either (REQ-NG-3).
       current.awaitingConfirmation = { ...current.awaitingConfirmation, [party]: true };
@@ -297,7 +302,7 @@ function applyInterpretation(state: State, fact: Fact & { type: 'interpretation'
       orders.set(order.id, current);
       return { state: { ...state, orders, holds }, outputs };
     }
-    const verdict = evaluateAcceptance(result, proposal.slot);
+    const verdict = containsProposal ? (result.exclusions.length > 0 ? 'needs_confirmation' : 'accepted') : evaluateAcceptance(result, proposal.slot);
     if (verdict === 'needs_confirmation') {
       current.awaitingConfirmation = { ...current.awaitingConfirmation, [party]: true };
       decision('needs_confirmation', { exclusions: result.exclusions });
@@ -330,6 +335,12 @@ function applyInterpretation(state: State, fact: Fact & { type: 'interpretation'
     }
     orders.set(order.id, current);
     return { state: { ...state, orders, holds }, outputs };
+  }
+
+  if (result.intent === 'contradictory' && result.times.length > 0) {
+    // A correction later in the message wins: the times it states are a counter-proposal (AC-4.2 of 009).
+    decision('correction', { times: result.times });
+    return refusal(ctx, 'counter', result);
   }
 
   if (result.intent === 'unclear' || result.intent === 'contradictory' || result.intent === 'cross_reference') {
@@ -381,6 +392,10 @@ function refusal(ctx: ReplyContext, cause: 'decline' | 'counter' | 'withdraw', a
   const { current, party } = ctx;
   current.refusals = { ...current.refusals, [party]: current.refusals[party] + 1 };
   if (current.proposal !== undefined) current.refused = [...current.refused, current.proposal.slot];
+  const simNow = ctx.state.simNow === null ? null : parseLocalOrOffset(ctx.state.simNow);
+  if (availability !== null && availability.exclusions.length > 0 && simNow !== null) {
+    current.constraints = [...current.constraints, ...constraintWindows(availability.exclusions, simNow)];
+  }
   if (current.refusals[party] >= REFUSAL_LIMIT) {
     ctx.decision('review', { reason: 'no_mutual_slot', refusals: current.refusals[party] });
     return review(ctx, 'no_mutual_slot', REVIEW_SENTENCES.no_mutual_slot(party));
@@ -426,8 +441,11 @@ function reproposeOrder(env: StepEnv, target: OrderState, options: ReproposeOpti
   let effectiveCause: ReproposeCause | 'no_fit' = options.cause;
   let slot: Slot | null = null;
   let victimId: string | null = null;
-  if (options.availability !== null) {
-    const windows = windowsFrom(options.availability.times, options.availability.exclusions);
+  // Only stated times open windows, allow a takeover and earn the "not available" note (AC-2.1, AC-2.2 of 009).
+  const stated = options.availability !== null && options.availability.times.length > 0 ? options.availability : null;
+  const avoid = [...blocked, ...target.refused, ...target.constraints];
+  if (stated !== null) {
+    const windows = windowsFrom(stated.times, stated.exclusions);
     slot = slotInside(windows, { earliest, holds: others, blocked });
     if (slot === null && options.allowTakeover) {
       const victim = takeoverCandidate(windows, { earliest, holds: others, blocked, urgency: order.urgency, urgencyOf: (id) => env.orders.get(id)?.order?.urgency });
@@ -439,10 +457,15 @@ function reproposeOrder(env: StepEnv, target: OrderState, options: ReproposeOpti
         victimId = victim.orderId;
       }
     }
-    if (slot === null) effectiveCause = 'no_fit';
+    if (slot === null) {
+      effectiveCause = 'no_fit';
+      // The closest free slot on the day the party named, before looking elsewhere (AC-3.1 of 009).
+      slot = nearestOnDate(stated.times, { earliest, holds: others, blocked: avoid });
+    }
   }
-  // The fallback chosen by the system avoids every slot refused in this order; stated availability above does not (008 AC-1.2, AC-1.3).
-  if (slot === null) slot = nextSlot({ from: earliest, urgency: order.urgency, holds: others, after: proposal.slot, blocked: [...blocked, ...target.refused] });
+  // The fallback chosen by the system avoids every slot refused in this order and every constraint stated in it; stated
+  // availability above does not (008 AC-1.2, AC-1.3; 009 AC-1.3, AC-1.4).
+  if (slot === null) slot = nextSlot({ from: earliest, urgency: order.urgency, holds: others, after: proposal.slot, blocked: avoid });
   for (const hold of env.holds.filter((candidate) => candidate.orderId === target.id && candidate.kind === 'tentative')) {
     env.outputs.push(trace(target.id, 'hold_released', { version: hold.version, reason: 'reproposed' }));
   }
@@ -471,7 +494,7 @@ function reproposeOrder(env: StepEnv, target: OrderState, options: ReproposeOpti
 
 function repropose(ctx: ReplyContext, cause: 'decline' | 'counter' | 'withdraw', availability: Interpretation | null): StepResult {
   const env: StepEnv = { state: ctx.state, orders: ctx.orders, holds: ctx.holds, outputs: ctx.outputs };
-  reproposeOrder(env, ctx.current, { cause, availability, party: ctx.party, allowTakeover: availability !== null });
+  reproposeOrder(env, ctx.current, { cause, availability, party: ctx.party, allowTakeover: availability !== null && availability.times.length > 0 });
   return { state: { ...ctx.state, orders: env.orders, holds: env.holds }, outputs: env.outputs };
 }
 

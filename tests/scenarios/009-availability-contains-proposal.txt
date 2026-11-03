@@ -1,0 +1,23 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-1,Leaking tap,Calle Mayor 1,The kitchen tap drips all night.,2026-11-02T09:00:00,Medium
+WO-2,Squeaky door,Calle Mayor 2,The bedroom door squeaks.,2026-11-02T10:00:00,Low
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+WO-1|tenant {"intent":"accept","times":[{"date":"2026-11-04"},{"date":"2026-11-05"},{"date":"2026-11-06"}],"exclusions":[],"quote":"whenever suits you, I'm home all week"}
+WO-1|handyman Sí
+WO-2|tenant {"intent":"counter","times":[{"date":"2026-11-04","start":"09:00","end":"18:00"}],"exclusions":[],"quote":"any time Wednesday between 9 and 6"}
+# stdout results
+WOID:WO-1|RESULT:scheduled
+SCHEDULED_FOR:2026-11-04T12:00:00+01:00
+
+WOID:WO-2|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"accepted","party":"tenant","version":1}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"scheduled","version":1}}
+{"event_type":"decision","work_order_id":"WO-2","detail":{"outcome":"accepted","party":"tenant","version":1}}

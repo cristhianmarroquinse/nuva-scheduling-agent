@@ -31,7 +31,7 @@ describe('US1 · after a refusal, the agent offers a genuinely different slot', 
     await expectScenario('008-withdraw-no-overlap');
   }, SPAWN_TIMEOUT);
 
-  it('008-no-fit-counter: the fallback after a counter with no fit does not overlap the countered slot (AC-1.1, AC-1.2)', async () => {
+  it('008-no-fit-counter: the fallback after a counter with no fit (a past day, so 009 AC-3.1 finds nothing) does not overlap the countered slot (AC-1.1, AC-1.2)', async () => {
     await expectScenario('008-no-fit-counter');
   }, SPAWN_TIMEOUT);
 

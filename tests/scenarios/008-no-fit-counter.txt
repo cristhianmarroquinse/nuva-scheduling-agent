@@ -4,7 +4,7 @@ WO-1,Leaking tap,Calle Mayor 1,The kitchen tap drips all night.,2026-11-02T09:00
 # env
 AGENT_NOW=2026-11-04T10:00
 # stdin
-WO-1|tenant {"intent":"counter","times":[{"date":"2026-11-04","start":"21:00"}],"exclusions":[],"quote":"tonight at nine"}
+WO-1|tenant {"intent":"counter","times":[{"date":"2026-11-02","start":"10:00"}],"exclusions":[],"quote":"last Monday at ten"}
 # stdout results
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
