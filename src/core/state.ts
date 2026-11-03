@@ -19,11 +19,12 @@ import {
   crossReferenceClarification,
   officeWillCheck,
   reminder,
+  reproposalNoted,
   reproposalToHandyman,
   reproposalToTenant,
   type ReproposalNote,
 } from '../messages/templates.js';
-import { availabilityContains, evaluateAcceptance } from '../policy/acceptance.js';
+import { availabilityContains, evaluateAcceptance, namesExactly } from '../policy/acceptance.js';
 import { inferLanguage } from '../orders/language.js';
 import { validateRows, type WorkOrder } from '../orders/validate.js';
 import { factsFor, type AnswerRequest } from '../interpreter/answer.js';
@@ -508,10 +509,12 @@ function reproposeOrder(env: StepEnv, target: OrderState, options: ReproposeOpti
   const version = proposal.version + 1;
   env.holds = [...others, { orderId: target.id, version, kind: 'tentative', slot }];
   target.proposal = { version, slot };
-  target.accepted = {};
+  // The party whose exact time this is has agreed to it already (011 AC-1.1); everyone else must accept the new version.
+  const namer = options.party !== undefined && stated !== null && effectiveCause !== 'no_fit' && namesExactly(stated.times, slot) ? options.party : null;
+  target.accepted = namer === null ? {} : { [namer]: version };
   target.awaitingConfirmation = {};
-  target.unanswered = { tenant: target.unanswered.tenant + 1, handyman: target.unanswered.handyman + 1 };
-  env.outputs.push(trace(target.id, 'decision', { outcome: 'repropose', cause: effectiveCause, party: options.party ?? null, version, start: slot.start, end: slot.end }));
+  target.unanswered = { tenant: target.unanswered.tenant + (namer === 'tenant' ? 0 : 1), handyman: target.unanswered.handyman + (namer === 'handyman' ? 0 : 1) };
+  env.outputs.push(trace(target.id, 'decision', { outcome: 'repropose', cause: effectiveCause, party: options.party ?? null, version, start: slot.start, end: slot.end, ...(namer === null ? {} : { accepted_by: namer }) }));
   env.outputs.push(trace(target.id, 'hold_taken', { version, start: slot.start, end: slot.end }));
   const tenantLanguage = languageFor(target, 'tenant');
   const noteFor = (role: Role): { note: ReproposalNote } | Record<string, never> => {
@@ -519,8 +522,10 @@ function reproposeOrder(env: StepEnv, target: OrderState, options: ReproposeOpti
     if (effectiveCause === 'preempted' || effectiveCause === 'blackout') return { note: effectiveCause };
     return {};
   };
-  send(env.outputs, target.id, 'tenant', tenantLanguage, version, slot, reproposalToTenant({ language: tenantLanguage, title: order.title, slot, ...noteFor('tenant') }));
-  send(env.outputs, target.id, 'handyman', 'es', version, slot, reproposalToHandyman({ title: order.title, address: order.address, slot, ...noteFor('handyman') }));
+  const tenantBody = namer === 'tenant' ? reproposalNoted({ language: tenantLanguage, to: 'tenant', title: order.title, slot, address: order.address }) : reproposalToTenant({ language: tenantLanguage, title: order.title, slot, ...noteFor('tenant') });
+  const handymanBody = namer === 'handyman' ? reproposalNoted({ language: 'es', to: 'handyman', title: order.title, slot, address: order.address }) : reproposalToHandyman({ title: order.title, address: order.address, slot, ...noteFor('handyman') });
+  send(env.outputs, target.id, 'tenant', tenantLanguage, version, slot, tenantBody);
+  send(env.outputs, target.id, 'handyman', 'es', version, slot, handymanBody);
   env.orders.set(target.id, target);
   if (victimId !== null) {
     const victim = env.orders.get(victimId);

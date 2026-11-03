@@ -58,3 +58,17 @@ export function evaluateAcceptance(interpretation: Interpretation, proposal: Slo
   if (interpretation.exclusions.length > 0) return 'needs_confirmation';
   return 'accepted';
 }
+
+/**
+ * Whether the reply names exactly this visit (AC-1.1 of 011): a point time equal to its start, or a range equal to it,
+ * on its date. A wider range or a date alone leaves the choice to the agent, so it does not count as the party's yes.
+ */
+export function namesExactly(times: readonly StatedTimeValue[], slot: Slot): boolean {
+  const start = parseLocalOrOffset(slot.start);
+  const end = parseLocalOrOffset(slot.end);
+  if (start === null || end === null) return false;
+  const date = start.toISODate();
+  const from = hourMinute(start);
+  const to = hourMinute(end);
+  return times.some((stated) => stated.date === date && stated.start === from && (stated.end === undefined || stated.end === to));
+}

@@ -1,6 +1,6 @@
 # 011 · A time a party names counts as their acceptance
 
-**Status:** planned
+**Status:** implemented
 **Product requirements:** REQ-NG-2, REQ-NG-3, REQ-NG-4, REQ-NG-6, REQ-TO-1
 **Invariants touched:** ACC-1, ACC-2, RUN-3 (unchanged: both parties still accept the same version before scheduling)
 **Amends:** 004 AC-2.1 and AC-2.2 (both acceptances are forgotten on a re-proposal, except the one of the party whose exact time it is)

@@ -173,3 +173,17 @@ export function reminder({ language, to, title, slot }: SlotMessage): string {
     ? `Le recordamos que seguimos pendientes de su respuesta. La visita propuesta por «${issue}» es el ${slotText(slot, 'es')}. ¿Le viene bien? Si no, indíquenos otra fecha y hora.`
     : `A reminder that we are still waiting for your reply. The proposed visit for "${issue}" is on ${slotText(slot, 'en')}. Does that work for you? If not, please give us another date and time.`;
 }
+
+/**
+ * A re-proposal of exactly the time this party named (AC-1.2 of 011): it counts as their yes, so it states the slot and
+ * says the agent waits for the other party, without asking again. Spanish to the handyman (COM-1).
+ */
+export function reproposalNoted({ language, to, title, slot, address }: SlotMessage & { address: string }): string {
+  const issue = singleLine(title);
+  if (to === 'handyman') {
+    return `La propuesta anterior queda cancelada. Anotamos la visita que propones para el aviso «${issue}» en ${singleLine(address)}: ${slotText(slot, 'es')}. Estamos pendientes de la confirmación del inquilino y te avisamos en cuanto la tengamos.`;
+  }
+  return language === 'es'
+    ? `La propuesta anterior queda cancelada. Anotamos la visita que nos indica para «${issue}»: ${slotText(slot, 'es')}. Estamos pendientes de la confirmación del técnico y le avisaremos en cuanto la tengamos.`
+    : `The previous proposal is cancelled. We have noted the visit you suggested for "${issue}": ${slotText(slot, 'en')}. We are waiting for the handyman to confirm and will let you know as soon as we have it.`;
+}

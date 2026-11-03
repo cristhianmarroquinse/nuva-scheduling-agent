@@ -1297,3 +1297,43 @@ describe('010 · blackout moves respect priority (REQ-SC-5, REQ-SC-6)', () => {
     expect(tracesOf(outputs, 'blackout_recorded')).toHaveLength(0);
   });
 });
+
+describe('011 · a time a party names counts as their acceptance (ACC-1, RUN-3)', () => {
+  // sim_now Wed 2026-11-04 10:00; one Medium order WO-1 (English) → v1 Wed 12:00–14:00.
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const one: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' })] }];
+  type Result = import('../../src/interpreter/schema.js').Interpretation;
+  let seq = 1100;
+  const say = (role: 'tenant' | 'handyman', result: Partial<Result>): Fact => ({ type: 'interpretation', seq: (seq += 1), woid: 'WO-1', role, source: 'fake', prompt_version: '4', result: { intent: 'accept', times: [], exclusions: [], quote: 'q', ...result } });
+  const thursday10 = { intent: 'counter' as const, times: [{ date: '2026-11-05', start: '10:00' }] };
+  const outcomes = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as { outcome: string }).outcome);
+
+  it('the handyman names Thursday 10:00: v2 is that slot, he is recorded as accepting it and told so, the tenant is asked (AC-1.1, AC-1.2)', () => {
+    const { state, outputs } = step(fold(one).state, say('handyman', thursday10));
+    expect(state.orders.get('WO-1')).toMatchObject({ proposal: { version: 2, slot: { start: '2026-11-05T10:00:00+01:00' } }, accepted: { handyman: 2 } });
+    expect(tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && output.detail)).toEqual([expect.objectContaining({ outcome: 'repropose', accepted_by: 'handyman' })]);
+    const frames = stdoutOf(outputs).split('\n\n').filter(Boolean);
+    expect(frames.find((frame) => frame.startsWith('WOID:WO-1|ROLE:handyman'))).toContain('Anotamos la visita que propones');
+    expect(frames.find((frame) => frame.startsWith('WOID:WO-1|ROLE:tenant'))).toContain('Does that work for you?');
+  });
+
+  it("the tenant's acceptance of that version schedules it, with confirmations to both (AC-1.5, ACC-1, ACC-2)", () => {
+    const { state, outputs } = step(fold([...one, say('handyman', thursday10)]).state, say('tenant', { times: [{ date: '2026-11-05', start: '10:00' }] }));
+    expect(outcomes(outputs)).toEqual(['scheduled']);
+    expect(state.orders.get('WO-1')?.result).toEqual({ kind: 'scheduled', scheduledFor: '2026-11-05T10:00:00+01:00' });
+  });
+
+  it('the namer is not awaited: his <NO RESPONSE> is not counted, and a later bare yes from him is not a second version (AC-1.3, RUN-3)', () => {
+    const named = fold([...one, say('tenant', thursday10)]).state;
+    expect(named.orders.get('WO-1')?.unanswered.tenant).toBe(0);
+    const { outputs } = step(named, { type: 'msg_in', seq: 2, raw: 'WO-1|tenant <NO RESPONSE>' });
+    expect(outcomes(outputs)).toEqual(['timeout_ignored']);
+  });
+
+  it('a wider range, a date alone or the nearest slot when the time did not fit do not count (AC-1.4)', () => {
+    const range = fold([...one, say('tenant', { intent: 'counter', times: [{ date: '2026-11-05', start: '15:00', end: '20:00' }] })]).state;
+    expect(range.orders.get('WO-1')?.accepted).toEqual({});
+    const nearest = fold([...one, say('tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '21:30' }] })]).state;
+    expect(nearest.orders.get('WO-1')?.accepted).toEqual({});
+  });
+});

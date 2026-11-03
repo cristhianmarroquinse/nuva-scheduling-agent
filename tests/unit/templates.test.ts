@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acknowledgement, clarification, confirmationRequest, confirmationToHandyman, confirmationToTenant, initialProposalToHandyman, initialProposalToTenant, officeWillCheck, answerReply, crossReferenceClarification, reminder, reproposalToHandyman, reproposalToTenant } from '../../src/messages/templates.js';
+import { reproposalNoted, acknowledgement, clarification, confirmationRequest, confirmationToHandyman, confirmationToTenant, initialProposalToHandyman, initialProposalToTenant, officeWillCheck, answerReply, crossReferenceClarification, reminder, reproposalToHandyman, reproposalToTenant } from '../../src/messages/templates.js';
 
 // First message of every order (REQ-ST-2, REQ-ST-4, REQ-OUT-2, REQ-OUT-3): templates, no model.
 
@@ -201,5 +201,22 @@ describe('reminders and re-proposal notes (AC-1.3, AC-2.3, AC-3.2, COM-1, COM-2,
     expect(reproposalToTenant({ language: 'es', title, slot, note: 'blackout' })).toContain('El técnico no está disponible en el hueco anterior.');
     expect(reproposalToTenant({ language: 'en', title, slot, note: 'blackout' })).toContain('The handyman is not available at the previous slot.');
     expect(reproposalToHandyman({ title, address: 'x', slot, note: 'blackout' })).toContain('Movemos la visita por tu indisponibilidad.');
+  });
+});
+
+describe('a re-proposal of the exact time the party named (AC-1.2 of 011, COM-1, COM-2, COM-3)', () => {
+  it('cancels the previous proposal, states the slot and waits for the other party, without asking again', () => {
+    const tenantEn = reproposalNoted({ language: 'en', to: 'tenant', title: 'Leaking tap', slot, address: 'Calle Mayor 1' });
+    expect(tenantEn).toContain('The previous proposal is cancelled.');
+    expect(tenantEn).toContain('Thursday 5 November 2026, 10:00 to 12:00 (Madrid time)');
+    expect(tenantEn).toContain('waiting for the handyman');
+    expect(tenantEn).not.toMatch(/\?/);
+    const handyman = reproposalNoted({ language: 'en', to: 'handyman', title, slot, address: 'Calle Mayor 1' });
+    expect(handyman).toContain('en Calle Mayor 1:');
+    expect(handyman).toContain('La propuesta anterior queda cancelada.');
+    expect(handyman).toContain('jueves 5 de noviembre de 2026, de 10:00 a 12:00 (hora de Madrid)');
+    expect(handyman).toContain('inquilino');
+    expect(handyman).not.toMatch(/\?/);
+    expect(reproposalNoted({ language: 'es', to: 'tenant', title, slot, address: 'Calle Mayor 1' })).toContain('técnico');
   });
 });

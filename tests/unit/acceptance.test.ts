@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Interpretation } from '../../src/interpreter/schema.js';
-import { evaluateAcceptance } from '../../src/policy/acceptance.js';
+import { evaluateAcceptance, namesExactly } from '../../src/policy/acceptance.js';
 
 // Acceptance is decided by code (ADR 0001, REQ-NG-2, REQ-NG-3): an accept counts only if every stated time fits the proposal.
 
@@ -57,5 +57,16 @@ describe('an exclusion that rules out the proposal is not an acceptance (AC-4.1 
   it('an exclusion that only touches the visit or applies elsewhere still asks for confirmation (003 AC-2.3)', () => {
     expect(evaluateAcceptance(accept({ exclusions: [{ end: '14:00' }] }), slot)).toBe('needs_confirmation');
     expect(evaluateAcceptance(accept({ exclusions: [{ date: '2026-11-05' }] }), slot)).toBe('needs_confirmation');
+  });
+});
+
+describe('a reply that names exactly the visit (AC-1.1, AC-1.4 of 011)', () => {
+  it('a point time equal to the start, or a range equal to the visit, names it; anything wider or elsewhere does not', () => {
+    expect(namesExactly([{ date: '2026-11-04', start: '14:00' }], slot)).toBe(true);
+    expect(namesExactly([{ date: '2026-11-04', start: '14:00', end: '16:00' }], slot)).toBe(true);
+    expect(namesExactly([{ date: '2026-11-04', start: '14:00', end: '18:00' }], slot)).toBe(false);
+    expect(namesExactly([{ date: '2026-11-04' }], slot)).toBe(false);
+    expect(namesExactly([{ date: '2026-11-05', start: '14:00' }], slot)).toBe(false);
+    expect(namesExactly([{ date: '2026-11-05', start: '09:00' }, { date: '2026-11-04', start: '14:00' }], slot)).toBe(true);
   });
 });
