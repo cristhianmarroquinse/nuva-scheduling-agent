@@ -159,16 +159,26 @@ export function blackoutWindows(exclusions: readonly ExclusionValue[], simNow: D
   return windows;
 }
 
+/** `HH:MM` plus the visit length, capped at 24:00. */
+function plusVisit(time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  const end = Math.min((hours ?? 0) + VISIT_HOURS, 24);
+  return end === 24 ? '23:59' : `${String(end).padStart(2, '0')}:${String(minutes ?? 0).padStart(2, '0')}`;
+}
+
 /** Undated time-of-day exclusions ("not before 13:00", "only afternoons") apply for this many days (AC-1.2 of 009). */
 export const CONSTRAINT_DAYS = 14;
 
 /**
- * An order's constraints as concrete Madrid windows (AC-1.2 of 009): a date or weekday as in `blackoutWindows`; times
- * without a day repeated on each of the next `days` days from the reference time; an exclusion with neither is ignored.
+ * An order's constraints as concrete Madrid windows (AC-1.2 of 009): a date or weekday as in `blackoutWindows`, except
+ * that a start with no end is the 2-hour visit at that time; times without a day repeated on each of the next `days` days from the reference time; an exclusion with neither is ignored.
  */
 export function constraintWindows(exclusions: readonly ExclusionValue[], simNow: DateTime, days: number = CONSTRAINT_DAYS): Slot[] {
   const windows: Slot[] = [];
-  for (const exclusion of exclusions) {
+  for (const stated of exclusions) {
+    // A time with no end ("a las 12 no puedo") rules out the visit at that time, not the rest of the day; ruling out
+    // less is the conservative reading for a constraint the system must avoid. Blackouts keep reading it as "from".
+    const exclusion = stated.start !== undefined && stated.end === undefined ? { ...stated, end: plusVisit(stated.start) } : stated;
     if (exclusion.date !== undefined || exclusion.weekday !== undefined) {
       windows.push(...blackoutWindows([exclusion], simNow));
       continue;

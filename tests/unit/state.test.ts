@@ -1190,6 +1190,12 @@ describe('009 · stated constraints are honoured, and notes are true (REQ-NG-12,
     });
   });
 
+  it('"Hoy a las 12 no puedo, ¿hoy a las 14?" with 14:00 held keeps the rest of the afternoon open: the nearest slot is today 16:00 (AC-1.2, AC-3.1)', () => {
+    const two: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' }), row({ work_order_id: 'WO-2', reported_at: '2026-11-02T10:00:00' })] }];
+    const { state } = step(fold(two).state, say('tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '14:00' }], exclusions: [{ date: '2026-11-04', start: '12:00' }] }));
+    expect(startOf(state)).toBe('2026-11-04T16:00:00+01:00');
+  });
+
   describe('the nearest slot on the stated day, and true notes (AC-2.1, AC-3.1, AC-3.2)', () => {
     it('a time that cannot fit gets the nearest slot that day, with the note', () => {
       const { state, outputs } = step(fold(one).state, say('tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '21:30' }] }));

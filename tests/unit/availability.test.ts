@@ -162,6 +162,13 @@ describe('constraint windows of an order (AC-1.2 of 009, TIME-1)', () => {
     expect(windows[13]).toEqual({ start: '2026-11-06T00:00:00+01:00', end: '2026-11-06T13:00:00+01:00' });
   });
 
+  it('a time with no end is the 2-hour visit at that time, not the rest of the day; a blackout keeps reading it as "from" (AC-1.2 of 009)', () => {
+    // "Hoy a las 12 no puedo" comes back as { start: 12:00 } with no end: it rules out the noon visit only.
+    expect(spans(constraintWindows([{ date: '2026-11-04', start: '12:00' }], now))).toEqual([['2026-11-04T12:00:00+01:00', '2026-11-04T14:00:00+01:00']]);
+    expect(constraintWindows([{ start: '12:00' }], now)[0]).toEqual({ start: '2026-11-04T12:00:00+01:00', end: '2026-11-04T14:00:00+01:00' });
+    expect(blackoutWindows([{ date: '2026-11-04', start: '12:00' }], now)).toEqual([{ start: '2026-11-04T12:00:00+01:00', end: '2026-11-05T00:00:00+01:00' }]);
+  });
+
   it('an exclusion with neither day nor times constrains nothing', () => {
     expect(constraintWindows([{}], now)).toEqual([]);
   });

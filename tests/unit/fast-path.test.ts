@@ -5,7 +5,7 @@ import { fastPath } from '../../src/interpreter/fast-path.js';
 
 describe('regex fast path (AC-1.3)', () => {
   it('reads trivial acceptances in Spanish and English, ignoring case and trailing punctuation', () => {
-    for (const body of ['Sí', 'sí.', 'SI', 'Vale', 'vale!', 'ok', 'OK.', 'Okay', 'De acuerdo', 'Perfecto', 'Yes', 'yes!', 'Yep', 'Sure', 'Fine', 'Claro']) {
+    for (const body of ['Sí', 'sí.', 'SI', 'Vale', 'vale!', 'ok', 'OK.', 'Okay', 'De acuerdo', 'Perfecto', 'Yes', 'yes!', 'Yep', 'Sure', 'Fine', 'Claro', 'Voy', 'voy.']) { // voy: 50% unclear through the model in e2e (014)
       expect(fastPath(body), body).toEqual({ intent: 'accept', times: [], exclusions: [], quote: body });
     }
   });

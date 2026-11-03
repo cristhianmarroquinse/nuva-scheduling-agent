@@ -20,7 +20,7 @@ As a tenant or the handyman, I want a day or a time I said I cannot do never to 
 **Acceptance criteria (EARS):**
 
 - **AC-1.1** WHEN a decline, a counter, a withdrawal or a mismatched acceptance states exclusions, THE system SHALL record them as constraints of that order, by either party, for the rest of the order's life.
-- **AC-1.2** THE system SHALL read a recorded exclusion as concrete Madrid windows: a date alone is that whole day; a weekday alone is its next occurrence from the reference time (as 005 AC-3.7); a date or weekday with times is that range on that day; times without a date or weekday (for example "not before 13:00", "only afternoons") apply to every day for 14 days from the reference time.
+- **AC-1.2** THE system SHALL read a recorded exclusion as concrete Madrid windows: a date alone is that whole day; a weekday alone is its next occurrence from the reference time (as 005 AC-3.7); a date or weekday with times is that range on that day; times without a date or weekday (for example "not before 13:00", "only afternoons") apply to every day for 14 days from the reference time. A start with no end ("a las 12 no puedo") is the 2-hour visit at that time, not the rest of the day (clarified 2026-11-03 by the 014 end-to-end run; handyman blackouts keep reading it as "from").
 - **AC-1.3** WHEN the system chooses a slot on its own for an order (008 AC-1.2), THE slot SHALL overlap none of that order's constraint windows, in addition to the refused slots of 008.
 - **AC-1.4** WHEN a party states availability, THE system SHALL choose inside it as in 004 AC-1.2, narrowed by that reply's own exclusions; earlier constraints of the order do not narrow a window the party states now (an explicit statement wins, as 008 AC-1.3).
 
@@ -100,6 +100,7 @@ Golden-set cases (eval only, real model): "Whenever suits you, I'm home all week
 - **An exclusion that rules out the proposal is not an acceptance** (decided 2026-11-03 with the user): it is a counter, so the party is not asked to confirm a time they excluded.
 - **Golden set** (2026-11-03). g33 and g34 ("Yes that's fine. No wait, I can't do Wednesday at all.") are relabelled from `contradictory` to `decline` of Wednesday, because AC-4.2/AC-4.3 make the later statement win; g56 and g57 are added as replies with no final position, which stay `contradictory`. The first version-4 prompt read a bare "lo que sea" as accept and gave the handyman `scope: all` on plain acceptances; the prompt now says both explicitly. On the 48 earlier cases with unchanged labels, version 4 scores intent 42–43 and full 37–38 over two runs, against 42 and 36 for version 3.
 - **Availability that contains the proposal is an acceptance** (AC-4.5, found in the e2e re-run of 2026-11-03): "whenever suits you" listed as the whole week had been cancelled and re-proposed as the same slot.
+- **A point exclusion is a point** (2026-11-03, found by the 014 end-to-end run): "Hoy a las 12 no puedo, ¿podría ser hoy a las 14:00?" came back as an exclusion with a start and no end; reading it as "from 12:00" blocked the whole afternoon, so the agent jumped to the next day and the conversation fell apart. Ruling out less is the conservative reading for a constraint the system must avoid. A bare "Voy" from the handyman, read as unclear in half the runs, is now a fast-path acceptance.
 
 ## Open questions
 
