@@ -73,5 +73,7 @@ describe('readings that keep the last word (AC-4.3 of 009)', () => {
     expect(prompt.system).toMatch(/lo que sea.*stays unclear/);
     expect(prompt.system).toMatch(/correction later in the same message wins/i);
     expect(prompt.system).toMatch(/el finde/);
+    // 013: with the escalate intent the model began to drop the day and time an acceptance names.
+    expect(prompt.system).toMatch(/including the day or time an acceptance names/);
   });
 });

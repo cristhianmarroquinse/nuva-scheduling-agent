@@ -77,8 +77,8 @@ describe('scope of a stated unavailability (005)', () => {
 });
 
 describe('escalate intent (AC-1.1 of 012)', () => {
-  it('is part of the closed set, and the prompt version is 5', () => {
+  it('is part of the closed set, and the prompt version is 6 (013: an acceptance keeps the day and time it names)', () => {
     expect(INTENTS).toContain('escalate');
-    expect(PROMPT_VERSION).toBe('5');
+    expect(PROMPT_VERSION).toBe('6');
   });
 });

@@ -1,15 +1,15 @@
 {
   "tier": "regex",
   "model": null,
-  "promptVersion": "5",
+  "promptVersion": "6",
   "date": "2026-11-03",
   "metrics": {
-    "n": 60,
-    "intentAccuracy": 0.08333333333333333,
-    "fullAccuracy": 0.08333333333333333,
-    "fastPathShare": 0.08333333333333333,
+    "n": 64,
+    "intentAccuracy": 0.078125,
+    "fullAccuracy": 0.078125,
+    "fastPathShare": 0.078125,
     "modelShare": 0,
-    "unresolvedShare": 0.9166666666666666,
+    "unresolvedShare": 0.921875,
     "p50LatencyMs": null,
     "p95LatencyMs": null,
     "inputTokens": 0,
@@ -516,6 +516,38 @@
     },
     {
       "id": "g60",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g61",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g62",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g63",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g64",
       "resolvedBy": "unresolved",
       "obtained": null,
       "intentMatch": false,

@@ -28,7 +28,7 @@ SCHEDULED_FOR:2026-11-04T12:00:00+01:00
 # exit
 0
 # trace
-{"event_type":"model_call","work_order_id":"WO-1","detail":{"seq":1,"attempt":1,"model":"fake","prompt_version":"5","outcome":"ok"}}
+{"event_type":"model_call","work_order_id":"WO-1","detail":{"seq":1,"attempt":1,"model":"fake","prompt_version":"6","outcome":"ok"}}
 {"event_type":"interpretation","work_order_id":"WO-1","detail":{"seq":1,"source":"fake","result":{"intent":"accept","times":[{"date":"2026-11-04","start":"12:00","end":"18:00"}]}}}
 {"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"accepted","party":"tenant"}}
 {"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"scheduled","party":"handyman"}}

@@ -41,7 +41,7 @@ WOID:WO-1002|ROLE:handyman
 La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking kitchen tap» en Calle Sol 5, 1ºB: jueves 5 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-1002|ROLE:handyman
-Lo consulto con la oficina y te digo. Te recuerdo que la visita propuesta por «Leaking kitchen tap» es el jueves 5 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
+No tengo información sobre el aparcamiento cerca del portal en los datos disponibles, así que la oficina lo consultará y le responderá. Te recuerdo que la visita propuesta por «Leaking kitchen tap» es el jueves 5 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
 
 WOID:WO-1002|ROLE:handyman
 Gracias, anotado. Estamos pendientes de la confirmación del inquilino y te avisamos en cuanto la tengamos.
