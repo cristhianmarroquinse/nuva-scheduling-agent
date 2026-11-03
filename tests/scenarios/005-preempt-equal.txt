@@ -20,10 +20,10 @@ WOID:WO-B|ROLE:handyman
 Nueva visita propuesta para el aviso «Squeaky door» (urgencia media) en Calle Mayor 2. Propuesta: miércoles 4 de noviembre de 2026, de 14:00 a 16:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-B|ROLE:tenant
-The previous proposal is cancelled. The times you suggested are not available. New proposal for "Squeaky door": Wednesday 4 November 2026, 15:00 to 17:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+The previous proposal is cancelled. The times you suggested are not available. New proposal for "Squeaky door": Wednesday 4 November 2026, 16:00 to 18:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
 
 WOID:WO-B|ROLE:handyman
-La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Squeaky door» en Calle Mayor 2: miércoles 4 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Squeaky door» en Calle Mayor 2: miércoles 4 de noviembre de 2026, de 16:00 a 18:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-A|RESULT:requires_review
 REASON:No reply was received before the end of input.

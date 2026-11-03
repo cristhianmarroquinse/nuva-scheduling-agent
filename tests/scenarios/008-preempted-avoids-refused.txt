@@ -1,0 +1,24 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+WO-H,No hot water,Calle Mayor 3,The boiler shows an error.,2026-11-02T09:00:00,High
+WO-L,Squeaky door,Calle Mayor 2,The bedroom door squeaks.,2026-11-02T10:00:00,Low
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+WO-L|tenant {"intent":"counter","times":[{"date":"2026-11-05","start":"09:00"}],"exclusions":[],"quote":"Thursday at nine"}
+WO-L|handyman {"intent":"counter","times":[{"date":"2026-11-04","start":"16:00"}],"exclusions":[],"quote":"mejor el miércoles a las 16"}
+WO-H|tenant {"intent":"counter","times":[{"date":"2026-11-04","start":"16:00","end":"18:00"}],"exclusions":[],"quote":"only 4 to 6 today"}
+# stdout results
+WOID:WO-H|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:WO-L|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"decision","work_order_id":"WO-L","detail":{"outcome":"repropose","cause":"counter","version":2,"start":"2026-11-05T09:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"WO-L","detail":{"outcome":"repropose","cause":"counter","version":3,"start":"2026-11-04T16:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"WO-H","detail":{"outcome":"takeover","from":"WO-L"}}
+{"event_type":"decision","work_order_id":"WO-L","detail":{"outcome":"repropose","cause":"preempted","version":4,"start":"2026-11-05T11:00:00+01:00","end":"2026-11-05T13:00:00+01:00"}}

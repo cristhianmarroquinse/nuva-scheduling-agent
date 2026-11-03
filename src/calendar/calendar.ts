@@ -69,7 +69,7 @@ export function overlaps(a: Slot, b: Slot): boolean {
 /**
  * The first on-the-hour 2-hour slot at or after `from` that fits the urgency's window and overlaps no hold (SCHED-1).
  * With `after`, the search also starts strictly after that slot's start (the next slot after a declined one). `blocked`
- * slots (handyman blackouts) are avoided like holds.
+ * slots (handyman blackouts, and slots refused in the order: 008 AC-1.2) are avoided like holds, compared by instant.
  */
 export function nextSlot(args: { from: DateTime; urgency: Urgency; holds: readonly Hold[]; after?: Slot; blocked?: readonly Slot[] }): Slot {
   let cursor = ceilHour(args.from.setZone(ZONE));

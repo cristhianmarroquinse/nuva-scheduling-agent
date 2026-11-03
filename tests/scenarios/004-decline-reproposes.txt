@@ -19,32 +19,32 @@ WOID:WO-1|ROLE:handyman
 Gracias, anotado. Estamos pendientes de la confirmación del inquilino y te avisamos en cuanto la tengamos.
 
 WOID:WO-1|ROLE:tenant
-The previous proposal is cancelled. New proposal for "Leaking tap": Wednesday 4 November 2026, 13:00 to 15:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+The previous proposal is cancelled. New proposal for "Leaking tap": Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
 
 WOID:WO-1|ROLE:handyman
-La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: miércoles 4 de noviembre de 2026, de 13:00 a 15:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: miércoles 4 de noviembre de 2026, de 14:00 a 16:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-1|ROLE:handyman
 Gracias, anotado. Estamos pendientes de la confirmación del inquilino y te avisamos en cuanto la tengamos.
 
 WOID:WO-1|ROLE:tenant
-Confirmed: the handyman's visit for "Leaking tap" is set for Wednesday 4 November 2026, 13:00 to 15:00 (Madrid time). Thank you.
+Confirmed: the handyman's visit for "Leaking tap" is set for Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time). Thank you.
 
 WOID:WO-1|ROLE:handyman
-Confirmado: visita por «Leaking tap» en Calle Mayor 1, miércoles 4 de noviembre de 2026, de 13:00 a 15:00 (hora de Madrid). Gracias.
+Confirmado: visita por «Leaking tap» en Calle Mayor 1, miércoles 4 de noviembre de 2026, de 14:00 a 16:00 (hora de Madrid). Gracias.
 
 WOID:WO-1|RESULT:scheduled
-SCHEDULED_FOR:2026-11-04T13:00:00+01:00
+SCHEDULED_FOR:2026-11-04T14:00:00+01:00
 
 # exit
 0
 # trace
 {"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"accepted","party":"handyman","version":1}}
 {"event_type":"hold_released","work_order_id":"WO-1","detail":{"version":1,"reason":"reproposed"}}
-{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"repropose","cause":"decline","party":"tenant","version":2,"start":"2026-11-04T13:00:00+01:00","end":"2026-11-04T15:00:00+01:00"}}
-{"event_type":"hold_taken","work_order_id":"WO-1","detail":{"version":2,"start":"2026-11-04T13:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"repropose","cause":"decline","party":"tenant","version":2,"start":"2026-11-04T14:00:00+01:00","end":"2026-11-04T16:00:00+01:00"}}
+{"event_type":"hold_taken","work_order_id":"WO-1","detail":{"version":2,"start":"2026-11-04T14:00:00+01:00"}}
 {"event_type":"msg_out","work_order_id":"WO-1","detail":{"to":"tenant","version":2}}
 {"event_type":"msg_out","work_order_id":"WO-1","detail":{"to":"handyman","version":2}}
 {"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"accepted","party":"handyman","version":2}}
 {"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"scheduled","party":"tenant","version":2}}
-{"event_type":"result","work_order_id":"WO-1","detail":{"kind":"scheduled","scheduledFor":"2026-11-04T13:00:00+01:00"}}
+{"event_type":"result","work_order_id":"WO-1","detail":{"kind":"scheduled","scheduledFor":"2026-11-04T14:00:00+01:00"}}

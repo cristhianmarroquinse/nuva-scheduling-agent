@@ -18,16 +18,16 @@ WOID:WO-1|ROLE:tenant
 Yes, please be at home during the visit. As a reminder, the proposed visit for "Leaking tap" is on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time). Does that work for you? If not, please give us another date and time.
 
 WOID:WO-1|ROLE:tenant
-The previous proposal is cancelled. New proposal for "Leaking tap": Wednesday 4 November 2026, 13:00 to 15:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
-
-WOID:WO-1|ROLE:handyman
-La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: miércoles 4 de noviembre de 2026, de 13:00 a 15:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
-
-WOID:WO-1|ROLE:tenant
 The previous proposal is cancelled. New proposal for "Leaking tap": Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
 
 WOID:WO-1|ROLE:handyman
 La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: miércoles 4 de noviembre de 2026, de 14:00 a 16:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-1|ROLE:tenant
+The previous proposal is cancelled. New proposal for "Leaking tap": Wednesday 4 November 2026, 16:00 to 18:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-1|ROLE:handyman
+La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: miércoles 4 de noviembre de 2026, de 16:00 a 18:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.

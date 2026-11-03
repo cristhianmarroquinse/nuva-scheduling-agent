@@ -149,3 +149,26 @@ describe('blocked slots (AC-3.3 of 005)', () => {
     expect(nextSlot({ from: at('2026-11-04T12:00'), urgency: 'Medium', holds: [], blocked: [{ start: iso('2026-11-04T00:00'), end: iso('2026-11-05T00:00') }] })).toEqual({ start: '2026-11-05T09:00:00+01:00', end: '2026-11-05T11:00:00+01:00' });
   });
 });
+
+describe('refused slots passed as blocked (AC-1.2 of 008, TIME-1)', () => {
+  it('a refused slot written with the pre-DST offset is avoided by instant on Sunday 25 October 2026', () => {
+    // 10:00+02:00 is 09:00+01:00: the same instant as a Madrid 09:00 visit after the change at 03:00.
+    const refused: Slot[] = [{ start: '2026-10-25T10:00:00+02:00', end: '2026-10-25T12:00:00+02:00' }];
+    expect(nextSlot({ from: at('2026-10-25T08:00'), urgency: 'Critical', holds: [], after: { start: iso('2026-10-25T08:00'), end: iso('2026-10-25T10:00') }, blocked: refused })).toEqual({
+      start: '2026-10-25T11:00:00+01:00',
+      end: '2026-10-25T13:00:00+01:00',
+    });
+  });
+
+  it('every refused slot is skipped, not only the one the search starts after', () => {
+    const refused: Slot[] = [
+      { start: iso('2026-11-04T12:00'), end: iso('2026-11-04T14:00') },
+      { start: iso('2026-11-04T14:00'), end: iso('2026-11-04T16:00') },
+      { start: iso('2026-11-04T16:00'), end: iso('2026-11-04T18:00') },
+    ];
+    expect(nextSlot({ from: at('2026-11-04T12:00'), urgency: 'Medium', holds: [], after: { start: iso('2026-11-04T13:00'), end: iso('2026-11-04T15:00') }, blocked: refused })).toEqual({
+      start: '2026-11-05T09:00:00+01:00',
+      end: '2026-11-05T11:00:00+01:00',
+    });
+  });
+});

@@ -13,10 +13,10 @@ WOID:WO-1|ROLE:handyman
 Nueva visita propuesta para el aviso «Leaking tap» (urgencia media) en Calle Mayor 1. Propuesta: miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-1|ROLE:tenant
-The previous proposal is cancelled. The times you suggested are not available. New proposal for "Leaking tap": Wednesday 4 November 2026, 13:00 to 15:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+The previous proposal is cancelled. The times you suggested are not available. New proposal for "Leaking tap": Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
 
 WOID:WO-1|ROLE:handyman
-La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: miércoles 4 de noviembre de 2026, de 13:00 a 15:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: miércoles 4 de noviembre de 2026, de 14:00 a 16:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
@@ -24,4 +24,4 @@ REASON:No reply was received before the end of input.
 # exit
 0
 # trace
-{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"repropose","cause":"no_fit","version":2,"start":"2026-11-04T13:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"repropose","cause":"no_fit","version":2,"start":"2026-11-04T14:00:00+01:00"}}

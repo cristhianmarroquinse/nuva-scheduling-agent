@@ -56,6 +56,8 @@ export interface OrderState {
   llmFailures: number;
   /** Proposals each party declined, countered or withdrew from (REQ-NG-9). */
   refusals: Record<Role, number>;
+  /** Slots of the proposals refused in this order by either party; the fallback search never overlaps them (REQ-NG-11). */
+  refused: Slot[];
   /** Proposal versions sent to each party since their last reply (REQ-NG-3). */
   unanswered: Record<Role, number>;
   /** Each party's last message body: the asker's goes to the answer prompt as data, the other's must not be echoed (LLM-2). */
@@ -78,6 +80,7 @@ function newOrderState(id: string): OrderState {
     unclearStreak: { ...FRESH_STREAK },
     llmFailures: 0,
     refusals: { tenant: 0, handyman: 0 },
+    refused: [],
     unanswered: { tenant: 0, handyman: 0 },
     lastBody: {},
     timeouts: { tenant: 0, handyman: 0 },
@@ -377,6 +380,7 @@ const REFUSAL_LIMIT = 3;
 function refusal(ctx: ReplyContext, cause: 'decline' | 'counter' | 'withdraw', availability: Interpretation | null): StepResult {
   const { current, party } = ctx;
   current.refusals = { ...current.refusals, [party]: current.refusals[party] + 1 };
+  if (current.proposal !== undefined) current.refused = [...current.refused, current.proposal.slot];
   if (current.refusals[party] >= REFUSAL_LIMIT) {
     ctx.decision('review', { reason: 'no_mutual_slot', refusals: current.refusals[party] });
     return review(ctx, 'no_mutual_slot', REVIEW_SENTENCES.no_mutual_slot(party));
@@ -437,7 +441,8 @@ function reproposeOrder(env: StepEnv, target: OrderState, options: ReproposeOpti
     }
     if (slot === null) effectiveCause = 'no_fit';
   }
-  if (slot === null) slot = nextSlot({ from: earliest, urgency: order.urgency, holds: others, after: proposal.slot, blocked });
+  // The fallback chosen by the system avoids every slot refused in this order; stated availability above does not (008 AC-1.2, AC-1.3).
+  if (slot === null) slot = nextSlot({ from: earliest, urgency: order.urgency, holds: others, after: proposal.slot, blocked: [...blocked, ...target.refused] });
   for (const hold of env.holds.filter((candidate) => candidate.orderId === target.id && candidate.kind === 'tentative')) {
     env.outputs.push(trace(target.id, 'hold_released', { version: hold.version, reason: 'reproposed' }));
   }

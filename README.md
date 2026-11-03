@@ -7,7 +7,7 @@ Status: **v1**. Every requirement of the take-home is implemented, each of the 2
 ## Try it in two minutes
 
 ```bash
-docker build -t agent .                                  # runs typecheck + 386 tests inside; fails if any fails
+docker build -t agent .                                  # runs typecheck + 404 tests inside; fails if any fails
 cp traces/examples/work_orders.csv .                     # four orders of mixed urgency
 cp .env.example .env                                     # then put your key in ANTHROPIC_API_KEY=
 mkdir -p traces
@@ -37,7 +37,7 @@ Environment variables:
 
 **Explicit agreement.** A reply counts as an acceptance only when its intent is `accept` *and* the day or time it names fits the proposal (a range must contain the visit, a point time must equal its start). "Yes, Thursday at 10" to a Wednesday proposal is a counter-proposal, not a yes. "Yes, but not before 15:00" gets a one-line confirmation of the exact slot before it counts. An order is `scheduled` only when both parties accepted the same proposal version while its hold is live; confirmations go to both, then the result with `SCHEDULED_FOR`.
 
-**Negotiation.** A decline, a counter-proposal or a withdrawal produces a new proposal to both parties, inside the stated availability when something fits, otherwise the next free slot with a note; the message says the previous proposal is cancelled. Questions are answered from a closed facts list and count toward nothing. A reply that references another work order gets one clarification.
+**Negotiation.** A decline, a counter-proposal or a withdrawal produces a new proposal to both parties, inside the stated availability when something fits, otherwise the next free slot that overlaps no proposal already refused in that order, with a note; the message says the previous proposal is cancelled. Questions are answered from a closed facts list and count toward nothing. A reply that references another work order gets one clarification.
 
 **Several orders at once.** All orders share one calendar, and tentative holds are the coordination primitive: a proposal reserves its slot until it is accepted by both, moved, or released. Input lines for different orders interleave freely and are processed one at a time in arrival order. When a higher-urgency order's party asks for times and the only fitting slot is held tentatively by a strictly lower-urgency order, the hold changes hands and the other order is re-proposed and told why, without penalty. A scheduled visit is never moved by anything. The example shows it: WO-1002's counter lands at Thursday 15:00 because Thursday 09:00 is held by WO-1003 ([traces/examples/README.md](traces/examples/README.md)).
 
@@ -121,6 +121,7 @@ Haiku is the default: Sonnet is four points better at seventeen times the cost. 
 - **Notice.** The agent's own proposals start at least one full hour after the next full hour from the reference time, and no earlier than `reported_at`. Times offered by a party are honoured 07:00–22:00 on any day, even outside the business windows.
 - **A withdrawal counts as a refusal** toward the three-refusal limit, so a party cannot withdraw without end. The take-home names declines and counters; this is stricter and deliberate.
 - **No fit for stated availability** still produces the next free slot, with a note that the requested times are not available, so every exchange ends in a concrete proposal.
+- **A slot the agent picks never overlaps one already refused in that order** (declined, countered or withdrawn from, by either party), so three refusals mean three genuinely different options before `no_mutual_slot`: a decline of Wednesday 14:00–16:00 is followed by 16:00–18:00, not 15:00–17:00. The take-home only forbids overlapping visits; this was decided after a manual run in which the first version burned the three refusals on nearly the same two hours. Times a party names are still honoured even if they overlap an earlier refusal, because people change their minds ([spec 008](specs/features/008-no-overlap-with-refused-slots/spec.md)).
 - **Takeover only on stated availability.** A higher-urgency order bumps a lower-urgency tentative hold only when its party asked for times that nothing free fits. Declines never bump anyone. Scheduled visits are never taken.
 - **A weekday blackout** ("el jueves no puedo") covers the next occurrence only.
 - **Reminders then review.** One reminder, then `no_response`; a Critical order's tenant goes to review at the first silence.
@@ -144,9 +145,9 @@ The repository holds the product and the development harness it was built with. 
 | Part | Paths |
 |---|---|
 | Product | `src/`, `Dockerfile`, `package.json`, `tsconfig*.json`, `traces/examples/` |
-| Tests (386, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
+| Tests (404, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
 | Evaluation | `eval/`: golden set, scorer, report; `pnpm eval` |
-| Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–007), `scripts/` |
+| Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–008), `scripts/` |
 | Decisions | `docs/planning/`, `docs/adr/` |
 
 Each feature went through the same pipeline with Claude Code: `/spec` (user stories and EARS criteria, clarified with at most five questions), `/plan` (design, a constitution check against the invariants and ADRs, ordered tasks), `/implement` (every test written and seen failing before its code, `pnpm check` after every task) and `/ship`. `pnpm check` is typecheck, the test suite and invariant coverage, whose baseline may only shrink and is empty now; hooks refuse to finish while it is red. Features: 001 I/O protocol and startup; 002 calendar and initial proposals; 003 interpretation and acceptance; 004 negotiation; 005 timeouts, preemption and blackouts; 006 golden set and evaluation; 007 delivery. Specs with plan and tasks are under `specs/features/`; the behaviour is specified in [001](specs/features/001-io-protocol-startup/spec.md), [002](specs/features/002-calendar-initial-proposals/spec.md), [003](specs/features/003-interpretation-acceptance/spec.md), [004](specs/features/004-negotiation/spec.md) and [005](specs/features/005-timeouts-preemption-blackouts/spec.md).

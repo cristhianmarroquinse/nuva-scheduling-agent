@@ -1039,3 +1039,92 @@ describe('handyman blackouts (AC-3.1, AC-3.2, AC-3.3, AC-3.4, AC-3.5, AC-3.6, SC
     expect(holdOf(state, 'WO-2')?.slot.start).toBe('2026-11-04T14:00:00+01:00');
   });
 });
+
+describe('008 · re-proposals never overlap a refused slot (REQ-NG-11)', () => {
+  // sim_now Wed 2026-11-04 10:00 +01:00. One Medium order WO-1 → v1 Wed 12:00–14:00 unless stated otherwise.
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const one: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' })] }];
+  // WO-H (High) v1 Wed 12:00–14:00; WO-L (Low) v1 Wed 14:00–16:00.
+  const two: Fact[] = [
+    startedNov,
+    { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-H', urgency: 'High', reported_at: '2026-11-02T09:00:00' }), row({ work_order_id: 'WO-L', work_order: 'Squeaky door', urgency: 'Low', reported_at: '2026-11-02T10:00:00' })] },
+  ];
+  type Result = import('../../src/interpreter/schema.js').Interpretation;
+  type State = import('../../src/core/state.js').State;
+  let seq = 800;
+  const say = (woid: string, role: 'tenant' | 'handyman', result: Partial<Result>): Fact => ({
+    type: 'interpretation', seq: (seq += 1), woid, role, source: 'fake', prompt_version: '3',
+    result: { intent: 'decline', times: [], exclusions: [], quote: 'q', ...result },
+  });
+  const decline = (woid: string, role: 'tenant' | 'handyman' = 'tenant') => say(woid, role, { intent: 'decline' });
+  const startOf = (state: State, id: string) => state.holds.find((hold) => hold.orderId === id)?.slot.start;
+  const refusedOf = (state: State, id: string) => state.orders.get(id)?.refused.map((slot) => slot.start);
+  const sound = (state: State) => {
+    for (const a of state.holds) {
+      expect(Date.parse(a.slot.end) - Date.parse(a.slot.start), `${a.orderId} lasts 2 hours (SCHED-2)`).toBe(2 * 3600_000);
+      for (const b of state.holds) if (a !== b) expect(Date.parse(a.slot.start) < Date.parse(b.slot.end) && Date.parse(b.slot.start) < Date.parse(a.slot.end), `${a.orderId} vs ${b.orderId} (SCHED-1)`).toBe(false);
+    }
+  };
+
+  describe('what counts as refused (AC-1.1)', () => {
+    it('a decline, a counter, a mismatched acceptance and a withdrawal each add the current slot', () => {
+      expect(refusedOf(fold([...one, decline('WO-1')]).state, 'WO-1')).toEqual(['2026-11-04T12:00:00+01:00']);
+      expect(refusedOf(fold([...one, say('WO-1', 'handyman', { intent: 'counter', times: [{ date: '2026-11-05', start: '09:00' }] })]).state, 'WO-1')).toEqual(['2026-11-04T12:00:00+01:00']);
+      expect(refusedOf(fold([...one, say('WO-1', 'tenant', { intent: 'accept', times: [{ date: '2026-11-05' }] })]).state, 'WO-1')).toEqual(['2026-11-04T12:00:00+01:00']);
+      expect(refusedOf(fold([...one, say('WO-1', 'tenant', { intent: 'accept' }), say('WO-1', 'tenant', { intent: 'withdraw' })]).state, 'WO-1')).toEqual(['2026-11-04T12:00:00+01:00']);
+    });
+
+    it('a preemption and a blackout add nothing to the moved order (REQ-NG-9)', () => {
+      const preempted = fold([...two, say('WO-H', 'tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '14:00', end: '16:00' }] })]).state;
+      expect(startOf(preempted, 'WO-H')).toBe('2026-11-04T14:00:00+01:00');
+      expect(refusedOf(preempted, 'WO-L')).toEqual([]);
+      const blackedOut = fold([...two, say('WO-H', 'handyman', { intent: 'decline', exclusions: [{ date: '2026-11-04' }], scope: 'all' })]).state;
+      expect(refusedOf(blackedOut, 'WO-L')).toEqual([]);
+      expect(refusedOf(blackedOut, 'WO-H')).toEqual(['2026-11-04T12:00:00+01:00']);
+    });
+  });
+
+  describe('the fallback avoids every refused slot (AC-1.2, SCHED-1, SCHED-2)', () => {
+    it('three plain declines walk 12:00 → 14:00 → 16:00, never overlapping the slot just refused', () => {
+      const first = fold([...one, decline('WO-1')]).state;
+      expect(startOf(first, 'WO-1')).toBe('2026-11-04T14:00:00+01:00');
+      const second = step(first, decline('WO-1', 'handyman')).state;
+      expect(startOf(second, 'WO-1')).toBe('2026-11-04T16:00:00+01:00');
+      sound(second);
+    });
+
+    it('a decline of the last slot of the day moves to the next weekday at 09:00', () => {
+      const late = fold([...one, say('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '17:00' }] })]).state;
+      expect(startOf(late, 'WO-1')).toBe('2026-11-04T17:00:00+01:00');
+      expect(startOf(step(late, decline('WO-1', 'handyman')).state, 'WO-1')).toBe('2026-11-05T09:00:00+01:00');
+    });
+
+    it('avoids earlier refusals too, not only the slot it starts after (non-contiguous)', () => {
+      const state = fold([
+        ...one,
+        decline('WO-1', 'handyman'), // v1 12:00 refused → v2 14:00
+        decline('WO-1', 'tenant'), // v2 14:00 refused → v3 16:00
+        say('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '13:00' }] }), // v3 refused; explicit 13:00 → v4
+      ]).state;
+      expect(startOf(state, 'WO-1')).toBe('2026-11-04T13:00:00+01:00');
+      const after = step(state, decline('WO-1', 'handyman')).state; // v4 13:00 refused; every Wednesday hour overlaps a refusal
+      expect(startOf(after, 'WO-1')).toBe('2026-11-05T09:00:00+01:00');
+      sound(after);
+    });
+  });
+
+  describe('explicit statements and other orders (AC-1.3, AC-1.4)', () => {
+    it('a stated time is honoured even when it overlaps a slot refused earlier in the order', () => {
+      const state = fold([...one, decline('WO-1', 'handyman'), say('WO-1', 'tenant', { intent: 'counter', times: [{ date: '2026-11-04', start: '12:00' }] })]).state;
+      expect(startOf(state, 'WO-1')).toBe('2026-11-04T12:00:00+01:00');
+    });
+
+    it("a slot refused in one order stays available to another order's fallback", () => {
+      const lowDeclined = fold([...two, decline('WO-L')]).state;
+      expect(startOf(lowDeclined, 'WO-L')).toBe('2026-11-04T16:00:00+01:00');
+      const highDeclined = step(lowDeclined, decline('WO-H')).state;
+      expect(startOf(highDeclined, 'WO-H')).toBe('2026-11-04T14:00:00+01:00');
+      sound(highDeclined);
+    });
+  });
+});

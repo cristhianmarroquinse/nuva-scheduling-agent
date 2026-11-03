@@ -20,11 +20,12 @@ const frames = (stdout: string) => stdoutBlocks(stdout).filter((block) => /^WOID
 const detail = <T,>(line: TraceLine) => line.detail as T;
 
 describe('US1 · a decline or counter-proposal leads to a new concrete proposal', () => {
-  it('004-decline-reproposes: a decline moves the hold to the next free slot, tells both parties the previous proposal is cancelled, and both must accept again (AC-1.1, AC-2.1, AC-2.2, AC-2.4)', async () => {
+  it('004-decline-reproposes: a decline moves the hold to the next free slot, tells both parties the previous proposal is cancelled, and both must accept again (AC-1.1, AC-2.1, AC-2.2, AC-2.4; 008 AC-1.2)', async () => {
     await expectScenario('004-decline-reproposes');
     const { output } = await scenarioRun('004-decline-reproposes');
     expect(frames(output.stdout).filter((frame) => frame.includes('previous proposal is cancelled') || frame.includes('propuesta anterior queda cancelada'))).toHaveLength(2);
-    expect(output.stdout).toContain('SCHEDULED_FOR:2026-11-04T13:00:00+01:00');
+    // 008 AC-1.2: v2 no longer overlaps the declined 12:00–14:00.
+    expect(output.stdout).toContain('SCHEDULED_FOR:2026-11-04T14:00:00+01:00');
   }, SPAWN_TIMEOUT);
 
   it('004-counter-range: a stated range gets the first free slot inside it, and the order can then be scheduled there (AC-1.2, AC-2.1)', async () => {
@@ -67,7 +68,8 @@ describe('US1 · a decline or counter-proposal leads to a new concrete proposal'
     expect(held).toEqual([
       ['WO-1', '2026-11-04T12:00:00+01:00'],
       ['WO-2', '2026-11-04T14:00:00+01:00'],
-      ['WO-2', '2026-11-04T15:00:00+01:00'],
+      // 008 AC-1.2: the no-fit fallback does not overlap the countered 14:00–16:00.
+      ['WO-2', '2026-11-04T16:00:00+01:00'],
     ]);
     expect(events(output.trace, 'hold_released').filter((line) => line.work_order_id === 'WO-1').map((line) => detail<{ reason: string }>(line).reason)).toEqual(['closed']);
   }, SPAWN_TIMEOUT);
@@ -96,8 +98,8 @@ describe('US2 and US3 · versions, confirmation and the refusal limit', () => {
   it('004-two-versions-bare-yes: a bare yes after two unanswered versions gets a confirmation question; a yes naming the slot counts (AC-2.3)', async () => {
     await expectScenario('004-two-versions-bare-yes');
     const { output } = await scenarioRun('004-two-versions-bare-yes');
-    expect(output.stdout).toContain('To confirm: does the visit for "Leaking tap" on Wednesday 4 November 2026, 13:00 to 15:00');
-    expect(output.stdout).toContain('SCHEDULED_FOR:2026-11-04T13:00:00+01:00');
+    expect(output.stdout).toContain('To confirm: does the visit for "Leaking tap" on Wednesday 4 November 2026, 14:00 to 16:00');
+    expect(output.stdout).toContain('SCHEDULED_FOR:2026-11-04T14:00:00+01:00'); // v2 moved by 008 AC-1.2
   }, SPAWN_TIMEOUT);
 
   it('004-three-refusals: the third refusal by the tenant closes the order as no_mutual_slot and the handyman gets nothing more (AC-3.1, AC-3.2)', async () => {
