@@ -7,7 +7,7 @@ Status: **v1**. Every requirement of the take-home is implemented, each of the 2
 ## Try it in two minutes
 
 ```bash
-docker build -t agent .                                  # runs typecheck + 460 tests inside; fails if any fails
+docker build -t agent .                                  # runs typecheck + 461 tests inside; fails if any fails
 cp traces/examples/work_orders.csv .                     # four orders of mixed urgency
 cp .env.example .env                                     # then put your key in ANTHROPIC_API_KEY=
 mkdir -p traces
@@ -147,7 +147,7 @@ The repository holds the product and the development harness it was built with. 
 | Part | Paths |
 |---|---|
 | Product | `src/`, `Dockerfile`, `package.json`, `tsconfig*.json`, `traces/examples/` |
-| Tests (460, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
+| Tests (461, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
 | Evaluation | `eval/`: golden set, scorer, report; `pnpm eval` |
 | Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–012), `scripts/` |
 | Decisions | `docs/planning/`, `docs/adr/` |
