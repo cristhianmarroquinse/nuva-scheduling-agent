@@ -98,7 +98,7 @@ describe('US2 · higher urgency takes over tentative holds, never scheduled visi
 });
 
 describe("US3 · the handyman's unavailability applies to every order", () => {
-  it('005-blackout-day: a scope-all day off moves every other tentative hold outside it without penalty, then the current order follows its own intent (AC-3.1, AC-3.2, AC-3.3, AC-3.5)', async () => {
+  it('005-blackout-day: a scope-all day off moves every other tentative hold outside it without penalty, then the current order follows its own intent, by priority (AC-3.1, AC-3.2, AC-3.3, AC-3.5; 010 AC-1.2)', async () => {
     await expectScenario('005-blackout-day');
     const { output } = await scenarioRun('005-blackout-day');
     expect(output.stdout).toContain('The handyman is not available at the previous slot.');

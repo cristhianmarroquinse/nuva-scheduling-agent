@@ -1,6 +1,6 @@
 # 010 · Blackout moves respect priority
 
-**Status:** planned
+**Status:** implemented
 **Product requirements:** REQ-SC-5, REQ-SC-6, REQ-ST-3
 **Invariants touched:** SCHED-1, SCHED-3, SCHED-4 (unchanged)
 **Amends:** 005 AC-3.2 (order of the moves) and AC-3.1 (a general decline without a date)

@@ -7,7 +7,7 @@ Status: **v1**. Every requirement of the take-home is implemented, each of the 2
 ## Try it in two minutes
 
 ```bash
-docker build -t agent .                                  # runs typecheck + 437 tests inside; fails if any fails
+docker build -t agent .                                  # runs typecheck + 445 tests inside; fails if any fails
 cp traces/examples/work_orders.csv .                     # four orders of mixed urgency
 cp .env.example .env                                     # then put your key in ANTHROPIC_API_KEY=
 mkdir -p traces
@@ -43,7 +43,7 @@ Environment variables:
 
 **Timeouts.** `<NO RESPONSE>` counts only against a party the agent is actually waiting on: the first one gets a reminder restating the slot, the second ends the order in review. The tenant of a Critical order goes to review at the first silence, with the slot and the handyman's state in the reason. Any real reply resets the count. Nothing waits on wall-clock time.
 
-**Handyman unavailability.** When the handyman says something that applies to all his work ("mañana no puedo nada"), every tentative visit in that window is moved and the window is avoided from then on; confirmed visits stay and the conflict is traced for the office.
+**Handyman unavailability.** When the handyman says something that applies to all his work ("mañana no puedo nada"), every tentative visit in that window is moved, in priority order (the most urgent order picks the first free slot, including the order he wrote on), and the window is avoided from then on; confirmed visits stay and the conflict is traced for the office. If he refuses in general but no date can be read, the day of the visit he was answering is blacked out, and the trace marks it as inferred ([spec 010](specs/features/010-blackout-priority/spec.md)).
 
 ### When an order goes to human review
 
@@ -146,9 +146,9 @@ The repository holds the product and the development harness it was built with. 
 | Part | Paths |
 |---|---|
 | Product | `src/`, `Dockerfile`, `package.json`, `tsconfig*.json`, `traces/examples/` |
-| Tests (437, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
+| Tests (445, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
 | Evaluation | `eval/`: golden set, scorer, report; `pnpm eval` |
-| Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–009), `scripts/` |
+| Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–010), `scripts/` |
 | Decisions | `docs/planning/`, `docs/adr/` |
 
 Each feature went through the same pipeline with Claude Code: `/spec` (user stories and EARS criteria, clarified with at most five questions), `/plan` (design, a constitution check against the invariants and ADRs, ordered tasks), `/implement` (every test written and seen failing before its code, `pnpm check` after every task) and `/ship`. `pnpm check` is typecheck, the test suite and invariant coverage, whose baseline may only shrink and is empty now; hooks refuse to finish while it is red. Features: 001 I/O protocol and startup; 002 calendar and initial proposals; 003 interpretation and acceptance; 004 negotiation; 005 timeouts, preemption and blackouts; 006 golden set and evaluation; 007 delivery. Specs with plan and tasks are under `specs/features/`; the behaviour is specified in [001](specs/features/001-io-protocol-startup/spec.md), [002](specs/features/002-calendar-initial-proposals/spec.md), [003](specs/features/003-interpretation-acceptance/spec.md), [004](specs/features/004-negotiation/spec.md) and [005](specs/features/005-timeouts-preemption-blackouts/spec.md).

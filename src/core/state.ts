@@ -3,7 +3,7 @@
 import type { Fact } from './facts.js';
 import { parseLine } from './protocol.js';
 import { NO_RESPONSE_SENTENCE, REVIEW_SENTENCES, criticalNoResponseSentence, invalidRowSentence, noResponseSentence, type ReasonCode } from './reasons.js';
-import { earliestStart, nextSlot, overlaps, priorityOrder, type Hold, type Slot } from '../calendar/calendar.js';
+import { URGENCY_RANK, earliestStart, nextSlot, overlaps, priorityOrder, type Hold, type Slot } from '../calendar/calendar.js';
 import type { Interpretation } from '../interpreter/schema.js';
 import { blackoutWindows, constraintWindows, nearestOnDate, slotInside, takeoverCandidate, windowsFrom } from '../policy/availability.js';
 import { formatFrame, formatResult, type Result, type Role } from '../io/frames.js';
@@ -29,7 +29,7 @@ import { validateRows, type WorkOrder } from '../orders/validate.js';
 import { factsFor, type AnswerRequest } from '../interpreter/answer.js';
 import type { InterpretRequest } from '../interpreter/types.js';
 import type { Language } from '../time/format.js';
-import { parseLocalOrOffset } from '../time/time.js';
+import { ZONE, parseLocalOrOffset } from '../time/time.js';
 
 export type { Language } from '../time/format.js';
 
@@ -234,7 +234,30 @@ function languageFor(order: OrderState, party: Role): Language {
  * An interpretation enters here and nowhere else (LLM-1): code decides what it means for the order. Acceptance follows
  * REQ-NG-2/3 and REQ-NG-6; both parties accepting the same live proposal schedules the visit (REQ-RES-1, ACC-1..3).
  */
+/**
+ * A reply, then the blackout moves it deferred: orders moved by a blackout that rank below the order the handyman wrote
+ * on pick their new slot after his reply is handled, in allocation order (010 AC-1.2).
+ */
 function applyInterpretation(state: State, fact: Fact & { type: 'interpretation' }): StepResult {
+  const deferred: string[] = [];
+  const replied = applyReply(state, fact, deferred);
+  if (deferred.length === 0) return replied;
+  const env: StepEnv = { state: replied.state, orders: new Map(replied.state.orders), holds: replied.state.holds, outputs: [...replied.outputs] };
+  for (const id of deferred) {
+    const other = env.orders.get(id);
+    if (other === undefined || other.status !== 'open' || other.proposal === undefined) continue;
+    reproposeOrder(env, { ...other }, { cause: 'blackout', availability: null, allowTakeover: false });
+  }
+  return { state: { ...replied.state, orders: env.orders, holds: env.holds }, outputs: env.outputs };
+}
+
+/** Allocation rank (REQ-ST-3): urgency, then `reported_at`; a lower number goes first. */
+function rankOf(order: OrderState): [number, number] {
+  return [URGENCY_RANK[order.order!.urgency], parseLocalOrOffset(order.order!.reportedAt)!.toMillis()];
+}
+const ranksBefore = (a: [number, number], b: [number, number]): boolean => a[0] < b[0] || (a[0] === b[0] && a[1] < b[1]);
+
+function applyReply(state: State, fact: Fact & { type: 'interpretation' }, deferred: string[]): StepResult {
   const order = state.orders.get(fact.woid);
   if (order === undefined || order.status === 'closed' || order.order === undefined || order.proposal === undefined) {
     return { state, outputs: [trace(fact.woid, 'ignored_fact', { type: fact.type, reason: order?.status === 'closed' ? 'closed_order' : 'no_open_proposal' })] };
@@ -255,21 +278,34 @@ function applyInterpretation(state: State, fact: Fact & { type: 'interpretation'
     current.unclearStreak = { ...current.unclearStreak, [party]: NO_STREAK };
   }
 
-  // Unavailability that applies to all the handyman's work (REQ-SC-6): other orders move first, this one follows its intent.
-  if (party === 'handyman' && result.scope === 'all' && result.exclusions.length > 0 && state.simNow !== null) {
+  // Unavailability that applies to all the handyman's work (REQ-SC-6). A general refusal without a date blacks out the day
+  // of the current proposal (010 AC-2.1); a general scope on any other intent records nothing (010 AC-2.2).
+  const refusesAll = result.intent === 'decline' || result.intent === 'withdraw';
+  const inferred = result.exclusions.length === 0 && refusesAll;
+  const blackoutExclusions = inferred ? [{ date: parseLocalOrOffset(proposal.slot.start)!.setZone(ZONE).toISODate()! }] : result.exclusions;
+  if (party === 'handyman' && result.scope === 'all' && blackoutExclusions.length > 0 && state.simNow !== null) {
     const simNow = parseLocalOrOffset(state.simNow);
-    const windows = simNow === null ? [] : blackoutWindows(result.exclusions, simNow);
+    const windows = simNow === null ? [] : blackoutWindows(blackoutExclusions, simNow);
     if (windows.length > 0) {
       state = { ...state, blackouts: [...state.blackouts, ...windows] };
-      outputs.push(trace(order.id, 'blackout_recorded', { windows, exclusions: result.exclusions }));
+      outputs.push(trace(order.id, 'blackout_recorded', { windows, exclusions: blackoutExclusions, ...(inferred ? { inferred: true } : {}) }));
       const env: StepEnv = { state, orders, holds, outputs };
+      // Every affected hold is released first, then the orders are re-proposed by rank; those ranking below the order the
+      // handyman wrote on wait until his reply is handled (010 AC-1.1, AC-1.2).
+      const affected: OrderState[] = [];
       for (const other of [...orders.values()]) {
         if (other.id === order.id || other.status !== 'open' || other.proposal === undefined) continue;
         const hold = env.holds.find((candidate) => candidate.orderId === other.id && candidate.kind === 'tentative');
         if (hold === undefined || !windows.some((window) => overlaps(window, hold.slot))) continue;
         outputs.push(trace(other.id, 'hold_released', { version: hold.version, reason: 'blackout' }));
         env.holds = env.holds.filter((candidate) => candidate !== hold);
-        reproposeOrder(env, { ...other }, { cause: 'blackout', availability: null, allowTakeover: false });
+        affected.push(other);
+      }
+      const ranked = priorityOrder(affected.map((other) => ({ other, urgency: other.order!.urgency, reportedAt: other.order!.reportedAt }))).map((entry) => entry.other);
+      const writerRank = rankOf(order);
+      for (const other of ranked) {
+        if (ranksBefore(rankOf(other), writerRank)) reproposeOrder(env, { ...other }, { cause: 'blackout', availability: null, allowTakeover: false });
+        else deferred.push(other.id);
       }
       for (const visit of env.holds.filter((candidate) => candidate.kind === 'scheduled' && windows.some((window) => overlaps(window, candidate.slot)))) {
         outputs.push(trace(visit.orderId, 'blackout_conflict', { version: visit.version, slot: visit.slot }));

@@ -1,0 +1,25 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+L,Squeaky door,Calle Mayor 2,The bedroom door squeaks.,2026-11-02T08:00:00,Low
+M,Leaking tap,Calle Mayor 1,The kitchen tap drips all night.,2026-11-02T09:00:00,Medium
+H,No hot water,Calle Mayor 3,The boiler shows an error.,2026-11-02T10:00:00,High
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+M|handyman {"intent":"decline","times":[],"exclusions":[{"date":"2026-11-04"}],"quote":"hoy no puedo hacer ningún trabajo","scope":"all"}
+# stdout results
+WOID:L|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:M|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+WOID:H|RESULT:requires_review
+REASON:No reply was received before the end of input.
+
+# exit
+0
+# trace
+{"event_type":"decision","work_order_id":"H","detail":{"outcome":"repropose","cause":"blackout","start":"2026-11-05T09:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"M","detail":{"outcome":"repropose","cause":"decline","start":"2026-11-05T11:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"L","detail":{"outcome":"repropose","cause":"blackout","start":"2026-11-05T13:00:00+01:00"}}

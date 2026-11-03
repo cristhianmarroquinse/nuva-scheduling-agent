@@ -986,7 +986,7 @@ describe('handyman blackouts (AC-3.1, AC-3.2, AC-3.3, AC-3.4, AC-3.5, AC-3.6, SC
   const decisionsOf = (outputs: Output[]) => tracesOf(outputs, 'decision').map((output) => output.kind === 'trace' && (output.detail as Record<string, unknown>));
   const holdOf = (state: import('../../src/core/state.js').State, id: string) => state.holds.find((hold) => hold.orderId === id);
 
-  it('records the blackout, moves every other tentative hold outside it without penalty, then handles the current order by its own intent (AC-3.1, AC-3.2, AC-3.5)', () => {
+  it('records the blackout, moves every other tentative hold outside it without penalty, then handles the current order by its own intent, by priority (AC-3.1, AC-3.2, AC-3.5; 010 AC-1.1, AC-1.2)', () => {
     const { state, outputs } = step(fold(loaded).state, wednesdayOff('WO-1'));
     expect(state.blackouts).toEqual([{ start: '2026-11-04T00:00:00+01:00', end: '2026-11-05T00:00:00+01:00' }]);
     expect(tracesOf(outputs, 'blackout_recorded')).toHaveLength(1);
@@ -994,12 +994,13 @@ describe('handyman blackouts (AC-3.1, AC-3.2, AC-3.3, AC-3.4, AC-3.5, AC-3.6, SC
       ['WO-2', 'blackout'],
       ['WO-1', 'reproposed'],
     ]);
+    // 010: WO-1 (Medium, the order the handyman wrote on) ranks above WO-2 (Low), so it picks first.
     expect(decisionsOf(outputs).map((d) => d && [d['outcome'], d['cause']])).toEqual([
-      ['repropose', 'blackout'],
       ['repropose', 'decline'],
+      ['repropose', 'blackout'],
     ]);
-    expect(holdOf(state, 'WO-2')?.slot.start).toBe('2026-11-05T09:00:00+01:00');
-    expect(holdOf(state, 'WO-1')?.slot.start).toBe('2026-11-05T11:00:00+01:00');
+    expect(holdOf(state, 'WO-1')?.slot.start).toBe('2026-11-05T09:00:00+01:00');
+    expect(holdOf(state, 'WO-2')?.slot.start).toBe('2026-11-05T11:00:00+01:00');
     expect(state.orders.get('WO-2')).toMatchObject({ refusals: { tenant: 0, handyman: 0 }, proposal: { version: 2 } });
     expect(state.orders.get('WO-1')).toMatchObject({ refusals: { tenant: 0, handyman: 1 }, proposal: { version: 2 } });
     const frames = stdoutOf(outputs).split('\n\n').filter(Boolean);
@@ -1245,5 +1246,54 @@ describe('009 · stated availability that contains the proposal is an acceptance
   it('an exclusion that rules the proposal out wins over a window that contains it', () => {
     const { outputs } = step(fold(one).state, say({ times: [{ date: '2026-11-04' }], exclusions: [{ end: '13:00' }] }));
     expect(outcomes(outputs)).toEqual(['mismatch', 'repropose']);
+  });
+});
+
+describe('010 · blackout moves respect priority (REQ-SC-5, REQ-SC-6)', () => {
+  // sim_now Wed 2026-11-04 10:00. Allocation: H (High) 12:00, M (Medium) 14:00, L (Low) 16:00, whatever the CSV order.
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const loaded: Fact[] = [
+    startedNov,
+    {
+      type: 'csv_loaded',
+      rows: [
+        row({ work_order_id: 'L', urgency: 'Low', reported_at: '2026-11-02T08:00:00' }),
+        row({ work_order_id: 'M', urgency: 'Medium', reported_at: '2026-11-02T09:00:00' }),
+        row({ work_order_id: 'H', urgency: 'High', reported_at: '2026-11-02T10:00:00' }),
+      ],
+    },
+  ];
+  type Result = import('../../src/interpreter/schema.js').Interpretation;
+  type State = import('../../src/core/state.js').State;
+  let seq = 1000;
+  const handyman = (woid: string, result: Partial<Result>): Fact => ({ type: 'interpretation', seq: (seq += 1), woid, role: 'handyman', source: 'fake', prompt_version: '4', result: { intent: 'decline', times: [], exclusions: [], quote: 'hoy no puedo nada', scope: 'all', ...result } });
+  const today = { exclusions: [{ date: '2026-11-04' }] };
+  const startOf = (state: State, id: string) => state.holds.find((hold) => hold.orderId === id)?.slot.start;
+  const sound = (state: State) => {
+    for (const a of state.holds) for (const b of state.holds) if (a !== b) expect(Date.parse(a.slot.start) < Date.parse(b.slot.end) && Date.parse(b.slot.start) < Date.parse(a.slot.end), 'SCHED-1').toBe(false);
+  };
+
+  it('the handyman writes on the Medium order: High moves first, then the Medium by its own reply, then the Low (AC-1.1, AC-1.2)', () => {
+    const { state } = step(fold(loaded).state, handyman('M', today));
+    expect([startOf(state, 'H'), startOf(state, 'M'), startOf(state, 'L')]).toEqual(['2026-11-05T09:00:00+01:00', '2026-11-05T11:00:00+01:00', '2026-11-05T13:00:00+01:00']);
+    sound(state);
+  });
+
+  it('the handyman writes on the Low order: the High and the Medium move before it (AC-1.2)', () => {
+    const { state } = step(fold(loaded).state, handyman('L', today));
+    expect([startOf(state, 'H'), startOf(state, 'M'), startOf(state, 'L')]).toEqual(['2026-11-05T09:00:00+01:00', '2026-11-05T11:00:00+01:00', '2026-11-05T13:00:00+01:00']);
+  });
+
+  it('an undated general decline blacks out the day of the current proposal, traced as inferred (AC-2.1)', () => {
+    const { state, outputs } = step(fold(loaded).state, handyman('M', {}));
+    expect(state.blackouts).toEqual([{ start: '2026-11-04T00:00:00+01:00', end: '2026-11-05T00:00:00+01:00' }]);
+    expect(tracesOf(outputs, 'blackout_recorded').map((output) => output.kind === 'trace' && (output.detail as { inferred?: boolean }).inferred)).toEqual([true]);
+    expect(startOf(state, 'H')).toBe('2026-11-05T09:00:00+01:00');
+  });
+
+  it('a general scope on an acceptance never creates a blackout (AC-2.2)', () => {
+    const { state, outputs } = step(fold(loaded).state, handyman('M', { intent: 'accept', quote: 'vale' }));
+    expect(state.blackouts).toEqual([]);
+    expect(tracesOf(outputs, 'blackout_recorded')).toHaveLength(0);
   });
 });

@@ -19,17 +19,17 @@ Hello. We are writing about your report "Squeaky door". We propose the handyman'
 WOID:WO-2|ROLE:handyman
 Nueva visita propuesta para el aviso «Squeaky door» (urgencia baja) en Calle Mayor 2. Propuesta: miércoles 4 de noviembre de 2026, de 14:00 a 16:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
-WOID:WO-2|ROLE:tenant
-The previous proposal is cancelled. The handyman is not available at the previous slot. New proposal for "Squeaky door": Thursday 5 November 2026, 09:00 to 11:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
-
-WOID:WO-2|ROLE:handyman
-La propuesta anterior queda cancelada. Movemos la visita por tu indisponibilidad. Nueva propuesta para el aviso «Squeaky door» en Calle Mayor 2: jueves 5 de noviembre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
-
 WOID:WO-1|ROLE:tenant
-The previous proposal is cancelled. New proposal for "Leaking tap": Thursday 5 November 2026, 11:00 to 13:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+The previous proposal is cancelled. New proposal for "Leaking tap": Thursday 5 November 2026, 09:00 to 11:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
 
 WOID:WO-1|ROLE:handyman
-La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: jueves 5 de noviembre de 2026, de 11:00 a 13:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: jueves 5 de noviembre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
+
+WOID:WO-2|ROLE:tenant
+The previous proposal is cancelled. The handyman is not available at the previous slot. New proposal for "Squeaky door": Thursday 5 November 2026, 11:00 to 13:00 (Madrid time). Does that work for you? If not, please tell us which days and times would suit you.
+
+WOID:WO-2|ROLE:handyman
+La propuesta anterior queda cancelada. Movemos la visita por tu indisponibilidad. Nueva propuesta para el aviso «Squeaky door» en Calle Mayor 2: jueves 5 de noviembre de 2026, de 11:00 a 13:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-1|RESULT:requires_review
 REASON:No reply was received before the end of input.
@@ -42,8 +42,8 @@ REASON:No reply was received before the end of input.
 # trace
 {"event_type":"blackout_recorded","work_order_id":"WO-1","detail":{"windows":[{"start":"2026-11-04T00:00:00+01:00","end":"2026-11-05T00:00:00+01:00"}]}}
 {"event_type":"hold_released","work_order_id":"WO-2","detail":{"version":1,"reason":"blackout"}}
-{"event_type":"decision","work_order_id":"WO-2","detail":{"outcome":"repropose","cause":"blackout","version":2,"start":"2026-11-05T09:00:00+01:00"}}
-{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"repropose","cause":"decline","party":"handyman","version":2,"start":"2026-11-05T11:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"repropose","cause":"decline","party":"handyman","version":2,"start":"2026-11-05T09:00:00+01:00"}}
+{"event_type":"decision","work_order_id":"WO-2","detail":{"outcome":"repropose","cause":"blackout","version":2,"start":"2026-11-05T11:00:00+01:00"}}
 {"event_type":"eof"}
 {"event_type":"result","work_order_id":"WO-1","detail":{"code":"no_response"}}
 {"event_type":"result","work_order_id":"WO-2","detail":{"code":"no_response"}}
