@@ -5,10 +5,10 @@ WO-2,Door,Calle Mayor 2,Stuck,${NOW+1d},High
 # stdin
 # stdout results
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Tuesday 3 November 2026, 09:00 to 11:00 (Madrid time).
 
 WOID:WO-2|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 09:00 to 11:00 (Madrid time).
 
 # exit
 0

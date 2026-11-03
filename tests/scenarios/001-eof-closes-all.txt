@@ -8,13 +8,13 @@ AGENT_NOW=2026-10-08T10:00
 # stdin
 # stdout results
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 8 October 2026, 14:00 to 16:00 (Madrid time).
 
 WOID:WO-2|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 8 October 2026, 12:00 to 14:00 (Madrid time).
 
 WOID:WO-3|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 8 October 2026, 16:00 to 18:00 (Madrid time).
 
 # exit
 0

@@ -19,10 +19,10 @@ WOID:WO-H|ROLE:handyman
 Nueva visita propuesta para el aviso «No hot water» (urgencia alta) en Calle Mayor 2. Propuesta: lunes 26 de octubre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-C|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Sunday 25 October 2026, 08:00 to 10:00 (Madrid time).
 
 WOID:WO-H|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Monday 26 October 2026, 09:00 to 11:00 (Madrid time).
 
 # exit
 0

@@ -7,7 +7,7 @@ AGENT_NOW=2026-11-04T10:00
 WO-1|tenant {"intent":"accept","times":[],"exclusions":[{"end":"13:00"}],"quote":"yes, but not before 1pm"}
 # stdout results
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time).
 
 # exit
 0

@@ -47,10 +47,10 @@ WOID:WO-C|ROLE:handyman
 La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Gas smell» en Calle Mayor 2: miércoles 4 de noviembre de 2026, de 18:00 a 20:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-C|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 18:00 to 20:00 (Madrid time).
 
 WOID:WO-X|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 16:00 to 18:00 (Madrid time).
 
 # exit
 0

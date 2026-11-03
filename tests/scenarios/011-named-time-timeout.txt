@@ -9,7 +9,7 @@ WO-1|handyman <NO RESPONSE>
 WO-1|handyman <NO RESPONSE>
 # stdout results
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended while waiting for the tenant; the handyman had accepted the proposed visit on Thursday 5 November 2026, 10:00 to 12:00 (Madrid time).
 
 # exit
 0

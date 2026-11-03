@@ -98,13 +98,13 @@ describe('eof (AC-5.1, AC-5.3)', () => {
     { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1' }), row({ work_order_id: 'WO-2', urgency: 'x' }), row({ work_order_id: 'WO-3' })] },
   ];
 
-  it('closes every open order with no_response, in CSV order, and skips orders already closed (ORD-1)', () => {
+  it('closes every open order with no_response, in CSV order, naming what was agreed, and skips orders already closed (ORD-1; 013 AC-1)', () => {
     const { state, outputs } = step(fold(loaded).state, { type: 'eof' });
     expect(state.ended).toBe(true);
     expect(allTerminal(state)).toBe(true);
     expect(stdoutOf(outputs)).toBe(
-      'WOID:WO-1|RESULT:requires_review\nREASON:No reply was received before the end of input.\n\n' +
-        'WOID:WO-3|RESULT:requires_review\nREASON:No reply was received before the end of input.\n\n',
+      'WOID:WO-1|RESULT:requires_review\nREASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 7 October 2026, 12:00 to 14:00 (Madrid time).\n\n' +
+        'WOID:WO-3|RESULT:requires_review\nREASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 7 October 2026, 14:00 to 16:00 (Madrid time).\n\n',
     );
     expect(tracesOf(outputs, 'result').map((output) => output.kind === 'trace' && output.work_order_id)).toEqual(['WO-1', 'WO-3']);
     expect([...state.orders.values()].every((order) => order.status === 'closed')).toBe(true);
@@ -843,7 +843,7 @@ describe('timeouts (AC-1.1, AC-1.2, AC-1.3, AC-1.4, AC-1.5, AC-1.6, AC-1.7, AC-1
     const once = fold([...loaded, accept('WO-1', 'tenant'), timeout('WO-1', 'handyman')]).state;
     const { state, outputs } = step(once, timeout('WO-1', 'handyman'));
     expect(outcomes(outputs)).toEqual(['review']);
-    expect(stdoutOf(outputs)).toBe('WOID:WO-1|RESULT:requires_review\nREASON:The handyman did not reply after a reminder; the proposed visit was 2026-11-04T12:00:00+01:00, accepted by the tenant.\n\n');
+    expect(stdoutOf(outputs)).toBe('WOID:WO-1|RESULT:requires_review\nREASON:The handyman did not reply after a reminder; the proposed visit was Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time), accepted by the tenant.\n\n');
     expect(state.orders.get('WO-1')).toMatchObject({ status: 'closed', result: { code: 'no_response' } });
     expect(state.holds).toEqual([]);
   });
@@ -857,7 +857,7 @@ describe('timeouts (AC-1.1, AC-1.2, AC-1.3, AC-1.4, AC-1.5, AC-1.6, AC-1.7, AC-1
   it('a silent tenant on a Critical order goes to review at once, stating the slot and the handyman state (AC-1.6)', () => {
     const { state, outputs } = step(fold([...critical, accept('WO-C', 'handyman')]).state, timeout('WO-C', 'tenant'));
     expect(outcomes(outputs)).toEqual(['review']);
-    expect(stdoutOf(outputs)).toBe('WOID:WO-C|RESULT:requires_review\nREASON:The tenant of a critical order did not reply; the proposed visit is 2026-11-04T12:00:00+01:00, accepted by the handyman.\n\n');
+    expect(stdoutOf(outputs)).toBe('WOID:WO-C|RESULT:requires_review\nREASON:The tenant of a critical order did not reply; the proposed visit is Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time), accepted by the handyman.\n\n');
     expect(state.orders.get('WO-C')?.status).toBe('closed');
     const alone = step(fold(critical).state, timeout('WO-C', 'tenant'));
     expect(stdoutOf(alone.outputs)).toContain('not yet accepted by the handyman.');

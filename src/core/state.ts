@@ -2,7 +2,7 @@
 
 import type { Fact } from './facts.js';
 import { parseLine } from './protocol.js';
-import { NO_RESPONSE_SENTENCE, REVIEW_SENTENCES, criticalNoResponseSentence, invalidRowSentence, noResponseSentence, type ReasonCode } from './reasons.js';
+import { NO_RESPONSE_SENTENCE, REVIEW_SENTENCES, criticalNoResponseSentence, endOfInputSentence, invalidRowSentence, noResponseSentence, type ReasonCode } from './reasons.js';
 import { URGENCY_RANK, earliestStart, nextSlot, overlaps, priorityOrder, type Hold, type Slot } from '../calendar/calendar.js';
 import type { Interpretation } from '../interpreter/schema.js';
 import { blackoutWindows, constraintWindows, nearestOnDate, slotInside, takeoverCandidate, windowsFrom } from '../policy/availability.js';
@@ -677,7 +677,12 @@ function endInput(state: State): StepResult {
       outputs.push(trace(order.id, 'hold_released', { version: hold.version, reason: 'closed' }));
     }
     holds = holds.filter((hold) => hold.orderId !== order.id);
-    close(orders, outputs, order.id, { kind: 'requires_review', code: 'no_response', sentence: NO_RESPONSE_SENTENCE });
+    const proposal = order.proposal;
+    const sentence =
+      proposal === undefined
+        ? NO_RESPONSE_SENTENCE
+        : endOfInputSentence({ slot: proposal.slot, accepted: { tenant: order.accepted.tenant === proposal.version, handyman: order.accepted.handyman === proposal.version } });
+    close(orders, outputs, order.id, { kind: 'requires_review', code: 'no_response', sentence });
   }
   return { state: { ...state, ended: true, orders, holds }, outputs };
 }

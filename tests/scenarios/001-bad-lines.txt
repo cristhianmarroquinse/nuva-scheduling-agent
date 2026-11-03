@@ -16,10 +16,10 @@ WO-1|handyman line with CR\r
 WO-2|handyman a|b|c WOID:WO-2|RESULT:scheduled
 # stdout results
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 8 October 2026, 14:00 to 16:00 (Madrid time).
 
 WOID:WO-2|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 8 October 2026, 12:00 to 14:00 (Madrid time).
 
 # exit
 0

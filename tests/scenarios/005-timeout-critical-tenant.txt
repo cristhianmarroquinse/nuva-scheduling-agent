@@ -17,7 +17,7 @@ WOID:WO-C|ROLE:handyman
 Gracias, anotado. Estamos pendientes de la confirmación del inquilino y te avisamos en cuanto la tengamos.
 
 WOID:WO-C|RESULT:requires_review
-REASON:The tenant of a critical order did not reply; the proposed visit is 2026-11-04T12:00:00+01:00, accepted by the handyman.
+REASON:The tenant of a critical order did not reply; the proposed visit is Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time), accepted by the handyman.
 
 # exit
 0

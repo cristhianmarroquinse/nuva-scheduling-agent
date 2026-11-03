@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
 import { scenarioFailures, scenarioRun, stdoutBlocks, type TraceLine } from './runner.js';
+import { ANSWER_PROMPT_VERSION } from '../../src/interpreter/schema.js';
 
 const SCENARIO_DIR = new URL('.', import.meta.url).pathname;
 
@@ -145,7 +146,7 @@ describe('US5 and US6 · questions and cross-references', () => {
     expect(answerFrames[0]).toContain('Te recuerdo que la visita propuesta por «Leaking tap» es el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid).');
     expect(events(output.trace, 'hold_taken')).toHaveLength(1);
     const call = detail<{ purpose: string; model: string; prompt_version: string; latency_ms: number; tokens: unknown; outcome: string }>(events(output.trace, 'model_call').find((line) => detail<{ purpose?: string }>(line).purpose === 'answer')!);
-    expect(call).toMatchObject({ purpose: 'answer', model: 'fake', prompt_version: '1', outcome: 'ok' });
+    expect(call).toMatchObject({ purpose: 'answer', model: 'fake', prompt_version: ANSWER_PROMPT_VERSION, outcome: 'ok' });
   }, SPAWN_TIMEOUT);
 
   it("004-question-answer-rejected: a foreign time, the other party's words and a failing call each become the fixed office sentence (AC-5.3)", async () => {

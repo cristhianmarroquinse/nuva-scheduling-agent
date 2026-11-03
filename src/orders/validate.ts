@@ -52,7 +52,13 @@ export function readRows(table: string[][]): ReadRowsResult {
 function usableId(raw: string): string | null {
   const id = raw.trim();
   // eslint-disable-next-line no-control-regex
-  return id !== '' && !/[\s|\u0000-\u001f\u007f]/.test(id) ? id : null;
+  // Inner spaces are usable: the protocol splits on the first `|` (013 AC-4). A pipe or a control character is not.
+  return id !== '' && !/[|\u0000-\u001f\u007f]/.test(id) ? id : null;
+}
+
+/** One of the four urgencies, ignoring case (013 AC-3); null for anything else. */
+function normaliseUrgency(value: string): Urgency | null {
+  return URGENCIES.find((urgency) => urgency.toLowerCase() === value.toLowerCase()) ?? null;
 }
 
 function rowProblem(row: RawRow): RowProblem | null {
@@ -61,7 +67,7 @@ function rowProblem(row: RawRow): RowProblem | null {
   if (reportedAt === '') return { field: 'reported_at', problem: 'empty' };
   if (parseLocalOrOffset(reportedAt) === null) return { field: 'reported_at', problem: 'unparseable', value: reportedAt };
   const urgency = (row['urgency'] ?? '').trim();
-  if (!URGENCIES.includes(urgency as Urgency)) return { field: 'urgency', problem: 'unknown', value: urgency };
+  if (normaliseUrgency(urgency) === null) return { field: 'urgency', problem: 'unknown', value: urgency };
   return null;
 }
 
@@ -91,7 +97,7 @@ export function validateRows(rows: RawRow[]): ValidatedRows {
       address: (row['address'] ?? '').trim(),
       description: (row['description'] ?? '').trim(),
       reportedAt: toIso(parseLocalOrOffset(row['reported_at'] ?? '')!),
-      urgency: (row['urgency'] ?? '').trim() as Urgency,
+      urgency: normaliseUrgency((row['urgency'] ?? '').trim())!,
     };
     result.orders.push(order);
     result.entries.push({ kind: 'order', order });

@@ -28,7 +28,7 @@ describe('US1 · a silent party is reminded once, then the order goes to review'
   it('005-timeout-twice: a second timeout closes the order naming the silent party and the accepted slot (AC-1.4)', async () => {
     await expectScenario('005-timeout-twice');
     const { output } = await scenarioRun('005-timeout-twice');
-    expect(output.stdout).toContain('REASON:The handyman did not reply after a reminder; the proposed visit was 2026-11-04T12:00:00+01:00, accepted by the tenant.');
+    expect(output.stdout).toContain('REASON:The handyman did not reply after a reminder; the proposed visit was Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time), accepted by the tenant.');
   }, SPAWN_TIMEOUT);
 
   it('005-timeout-reset: a real reply resets the count, so the next timeout is a reminder again (AC-1.5)', async () => {
@@ -42,13 +42,13 @@ describe('US1 · a silent party is reminded once, then the order goes to review'
     await expectScenario('005-timeout-not-waiting');
     const { output } = await scenarioRun('005-timeout-not-waiting');
     expect(headers(output.stdout)).toEqual(['WOID:WO-1|ROLE:tenant', 'WOID:WO-1|ROLE:handyman', 'WOID:WO-1|ROLE:tenant', 'WOID:WO-1|RESULT:requires_review']);
-    expect(output.stdout).toContain('REASON:No reply was received before the end of input.');
+    expect(output.stdout).toContain('REASON:Input ended while waiting for the handyman; the tenant had accepted the proposed visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time).');
   }, SPAWN_TIMEOUT);
 
   it('005-timeout-critical-tenant: the tenant of a Critical order goes to review on the first timeout, stating what is known (AC-1.6)', async () => {
     await expectScenario('005-timeout-critical-tenant');
     const { output } = await scenarioRun('005-timeout-critical-tenant');
-    expect(output.stdout).toContain('REASON:The tenant of a critical order did not reply; the proposed visit is 2026-11-04T12:00:00+01:00, accepted by the handyman.');
+    expect(output.stdout).toContain('REASON:The tenant of a critical order did not reply; the proposed visit is Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time), accepted by the handyman.');
     expect(output.stdout).not.toContain('A reminder that');
   }, SPAWN_TIMEOUT);
 

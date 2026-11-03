@@ -1,5 +1,8 @@
 // Closed set of review reason codes (000-product.md, "Review reasons") and their REASON sentences.
 
+import { slotText } from '../messages/templates.js';
+import type { Slot } from '../calendar/calendar.js';
+
 export type ReasonCode =
   | 'no_response'
   | 'no_mutual_slot'
@@ -63,12 +66,20 @@ export const REVIEW_SENTENCES: Record<ReviewByReply, (party: 'tenant' | 'handyma
 };
 
 /** Review after two timeouts (REQ-TO-2): the silent party, the slot and whether the other party had accepted. */
-export function noResponseSentence(args: { party: 'tenant' | 'handyman'; slot: { start: string }; otherAccepted: boolean }): string {
+export function noResponseSentence(args: { party: 'tenant' | 'handyman'; slot: Slot; otherAccepted: boolean }): string {
   const other = args.party === 'tenant' ? 'handyman' : 'tenant';
-  return `The ${args.party} did not reply after a reminder; the proposed visit was ${args.slot.start}, ${args.otherAccepted ? 'accepted' : 'not yet accepted'} by the ${other}.`;
+  return `The ${args.party} did not reply after a reminder; the proposed visit was ${slotText(args.slot, 'en')}, ${args.otherAccepted ? 'accepted' : 'not yet accepted'} by the ${other}.`;
 }
 
 /** Immediate review for a Critical order whose tenant went silent (REQ-TO-3): what is known, nothing from free text. */
-export function criticalNoResponseSentence(args: { slot: { start: string }; handymanAccepted: boolean }): string {
-  return `The tenant of a critical order did not reply; the proposed visit is ${args.slot.start}, ${args.handymanAccepted ? 'accepted' : 'not yet accepted'} by the handyman.`;
+export function criticalNoResponseSentence(args: { slot: Slot; handymanAccepted: boolean }): string {
+  return `The tenant of a critical order did not reply; the proposed visit is ${slotText(args.slot, 'en')}, ${args.handymanAccepted ? 'accepted' : 'not yet accepted'} by the handyman.`;
+}
+
+/** Review at end of input (REQ-TO-4, 013 AC-1, AC-2): who was awaited and what was agreed, the slot in Madrid time. */
+export function endOfInputSentence(args: { slot: Slot; accepted: { tenant?: boolean; handyman?: boolean } }): string {
+  const visit = slotText(args.slot, 'en');
+  if (args.accepted.tenant === true && args.accepted.handyman !== true) return `Input ended while waiting for the handyman; the tenant had accepted the proposed visit on ${visit}.`;
+  if (args.accepted.handyman === true && args.accepted.tenant !== true) return `Input ended while waiting for the tenant; the handyman had accepted the proposed visit on ${visit}.`;
+  return `Input ended with no agreement; neither party had accepted the proposed visit on ${visit}.`;
 }

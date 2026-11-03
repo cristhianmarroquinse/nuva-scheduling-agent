@@ -8,7 +8,7 @@ WO-1|tenant Yes
 WO-1|tenant {"intent":"withdraw","times":[],"exclusions":[],"quote":"actually I cannot"}
 # stdout results
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time).
 
 # exit
 0

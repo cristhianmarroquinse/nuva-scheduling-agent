@@ -24,13 +24,13 @@ WOID:WO-EN|ROLE:handyman
 Nueva visita propuesta para el aviso «Leaking tap» (urgencia media) en Calle Mayor 2. Propuesta: miércoles 7 de octubre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-ES|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 7 October 2026, 13:00 to 15:00 (Madrid time).
 
 WOID:WO-EN|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 7 October 2026, 15:00 to 17:00 (Madrid time).
 
 WOID:WO-NONE|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 7 October 2026, 11:00 to 13:00 (Madrid time).
 
 # exit
 0

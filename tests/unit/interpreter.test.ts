@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { answerQuestion, interpretReply } from '../../src/interpreter/interpreter.js';
 import type { Interpreter, InterpretRequest, ModelOutput, Prompt } from '../../src/interpreter/types.js';
-import { PROMPT_VERSION } from '../../src/interpreter/schema.js';
+import { ANSWER_PROMPT_VERSION, PROMPT_VERSION } from '../../src/interpreter/schema.js';
 
 // The cascade (ADR 0004): fast path, else the model once, re-asked once on invalid output, else unclear (AC-1.4, AC-1.5, AC-1.7).
 
@@ -121,8 +121,8 @@ describe('answerQuestion (AC-5.4)', () => {
 
   it('records a valid answer as an answer fact with the call traced', async () => {
     const outcome = await answerQuestion(answerRequest, answering(['Sí, hay aparcamiento en la calle.']));
-    expect(outcome.fact).toEqual({ type: 'answer', seq: 4, woid: 'WO-1', role: 'handyman', prompt_version: '1', outcome: 'ok', text: 'Sí, hay aparcamiento en la calle.' });
-    expect(outcome.calls).toEqual([{ purpose: 'answer', attempt: 1, model: 'scripted', prompt_version: '1', latency_ms: 7, tokens: { input: 20, output: 9 }, outcome: 'ok' }]);
+    expect(outcome.fact).toEqual({ type: 'answer', seq: 4, woid: 'WO-1', role: 'handyman', prompt_version: ANSWER_PROMPT_VERSION, outcome: 'ok', text: 'Sí, hay aparcamiento en la calle.' });
+    expect(outcome.calls).toEqual([{ purpose: 'answer', attempt: 1, model: 'scripted', prompt_version: ANSWER_PROMPT_VERSION, latency_ms: 7, tokens: { input: 20, output: 9 }, outcome: 'ok' }]);
   });
 
   it('records an invalid answer with its problem and no text, without re-asking', async () => {

@@ -41,7 +41,7 @@ WOID:WO-1002|ROLE:handyman
 La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking kitchen tap» en Calle Sol 5, 1ºB: jueves 5 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-1002|ROLE:handyman
-Lo siento, no tengo información sobre aparcamiento cerca del portal. La oficina lo comprobará y le responderá. Te recuerdo que la visita propuesta por «Leaking kitchen tap» es el jueves 5 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
+Lo consulto con la oficina y te digo. Te recuerdo que la visita propuesta por «Leaking kitchen tap» es el jueves 5 de noviembre de 2026, de 15:00 a 17:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
 
 WOID:WO-1002|ROLE:handyman
 Gracias, anotado. Estamos pendientes de la confirmación del inquilino y te avisamos en cuanto la tengamos.
@@ -80,5 +80,5 @@ WOID:WO-1003|ROLE:handyman
 Te recuerdo que sigo pendiente de tu respuesta. La visita propuesta por «Puerta que chirría» es el jueves 5 de noviembre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
 
 WOID:WO-1003|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 5 November 2026, 09:00 to 11:00 (Madrid time).
 

@@ -33,16 +33,16 @@ WOID:WO-LOW|ROLE:handyman
 Nueva visita propuesta para el aviso «Squeaky door» (urgencia baja) en Calle Mayor 1. Propuesta: jueves 5 de noviembre de 2026, de 09:00 a 11:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-LOW|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 5 November 2026, 09:00 to 11:00 (Madrid time).
 
 WOID:WO-MED|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 16:00 to 18:00 (Madrid time).
 
 WOID:WO-HIGH|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time).
 
 WOID:WO-CRIT|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time).
 
 # exit
 0

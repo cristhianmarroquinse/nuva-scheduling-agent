@@ -19,7 +19,7 @@ WOID:WO-1|ROLE:handyman
 La propuesta anterior queda cancelada. Nueva propuesta para el aviso «Leaking tap» en Calle Mayor 1: domingo 8 de noviembre de 2026, de 07:00 a 09:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Sunday 8 November 2026, 07:00 to 09:00 (Madrid time).
 
 # exit
 0

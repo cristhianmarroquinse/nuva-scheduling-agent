@@ -8,7 +8,7 @@ WO-1|handyman {"intent":"decline","times":[],"exclusions":[],"quote":"a las 12 n
 WO-1|tenant {"intent":"counter","times":[{"date":"2026-11-04","start":"12:00"}],"exclusions":[],"quote":"Wednesday at noon"}
 # stdout results
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended while waiting for the handyman; the tenant had accepted the proposed visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time).
 
 # exit
 0

@@ -16,7 +16,7 @@ WOID:WO-1|ROLE:handyman
 Te recuerdo que sigo pendiente de tu respuesta. La visita propuesta por «Leaking tap» es el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
 
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time).
 
 # exit
 0

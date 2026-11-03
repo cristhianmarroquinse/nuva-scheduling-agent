@@ -16,13 +16,13 @@ WOID:WO-1|ROLE:handyman
 Sí, hay aparcamiento en la calle. Te recuerdo que la visita propuesta por «Leaking tap» es el miércoles 4 de noviembre de 2026, de 12:00 a 14:00 (hora de Madrid). ¿Te viene bien? Si no, dime otra fecha y hora.
 
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time).
 
 # exit
 0
 # trace
 {"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"question","party":"handyman"}}
-{"event_type":"model_call","work_order_id":"WO-1","detail":{"purpose":"answer","outcome":"ok","prompt_version":"1"}}
+{"event_type":"model_call","work_order_id":"WO-1","detail":{"purpose":"answer","outcome":"ok","prompt_version":"2"}}
 {"event_type":"answer","work_order_id":"WO-1","detail":{"role":"handyman","outcome":"ok","text":"Sí, hay aparcamiento en la calle."}}
 {"event_type":"decision","work_order_id":"WO-1","detail":{"outcome":"answered","party":"handyman","source":"model"}}
 {"event_type":"msg_out","work_order_id":"WO-1","detail":{"to":"handyman","source":"model"}}

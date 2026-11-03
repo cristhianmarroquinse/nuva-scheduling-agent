@@ -1,0 +1,21 @@
+# csv
+work_order_id,work_order,address,description,reported_at,urgency
+G,Gas smell,Calle Mayor 1,Strong smell of gas in the kitchen.,2026-11-04T09:00:00,critical
+H,No hot water,Calle Mayor 2,The boiler shows an error.,2026-11-03T09:00:00, High 
+# env
+AGENT_NOW=2026-11-04T10:00
+# stdin
+G|tenant Yes
+G|handyman Sí
+# stdout results
+WOID:G|RESULT:scheduled
+SCHEDULED_FOR:2026-11-04T12:00:00+01:00
+
+WOID:H|RESULT:requires_review
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 14:00 to 16:00 (Madrid time).
+
+# exit
+0
+# trace
+{"event_type":"order_loaded","work_order_id":"G","detail":{"urgency":"Critical"}}
+{"event_type":"order_loaded","work_order_id":"H","detail":{"urgency":"High"}}

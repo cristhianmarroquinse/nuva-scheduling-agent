@@ -218,14 +218,15 @@ export function stdoutBlocks(stdout: string): string[] {
 /** Only the terminal results of stdout, each with its terminating blank line, in order. */
 export function resultBlocks(stdout: string): string {
   return stdoutBlocks(stdout)
-    .filter((block) => /^WOID:[^|\s]+\|RESULT:/.test(block))
+    .filter((block) => /^WOID:[^|\s](?:[^|\n]*[^|\s])?\|RESULT:/.test(block))
     .map((block) => `${block}\n\n`)
     .join('');
 }
 
-const FRAME_HEADER = /^WOID:[^|\s]+\|ROLE:(tenant|handyman)$/;
-const RESULT_REVIEW = /^WOID:[^|\s]+\|RESULT:requires_review$/;
-const RESULT_SCHEDULED = /^WOID:[^|\s]+\|RESULT:scheduled$/;
+// An id may contain inner spaces but no `|`, line break or surrounding space (013 AC-4).
+const FRAME_HEADER = /^WOID:[^|\s](?:[^|\n]*[^|\s])?\|ROLE:(tenant|handyman)$/;
+const RESULT_REVIEW = /^WOID:[^|\s](?:[^|\n]*[^|\s])?\|RESULT:requires_review$/;
+const RESULT_SCHEDULED = /^WOID:[^|\s](?:[^|\n]*[^|\s])?\|RESULT:scheduled$/;
 
 /** Whether a stdout block is a well-formed frame or terminal result (OUT-1). */
 export function isProtocolBlock(block: string): boolean {

@@ -28,7 +28,7 @@ WOID:WO-1|ROLE:tenant
 We will check with the office and get back to you. As a reminder, the proposed visit for "Leaking tap" is on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time). Does that work for you? If not, please give us another date and time.
 
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Wednesday 4 November 2026, 12:00 to 14:00 (Madrid time).
 
 # exit
 0

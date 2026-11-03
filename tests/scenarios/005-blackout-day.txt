@@ -32,10 +32,10 @@ WOID:WO-2|ROLE:handyman
 La propuesta anterior queda cancelada. Movemos la visita por tu indisponibilidad. Nueva propuesta para el aviso «Squeaky door» en Calle Mayor 2: jueves 5 de noviembre de 2026, de 11:00 a 13:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 5 November 2026, 09:00 to 11:00 (Madrid time).
 
 WOID:WO-2|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 5 November 2026, 11:00 to 13:00 (Madrid time).
 
 # exit
 0

@@ -10,7 +10,7 @@ WO-1|tenant {"intent":"counter","times":[{"date":"2026-11-04","start":"13:00"}],
 WO-1|handyman {"intent":"decline","times":[],"exclusions":[],"quote":"a la una tampoco"}
 # stdout results
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 5 November 2026, 09:00 to 11:00 (Madrid time).
 
 # exit
 0

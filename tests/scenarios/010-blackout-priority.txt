@@ -9,13 +9,13 @@ AGENT_NOW=2026-11-04T10:00
 M|handyman {"intent":"decline","times":[],"exclusions":[{"date":"2026-11-04"}],"quote":"hoy no puedo hacer ningún trabajo","scope":"all"}
 # stdout results
 WOID:L|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 5 November 2026, 13:00 to 15:00 (Madrid time).
 
 WOID:M|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 5 November 2026, 11:00 to 13:00 (Madrid time).
 
 WOID:H|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Thursday 5 November 2026, 09:00 to 11:00 (Madrid time).
 
 # exit
 0

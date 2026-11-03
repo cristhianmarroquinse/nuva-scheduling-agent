@@ -7,7 +7,7 @@ AGENT_NOW=2026-11-04T10:00
 WO-1|tenant {"intent":"contradictory","times":[{"date":"2026-11-05","start":"11:00"}],"exclusions":[{"date":"2026-11-04","start":"12:00","end":"14:00"}],"quote":"yes... actually no, Thursday at 11"}
 # stdout results
 WOID:WO-1|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended while waiting for the handyman; the tenant had accepted the proposed visit on Thursday 5 November 2026, 11:00 to 13:00 (Madrid time).
 
 # exit
 0

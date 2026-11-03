@@ -32,10 +32,10 @@ WOID:WO-H|ROLE:handyman
 La propuesta anterior queda cancelada. Nueva propuesta para el aviso «No hot water» en Calle Mayor 2: lunes 26 de octubre de 2026, de 13:00 a 15:00 (hora de Madrid). ¿Te viene bien? Si no, dime qué disponibilidad tienes.
 
 WOID:WO-C|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Monday 26 October 2026, 11:00 to 13:00 (Madrid time).
 
 WOID:WO-H|RESULT:requires_review
-REASON:No reply was received before the end of input.
+REASON:Input ended with no agreement; neither party had accepted the proposed visit on Monday 26 October 2026, 13:00 to 15:00 (Madrid time).
 
 # exit
 0

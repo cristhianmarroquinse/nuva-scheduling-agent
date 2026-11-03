@@ -98,3 +98,26 @@ describe('answer validator (AC-5.3)', () => {
     expect(validateAnswer('Sí, hay aparcamiento.', withoutOther).ok).toBe(true);
   });
 });
+
+describe('answer register and no repeated slot (AC-5 of 013)', () => {
+  it('asks for tú to the handyman and usted to a Spanish-speaking tenant, and not to restate the slot', async () => {
+    const { buildAnswerPrompt } = await import('../../src/interpreter/answer.js');
+    const { ANSWER_PROMPT_VERSION } = await import('../../src/interpreter/schema.js');
+    const prompt = buildAnswerPrompt({ woid: 'WO-1', seq: 1, role: 'handyman', language: 'es', body: '¿Hay aparcamiento?', facts: [], slot: { start: '2026-11-04T12:00:00+01:00', end: '2026-11-04T14:00:00+01:00' } } as never);
+    expect(prompt.system).toMatch(/"tú"/);
+    expect(prompt.system).toMatch(/"usted"/);
+    expect(prompt.system).toMatch(/do not restate the proposed date or time/i);
+    expect(ANSWER_PROMPT_VERSION).toBe('2');
+  });
+});
+
+describe('answer language (COM-1, COM-2; 013, found when regenerating the example)', () => {
+  it('rejects an answer written in the other language, so the fixed office sentence goes out in the right one', () => {
+    const english = 'The facts do not say anything about parking near the building, so I cannot answer that. The office will check and get back to you.';
+    expect(validateAnswer(english, request)).toEqual({ ok: false, problem: 'answer is not in es' });
+    const spanish = 'La información disponible no indica si hay aparcamiento. La oficina lo comprobará y te responderá.';
+    expect(validateAnswer(spanish, { ...request, role: 'tenant', language: 'en' })).toEqual({ ok: false, problem: 'answer is not in en' });
+    expect(validateAnswer(spanish, request).ok).toBe(true);
+    expect(validateAnswer('Sí.', request).ok).toBe(true);
+  });
+});

@@ -84,29 +84,28 @@ describe('validateRows', () => {
     ]);
   });
 
-  it('accepts the four urgencies after trimming', () => {
+  it('accepts the four urgencies after trimming, ignoring case (013 AC-3)', () => {
     const { orders, rejected } = validateRows(
-      ['Critical', ' High ', 'Medium', 'Low'].map((urgency, index) => row({ work_order_id: `WO-${index}`, urgency })),
+      ['critical', ' HIGH ', 'Medium', 'low'].map((urgency, index) => row({ work_order_id: `WO-${index}`, urgency })),
     );
     expect(rejected).toEqual([]);
     expect(orders.map((order) => order.urgency)).toEqual(['Critical', 'High', 'Medium', 'Low']);
   });
 
-  it('ignores rows with no usable id: empty, whitespace, or containing a pipe, whitespace or control characters (AC-1.4)', () => {
+  it('ignores rows with no usable id: empty, whitespace, or containing a pipe or control characters; inner spaces are usable (AC-1.4; 013 AC-4)', () => {
     const { orders, rejected, ignored } = validateRows([
       row({ work_order_id: '' }),
       row({ work_order_id: '   ' }),
       row({ work_order_id: 'WO|1' }),
-      row({ work_order_id: 'WO 1' }),
+      row({ work_order_id: ' WO 1 ' }),
       row({ work_order_id: 'WO\u00001' }),
     ]);
-    expect(orders).toEqual([]);
+    expect(orders.map((order) => order.id)).toEqual(['WO 1']);
     expect(rejected).toEqual([]);
     expect(ignored).toEqual([
       { line: 1, reason: 'no_id' },
       { line: 2, reason: 'no_id' },
       { line: 3, reason: 'no_id' },
-      { line: 4, reason: 'no_id' },
       { line: 5, reason: 'no_id' },
     ]);
   });
