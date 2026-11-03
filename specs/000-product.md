@@ -53,6 +53,7 @@ Coordinate a handyman visit for every work order between the order's tenant and 
 - **REQ-NG-11.** WHEN the system chooses a new slot on its own (no stated availability fits), THE slot SHALL NOT overlap any proposal already declined, countered or withdrawn from in that order; availability a party states explicitly is still honoured.
 - **REQ-NG-12.** WHEN a reply states days or times a party cannot do, THE system SHALL never again choose a slot for that order that overlaps them on its own, and SHALL say that requested times are unavailable only when the party requested times.
 - **REQ-NG-13.** IF the times a party states on a specific day do not fit, THEN THE system SHALL propose the free slot closest to them on that day before looking elsewhere.
+- **REQ-NG-14.** WHEN a party asks to speak with a person, complains strongly or is abusive, THE system SHALL tell them the office will contact them and SHALL close the order as `requires_review`.
 
 ## Timeouts
 
@@ -113,4 +114,5 @@ Closed set of reason codes recorded in traces. The `REASON` line is a sentence w
 | `interpretation_failed` | Two consecutive unclear replies |
 | `llm_unavailable` | The model keeps failing for this order |
 | `cross_reference` | A reference to another order stays unresolved |
+| `escalated` | A party asked for a person, complained strongly or was abusive |
 | `invalid_work_order` | The CSV row cannot be used |

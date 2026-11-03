@@ -1337,3 +1337,20 @@ describe('011 · a time a party names counts as their acceptance (ACC-1, RUN-3)'
     expect(nearest.orders.get('WO-1')?.accepted).toEqual({});
   });
 });
+
+describe('012 · escalate to a person (REQ-NG-14, LLM-2, ORD-1)', () => {
+  const startedNov: Fact = { type: 'run_started', sim_now: '2026-11-04T10:00:00+01:00', source: 'agent_now', clock_now: '2026-11-04T10:00:00+01:00', agent_now: '2026-11-04T10:00' };
+  const one: Fact[] = [startedNov, { type: 'csv_loaded', rows: [row({ work_order_id: 'WO-1', reported_at: '2026-11-02T09:00:00' })] }];
+  let seq = 1200;
+  const say = (role: 'tenant' | 'handyman', intent: string, quote: string): Fact => ({ type: 'interpretation', seq: (seq += 1), woid: 'WO-1', role, source: 'fake', prompt_version: '5', result: { intent, times: [], exclusions: [], quote } as never });
+
+  it('acknowledges the sender, closes as escalated and releases the hold; the other party gets nothing (AC-1.2, AC-1.3)', () => {
+    const { state, outputs } = step(fold([...one, say('handyman', 'accept', 'vale')]).state, say('tenant', 'escalate', 'I want to talk to a person'));
+    expect(state.orders.get('WO-1')?.result).toEqual({ kind: 'requires_review', code: 'escalated', sentence: 'The tenant asked for a person or complained; the office should contact them.' });
+    const blocks = stdoutOf(outputs).split('\n\n').filter(Boolean);
+    expect(blocks.map((block) => block.split('\n')[0])).toEqual(['WOID:WO-1|ROLE:tenant', 'WOID:WO-1|RESULT:requires_review']);
+    expect(blocks[0]).toContain('someone will contact you');
+    expect(stdoutOf(outputs)).not.toContain('talk to a person');
+    expect(state.holds.filter((hold) => hold.orderId === 'WO-1')).toEqual([]);
+  });
+});

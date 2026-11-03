@@ -7,7 +7,7 @@ Status: **v1**. Every requirement of the take-home is implemented, each of the 2
 ## Try it in two minutes
 
 ```bash
-docker build -t agent .                                  # runs typecheck + 455 tests inside; fails if any fails
+docker build -t agent .                                  # runs typecheck + 460 tests inside; fails if any fails
 cp traces/examples/work_orders.csv .                     # four orders of mixed urgency
 cp .env.example .env                                     # then put your key in ANTHROPIC_API_KEY=
 mkdir -p traces
@@ -55,6 +55,7 @@ Environment variables:
 | `contradictory_replies` | Two consecutive problem replies from the same party, at least one contradictory ("yes… no, I can't") |
 | `cross_reference` | Two consecutive replies about a different work order |
 | `llm_unavailable` | The model failed twice in a row for the order |
+| `escalated` | The tenant or the handyman asked for a person, complained strongly or was abusive; they are told the office will contact them |
 | `invalid_work_order` | The CSV row cannot be used (bad urgency, unreadable date, empty title) |
 
 The `REASON` line on stdout is one human-readable sentence naming the party and what is known; the code and the decision that produced it are in the trace. Every order gets exactly one result and nothing is emitted for it afterwards.
@@ -99,20 +100,20 @@ Traces are JSONL files under `/app/traces`, one per run; every line has `timesta
 
 The model is called in exactly two places:
 
-1. **Interpreting a reply** into a closed structure: intent (`accept`, `decline`, `counter`, `question`, `withdraw`, `cross_reference`, `contradictory`, `unclear`), stated times as local Madrid date and time fields, exclusions, and whether a handyman's unavailability applies to all his work. The output is validated against a schema (offsets, `Z` times and unknown fields are rejected), re-asked once, and otherwise recorded as `unclear`. Bare yes/no replies are handled by a regex and never reach the model ([ADR 0004](docs/adr/0004-interpretation-cascade.md)).
+1. **Interpreting a reply** into a closed structure: intent (`accept`, `decline`, `counter`, `question`, `withdraw`, `cross_reference`, `contradictory`, `escalate`, `unclear`), stated times as local Madrid date and time fields, exclusions, and whether a handyman's unavailability applies to all his work. The output is validated against a schema (offsets, `Z` times and unknown fields are rejected), re-asked once, and otherwise recorded as `unclear`. Bare yes/no replies are handled by a regex and never reach the model ([ADR 0004](docs/adr/0004-interpretation-cascade.md)).
 2. **Answering a question** from a closed facts list (title, address or "your address", the proposed slot, the 2-hour duration, the urgency, who comes, how to reply). The answer is validated (one paragraph, at most 400 characters, no date or time other than the proposed slot, none of the other party's words) and sent only to the asker, followed by a templated reminder of the slot. If the facts do not cover the question the model is told to say the office will check, and if the answer fails validation a fixed sentence says so instead.
 
 The model never sets state, holds, acceptances or results, never sees the other party's text, and the parties' replies are placed in the prompt as data, never as instructions. Everything else is templates and rules, which is why the invariants are tested without a key ([ADR 0001](docs/adr/0001-deterministic-core-llm-interpreter.md)).
 
-Why Haiku, with numbers. A golden set of 57 labelled replies (Spanish and English, every intent, relative dates, ranges, exclusions, idioms, hostile text) was run against each tier through the production prompt, schema and validator. The full report with every mismatch is [`eval/REPORT.md`](eval/REPORT.md); `pnpm eval --tier <regex|haiku|sonnet>` regenerates it.
+Why Haiku, with numbers. A golden set of 60 labelled replies (Spanish and English, every intent, relative dates, ranges, exclusions, idioms, hostile text) was run against each tier through the production prompt, schema and validator. The full report with every mismatch is [`eval/REPORT.md`](eval/REPORT.md); `pnpm eval --tier <regex|haiku|sonnet>` regenerates it.
 
 | Tier | Model | Intent accuracy | Full accuracy | Resolved by regex | p50 latency | Cost for the set |
 |---|---|---|---|---|---|---|
-| regex | — | 9% | 9% | 9% | — | $0 |
-| haiku | claude-haiku-5-5 | 82% | 68% | 9% | 1.6 s | $0.017 |
-| sonnet | claude-sonnet-5-5 | 88% | 70% | 9% | 1.3 s | $0.285 |
+| regex | — | 8% | 8% | 8% | — | $0 |
+| haiku | claude-haiku-5-5 | 90% | 70% | 8% | 1.6 s | $0.018 |
+| sonnet | claude-sonnet-5-5 | 88% | 73% | 8% | 1.3 s | $0.306 |
 
-Haiku is the default: Sonnet is six points better on intent at seventeen times the cost, and both miss the same kinds of reply: a withdrawal read as a decline and cross-references read as questions (known limitations below), "Wednesday is impossible, any other weekday is fine" read as a counter instead of a decline, which the policy handles identically since 009, and two replies with no final position read as unclear instead of contradictory, which leads to the same clarification. Haiku misses a few more: a frame-like injection read as an acceptance (which still needs the other party before anything is scheduled) and a reply with a `12:00Z` time read as a counter. Prompt version 4 (2026-11-03) added three readings found by the end-to-end runs ("whenever suits you" is a yes, a later correction in the message wins, "el finde" becomes concrete dates); on the 48 earlier cases whose labels did not change it scores as well as version 3 or better (intent 42 → 42–43, full 36 → 37–38 over two runs). The labels are hand-written; two were relabelled because spec 009 changed what is correct ("Yes that's fine. No wait, I can't do Wednesday at all." is now a decline of Wednesday, not contradictory). The regex share is low on this set because it over-represents long replies; in practice bare yes/no replies are common.
+Haiku is the default: with prompt version 5 it matches Sonnet on intent (90% against 88%), three points below on full accuracy, at a seventeenth of the cost. Both miss the same kinds of reply: a withdrawal read as a decline, which the policy handles the same way; a cross-reference read as a question (known limitations below); "Wednesday is impossible, any other weekday is fine" read as a counter instead of a decline, handled identically since 009; and two replies with no final position read as unclear instead of contradictory, which leads to the same clarification. Haiku also reads a frame-like injection as an acceptance, which still needs the other party before anything is scheduled. Version 4 (2026-11-03) added three readings found by the end-to-end runs ("whenever suits you" is a yes, a later correction wins, "el finde" becomes concrete dates) and version 5 the `escalate` intent; on the cases that existed before each change and kept their labels, accuracy did not drop over two runs each (intent 42 → 42–43 and 47 → 50–51). Two labels were changed by spec 009 ("Yes that's fine. No wait, I can't do Wednesday at all." is now a decline of Wednesday, not contradictory). The labels are hand-written. The regex share is low on this set because it over-represents long replies; in practice bare yes/no replies are common.
 
 ## Assumptions and trade-offs
 
@@ -146,9 +147,9 @@ The repository holds the product and the development harness it was built with. 
 | Part | Paths |
 |---|---|
 | Product | `src/`, `Dockerfile`, `package.json`, `tsconfig*.json`, `traces/examples/` |
-| Tests (455, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
+| Tests (460, under a minute) | `tests/`: unit, spawned-process scenarios with the fake interpreter, replay, evaluation, delivery, and the harness's own checks; they also run in the Docker build stage |
 | Evaluation | `eval/`: golden set, scorer, report; `pnpm eval` |
-| Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–011), `scripts/` |
+| Development harness | `CLAUDE.md`, `.claude/` (rules, skills, hooks), `specs/` (product spec, invariants, feature specs 001–012), `scripts/` |
 | Decisions | `docs/planning/`, `docs/adr/` |
 
 Each feature went through the same pipeline with Claude Code: `/spec` (user stories and EARS criteria, clarified with at most five questions), `/plan` (design, a constitution check against the invariants and ADRs, ordered tasks), `/implement` (every test written and seen failing before its code, `pnpm check` after every task) and `/ship`. `pnpm check` is typecheck, the test suite and invariant coverage, whose baseline may only shrink and is empty now; hooks refuse to finish while it is red. Features: 001 I/O protocol and startup; 002 calendar and initial proposals; 003 interpretation and acceptance; 004 negotiation; 005 timeouts, preemption and blackouts; 006 golden set and evaluation; 007 delivery. Specs with plan and tasks are under `specs/features/`; the behaviour is specified in [001](specs/features/001-io-protocol-startup/spec.md), [002](specs/features/002-calendar-initial-proposals/spec.md), [003](specs/features/003-interpretation-acceptance/spec.md), [004](specs/features/004-negotiation/spec.md) and [005](specs/features/005-timeouts-preemption-blackouts/spec.md).

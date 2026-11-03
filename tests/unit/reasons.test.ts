@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { criticalNoResponseSentence, noResponseSentence } from '../../src/core/reasons.js';
+import { REASON_CODES, REVIEW_SENTENCES, criticalNoResponseSentence, noResponseSentence } from '../../src/core/reasons.js';
 
 // Review sentences for timeouts (REQ-TO-2, REQ-TO-3): one line, naming the party and what is known, never free text.
 
@@ -18,5 +18,12 @@ describe('timeout review sentences (AC-1.4, AC-1.6)', () => {
 
   it('is always one line', () => {
     for (const sentence of [noResponseSentence({ party: 'tenant', slot, otherAccepted: true }), criticalNoResponseSentence({ slot, handymanAccepted: false })]) expect(sentence).not.toContain('\n');
+  });
+});
+
+describe('escalation (AC-1.2 of 012)', () => {
+  it('has its own reason code and a one-line sentence naming the party', () => {
+    expect(REASON_CODES).toContain('escalated');
+    expect(REVIEW_SENTENCES.escalated('tenant')).toBe('The tenant asked for a person or complained; the office should contact them.');
   });
 });

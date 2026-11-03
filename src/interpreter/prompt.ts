@@ -13,6 +13,7 @@ const INTENT_MEANINGS: Record<(typeof INTENTS)[number], string> = {
   withdraw: 'the sender says a previously given availability or acceptance no longer holds',
   cross_reference: 'the sender talks about a different work order or visit than this one',
   contradictory: 'the sender both accepts and rejects the proposed visit in the same message',
+  escalate: 'the sender asks to speak with a person or the office, complains strongly about the service, or is abusive; a plain question about the visit is question, not escalate',
   unclear: 'none of the above can be told from the message',
 };
 

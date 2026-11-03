@@ -74,7 +74,11 @@ describe('scope of a stated unavailability (005)', () => {
     expect(validateInterpretation({ intent: 'decline', quote: 'x', scope: 'everyone' }).ok).toBe(false);
   });
 
-  it('is prompt version 4 (009 AC-4.3)', () => {
-    expect(PROMPT_VERSION).toBe('4');
+});
+
+describe('escalate intent (AC-1.1 of 012)', () => {
+  it('is part of the closed set, and the prompt version is 5', () => {
+    expect(INTENTS).toContain('escalate');
+    expect(PROMPT_VERSION).toBe('5');
   });
 });

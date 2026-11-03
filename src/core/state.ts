@@ -20,6 +20,7 @@ import {
   officeWillCheck,
   reminder,
   reproposalNoted,
+  escalationAck,
   reproposalToHandyman,
   reproposalToTenant,
   type ReproposalNote,
@@ -382,6 +383,14 @@ function applyReply(state: State, fact: Fact & { type: 'interpretation' }, defer
 
   if (result.intent === 'unclear' || result.intent === 'contradictory' || result.intent === 'cross_reference') {
     return unclearReply(ctx, result.intent);
+  }
+
+  if (result.intent === 'escalate') {
+    // A request for a person, a strong complaint or abuse: the sender is told the office takes over, and the order goes to
+    // review (REQ-NG-14, 012 AC-1.2). The sender's words reach nobody else (LLM-2).
+    decision('escalate');
+    send(outputs, order.id, party, language, proposal.version, proposal.slot, escalationAck({ language, to: party }));
+    return review(ctx, 'escalated', REVIEW_SENTENCES.escalated(party));
   }
 
   if (result.intent === 'question') {

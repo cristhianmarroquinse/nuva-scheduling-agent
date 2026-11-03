@@ -7,6 +7,7 @@ export type ReasonCode =
   | 'interpretation_failed'
   | 'llm_unavailable'
   | 'cross_reference'
+  | 'escalated'
   | 'invalid_work_order';
 
 export const REASON_CODES: readonly ReasonCode[] = [
@@ -16,6 +17,7 @@ export const REASON_CODES: readonly ReasonCode[] = [
   'interpretation_failed',
   'llm_unavailable',
   'cross_reference',
+  'escalated',
   'invalid_work_order',
 ];
 
@@ -49,7 +51,7 @@ export function invalidRowSentence(problem: RowProblem): string {
 export const NO_RESPONSE_SENTENCE = 'No reply was received before the end of input.';
 
 /** Sentences for the review reasons this feature closes with (REQ-NG-8, REQ-RB-1). */
-export type ReviewByReply = 'contradictory_replies' | 'interpretation_failed' | 'llm_unavailable' | 'no_mutual_slot' | 'cross_reference';
+export type ReviewByReply = 'contradictory_replies' | 'interpretation_failed' | 'llm_unavailable' | 'no_mutual_slot' | 'cross_reference' | 'escalated';
 
 export const REVIEW_SENTENCES: Record<ReviewByReply, (party: 'tenant' | 'handyman') => string> = {
   contradictory_replies: (party) => `The ${party} gave two consecutive replies that could not be reconciled with the proposed visit.`,
@@ -57,6 +59,7 @@ export const REVIEW_SENTENCES: Record<ReviewByReply, (party: 'tenant' | 'handyma
   llm_unavailable: () => 'The reply interpreter was unavailable twice in a row for this order.',
   no_mutual_slot: (party) => `The ${party} declined or countered three proposals.`,
   cross_reference: (party) => `The ${party} kept referring to a different work order.`,
+  escalated: (party) => `The ${party} asked for a person or complained; the office should contact them.`,
 };
 
 /** Review after two timeouts (REQ-TO-2): the silent party, the slot and whether the other party had accepted. */

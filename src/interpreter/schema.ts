@@ -2,10 +2,10 @@
 
 import { z } from 'zod';
 
-export const PROMPT_VERSION = '4';
+export const PROMPT_VERSION = '5';
 export const ANSWER_PROMPT_VERSION = '1';
 
-export const INTENTS = ['accept', 'decline', 'counter', 'question', 'withdraw', 'cross_reference', 'contradictory', 'unclear'] as const;
+export const INTENTS = ['accept', 'decline', 'counter', 'question', 'withdraw', 'cross_reference', 'contradictory', 'escalate', 'unclear'] as const;
 export type Intent = (typeof INTENTS)[number];
 
 /** Whether a stated unavailability applies to this order only or to all the handyman's work (REQ-SC-6). */

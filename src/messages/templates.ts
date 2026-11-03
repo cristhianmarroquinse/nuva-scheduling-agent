@@ -187,3 +187,11 @@ export function reproposalNoted({ language, to, title, slot, address }: SlotMess
     ? `La propuesta anterior queda cancelada. Anotamos la visita que nos indica para «${issue}»: ${slotText(slot, 'es')}. Estamos pendientes de la confirmación del técnico y le avisaremos en cuanto la tengamos.`
     : `The previous proposal is cancelled. We have noted the visit you suggested for "${issue}": ${slotText(slot, 'en')}. We are waiting for the handyman to confirm and will let you know as soon as we have it.`;
 }
+
+/** The reply to a party who asked for a person, complained strongly or was abusive (AC-1.2 of 012): the office takes over. */
+export function escalationAck({ language, to }: Addressed): string {
+  if (to === 'handyman') return 'Entendido. Paso tu mensaje a la oficina y una persona se pondrá en contacto contigo.';
+  return language === 'es'
+    ? 'Entendido. Trasladamos su mensaje a la oficina y una persona se pondrá en contacto con usted.'
+    : 'Understood. We are passing your message to the office and someone will contact you.';
+}

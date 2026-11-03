@@ -68,7 +68,7 @@ describe('scope instruction (005)', () => {
 describe('readings that keep the last word (AC-4.3 of 009)', () => {
   const prompt = buildPrompt(request);
   it('availability that includes the proposal is an acceptance; a later correction wins; named periods become concrete times', () => {
-    expect(PROMPT_VERSION).toBe('4');
+    expect(Number(PROMPT_VERSION)).toBeGreaterThanOrEqual(4);
     expect(prompt.system).toMatch(/whenever suits you/i);
     expect(prompt.system).toMatch(/lo que sea.*stays unclear/);
     expect(prompt.system).toMatch(/correction later in the same message wins/i);

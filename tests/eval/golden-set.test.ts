@@ -3,7 +3,8 @@ import { checkGoldenSet, loadGoldenSet, type GoldenEntry } from '../../eval/lib/
 
 // The golden set is data the eval scores every tier against (ADR 0004); its shape and coverage are checked here (AC-1.1–AC-1.4).
 
-const INTENTS = ['accept', 'decline', 'counter', 'question', 'withdraw', 'cross_reference', 'contradictory', 'unclear'] as const;
+// The closed set of the production schema, so the fixture follows it (012 added escalate).
+import { INTENTS } from '../../src/interpreter/schema.js';
 
 function entry(index: number, overrides: Partial<GoldenEntry> = {}): GoldenEntry {
   const intent = INTENTS[index % INTENTS.length]!;

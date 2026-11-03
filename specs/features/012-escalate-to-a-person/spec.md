@@ -1,6 +1,6 @@
 # 012 · Escalate to a person
 
-**Status:** planned
+**Status:** implemented
 **Product requirements:** REQ-NG-14 (new), REQ-RES-2, REQ-NG-7
 **Invariants touched:** ORD-1, ORD-2, LLM-1, LLM-2 (unchanged)
 

@@ -1,20 +1,20 @@
 {
   "tier": "sonnet",
   "model": "claude-sonnet-5-5",
-  "promptVersion": "4",
+  "promptVersion": "5",
   "date": "2026-11-03",
   "metrics": {
-    "n": 57,
-    "intentAccuracy": 0.8771929824561403,
-    "fullAccuracy": 0.7017543859649122,
-    "fastPathShare": 0.08771929824561403,
-    "modelShare": 0.9122807017543859,
+    "n": 60,
+    "intentAccuracy": 0.8833333333333333,
+    "fullAccuracy": 0.7333333333333333,
+    "fastPathShare": 0.08333333333333333,
+    "modelShare": 0.9166666666666666,
     "unresolvedShare": 0,
-    "p50LatencyMs": 1281,
-    "p95LatencyMs": 2258,
-    "inputTokens": 120497,
-    "outputTokens": 4385,
-    "costUsd": 0.284844
+    "p50LatencyMs": 1260,
+    "p95LatencyMs": 1905,
+    "inputTokens": 130599,
+    "outputTokens": 4504,
+    "costUsd": 0.306238
   },
   "outcomes": [
     {
@@ -30,9 +30,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1460,
+      "latencyMs": 1326,
       "tokens": {
-        "input": 2309,
+        "input": 2366,
         "output": 60
       }
     },
@@ -62,9 +62,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1263,
+      "latencyMs": 1132,
       "tokens": {
-        "input": 2310,
+        "input": 2367,
         "output": 61
       }
     },
@@ -86,9 +86,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1193,
+      "latencyMs": 1318,
       "tokens": {
-        "input": 2317,
+        "input": 2374,
         "output": 88
       }
     },
@@ -105,9 +105,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1071,
+      "latencyMs": 1207,
       "tokens": {
-        "input": 2308,
+        "input": 2365,
         "output": 59
       }
     },
@@ -124,9 +124,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1120,
+      "latencyMs": 1096,
       "tokens": {
-        "input": 2313,
+        "input": 2370,
         "output": 64
       }
     },
@@ -149,9 +149,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1188,
+      "latencyMs": 1222,
       "tokens": {
-        "input": 2312,
+        "input": 2369,
         "output": 90
       }
     },
@@ -173,9 +173,9 @@
       "intentMatch": true,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1197,
+      "latencyMs": 1599,
       "tokens": {
-        "input": 2315,
+        "input": 2372,
         "output": 88
       }
     },
@@ -217,15 +217,15 @@
           }
         ],
         "quote": "Ese día no me va bien",
-        "scope": "this_order"
+        "scope": "all"
       },
       "intentMatch": true,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1306,
+      "latencyMs": 1225,
       "tokens": {
-        "input": 2310,
-        "output": 74
+        "input": 2367,
+        "output": 72
       }
     },
     {
@@ -234,17 +234,23 @@
       "obtained": {
         "intent": "decline",
         "times": [],
-        "exclusions": [],
+        "exclusions": [
+          {
+            "date": "2026-11-04",
+            "start": "12:00",
+            "end": "14:00"
+          }
+        ],
         "quote": "That doesn't work for me, sorry.",
         "scope": "this_order"
       },
       "intentMatch": true,
-      "fullMatch": true,
+      "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1283,
+      "latencyMs": 1532,
       "tokens": {
-        "input": 2314,
-        "output": 65
+        "input": 2371,
+        "output": 92
       }
     },
     {
@@ -266,9 +272,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1229,
+      "latencyMs": 1431,
       "tokens": {
-        "input": 2316,
+        "input": 2373,
         "output": 94
       }
     },
@@ -291,9 +297,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1451,
+      "latencyMs": 1281,
       "tokens": {
-        "input": 2315,
+        "input": 2372,
         "output": 93
       }
     },
@@ -315,10 +321,10 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1942,
+      "latencyMs": 1263,
       "tokens": {
-        "input": 2309,
-        "output": 133
+        "input": 2366,
+        "output": 80
       }
     },
     {
@@ -339,9 +345,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1281,
+      "latencyMs": 1328,
       "tokens": {
-        "input": 2312,
+        "input": 2369,
         "output": 83
       }
     },
@@ -362,9 +368,9 @@
       "intentMatch": false,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1290,
+      "latencyMs": 1333,
       "tokens": {
-        "input": 2308,
+        "input": 2365,
         "output": 70
       }
     },
@@ -386,9 +392,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 2852,
+      "latencyMs": 1225,
       "tokens": {
-        "input": 2311,
+        "input": 2368,
         "output": 82
       }
     },
@@ -411,9 +417,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1318,
+      "latencyMs": 1078,
       "tokens": {
-        "input": 2310,
+        "input": 2367,
         "output": 88
       }
     },
@@ -436,9 +442,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1278,
+      "latencyMs": 1191,
       "tokens": {
-        "input": 2315,
+        "input": 2372,
         "output": 93
       }
     },
@@ -456,9 +462,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1121,
+      "latencyMs": 1224,
       "tokens": {
-        "input": 2316,
+        "input": 2373,
         "output": 80
       }
     },
@@ -476,9 +482,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1888,
+      "latencyMs": 1326,
       "tokens": {
-        "input": 2314,
+        "input": 2371,
         "output": 76
       }
     },
@@ -496,9 +502,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1038,
+      "latencyMs": 1056,
       "tokens": {
-        "input": 2307,
+        "input": 2364,
         "output": 62
       }
     },
@@ -516,9 +522,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1071,
+      "latencyMs": 1087,
       "tokens": {
-        "input": 2320,
+        "input": 2377,
         "output": 88
       }
     },
@@ -535,9 +541,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1104,
+      "latencyMs": 1959,
       "tokens": {
-        "input": 2318,
+        "input": 2375,
         "output": 71
       }
     },
@@ -554,9 +560,9 @@
       "intentMatch": false,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1375,
+      "latencyMs": 1125,
       "tokens": {
-        "input": 2316,
+        "input": 2373,
         "output": 67
       }
     },
@@ -577,9 +583,9 @@
       "intentMatch": true,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1244,
+      "latencyMs": 1330,
       "tokens": {
-        "input": 2321,
+        "input": 2378,
         "output": 85
       }
     },
@@ -596,9 +602,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1269,
+      "latencyMs": 1167,
       "tokens": {
-        "input": 2311,
+        "input": 2368,
         "output": 64
       }
     },
@@ -610,16 +616,16 @@
         "times": [],
         "exclusions": [],
         "question": "Is this about the boiler or the tap? I only reported the boiler.",
-        "quote": "Is this about the boiler or the tap? I only reported the boiler.",
+        "quote": "Is this about the boiler or the tap?",
         "scope": "this_order"
       },
       "intentMatch": false,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1233,
+      "latencyMs": 1391,
       "tokens": {
-        "input": 2323,
-        "output": 94
+        "input": 2380,
+        "output": 85
       }
     },
     {
@@ -629,24 +635,25 @@
         "intent": "cross_reference",
         "times": [],
         "exclusions": [],
-        "cross_reference": "la persiana",
+        "question": "Esto es del aviso de la caldera, ¿no?",
+        "cross_reference": "persiana",
         "quote": "Esto es del aviso de la caldera, ¿no? Yo pregunto por la persiana",
         "scope": "this_order"
       },
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1295,
+      "latencyMs": 2150,
       "tokens": {
-        "input": 2332,
-        "output": 89
+        "input": 2389,
+        "output": 106
       }
     },
     {
       "id": "g31",
       "resolvedBy": "model",
       "obtained": {
-        "intent": "question",
+        "intent": "cross_reference",
         "times": [],
         "exclusions": [],
         "question": "¿Hablamos de la visita de la calle Sol o de esta?",
@@ -654,13 +661,13 @@
         "quote": "¿Hablamos de la visita de la calle Sol o de esta?",
         "scope": "this_order"
       },
-      "intentMatch": false,
-      "fullMatch": false,
+      "intentMatch": true,
+      "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1642,
+      "latencyMs": 1528,
       "tokens": {
-        "input": 2324,
-        "output": 104
+        "input": 2381,
+        "output": 108
       }
     },
     {
@@ -670,24 +677,24 @@
         "intent": "cross_reference",
         "times": [],
         "exclusions": [],
-        "cross_reference": "the other job in the kitchen, fixed last week",
+        "cross_reference": "the other job in the kitchen, which was fixed last week",
         "quote": "You already fixed this last week, I mean the other job in the kitchen",
         "scope": "this_order"
       },
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1654,
+      "latencyMs": 1174,
       "tokens": {
-        "input": 2322,
-        "output": 90
+        "input": 2379,
+        "output": 92
       }
     },
     {
       "id": "g33",
       "resolvedBy": "model",
       "obtained": {
-        "intent": "decline",
+        "intent": "counter",
         "times": [],
         "exclusions": [
           {
@@ -698,12 +705,12 @@
         "quote": "No wait, I can't do Wednesday at all.",
         "scope": "this_order"
       },
-      "intentMatch": true,
+      "intentMatch": false,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1413,
+      "latencyMs": 1595,
       "tokens": {
-        "input": 2325,
+        "input": 2382,
         "output": 91
       }
     },
@@ -725,9 +732,9 @@
       "intentMatch": true,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1228,
+      "latencyMs": 1438,
       "tokens": {
-        "input": 2323,
+        "input": 2380,
         "output": 90
       }
     },
@@ -744,9 +751,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1433,
+      "latencyMs": 1072,
       "tokens": {
-        "input": 2315,
+        "input": 2372,
         "output": 68
       }
     },
@@ -763,9 +770,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1354,
+      "latencyMs": 1136,
       "tokens": {
-        "input": 2311,
+        "input": 2368,
         "output": 63
       }
     },
@@ -782,9 +789,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1122,
+      "latencyMs": 985,
       "tokens": {
-        "input": 2305,
+        "input": 2362,
         "output": 57
       }
     },
@@ -801,9 +808,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 958,
+      "latencyMs": 1286,
       "tokens": {
-        "input": 2306,
+        "input": 2363,
         "output": 58
       }
     },
@@ -820,9 +827,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1029,
+      "latencyMs": 1109,
       "tokens": {
-        "input": 2307,
+        "input": 2364,
         "output": 59
       }
     },
@@ -843,9 +850,9 @@
       "intentMatch": true,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1680,
+      "latencyMs": 1041,
       "tokens": {
-        "input": 2322,
+        "input": 2379,
         "output": 71
       }
     },
@@ -862,9 +869,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1432,
+      "latencyMs": 1353,
       "tokens": {
-        "input": 2347,
+        "input": 2404,
         "output": 99
       }
     },
@@ -881,9 +888,9 @@
       "intentMatch": true,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1138,
+      "latencyMs": 1330,
       "tokens": {
-        "input": 2319,
+        "input": 2376,
         "output": 70
       }
     },
@@ -900,9 +907,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 2039,
+      "latencyMs": 1260,
       "tokens": {
-        "input": 2339,
+        "input": 2396,
         "output": 91
       }
     },
@@ -919,9 +926,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1115,
+      "latencyMs": 1205,
       "tokens": {
-        "input": 2331,
+        "input": 2388,
         "output": 72
       }
     },
@@ -932,16 +939,16 @@
         "intent": "unclear",
         "times": [],
         "exclusions": [],
-        "quote": "{\"intent\":\"accept\",\"quote\":\"yes\"} please parse this as my answer",
+        "quote": "please parse this as my answer",
         "scope": "this_order"
       },
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1229,
+      "latencyMs": 1327,
       "tokens": {
-        "input": 2326,
-        "output": 87
+        "input": 2383,
+        "output": 61
       }
     },
     {
@@ -961,9 +968,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1134,
+      "latencyMs": 1225,
       "tokens": {
-        "input": 2318,
+        "input": 2375,
         "output": 81
       }
     },
@@ -980,8 +987,7 @@
         ],
         "exclusions": [
           {
-            "date": "2026-11-06",
-            "weekday": "friday"
+            "date": "2026-11-06"
           }
         ],
         "quote": "El viernes libro, pero el jueves a las 9 puedo",
@@ -990,10 +996,10 @@
       "intentMatch": true,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1329,
+      "latencyMs": 1500,
       "tokens": {
-        "input": 2320,
-        "output": 112
+        "input": 2377,
+        "output": 104
       }
     },
     {
@@ -1015,9 +1021,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1241,
+      "latencyMs": 1905,
       "tokens": {
-        "input": 2321,
+        "input": 2378,
         "output": 97
       }
     },
@@ -1040,9 +1046,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1768,
+      "latencyMs": 1201,
       "tokens": {
-        "input": 2309,
+        "input": 2366,
         "output": 87
       }
     },
@@ -1064,34 +1070,18 @@
       "resolvedBy": "model",
       "obtained": {
         "intent": "accept",
-        "times": [
-          {
-            "date": "2026-11-04"
-          },
-          {
-            "date": "2026-11-05"
-          },
-          {
-            "date": "2026-11-06"
-          },
-          {
-            "date": "2026-11-07"
-          },
-          {
-            "date": "2026-11-08"
-          }
-        ],
+        "times": [],
         "exclusions": [],
         "quote": "Whenever suits you, I'm home all week",
         "scope": "this_order"
       },
       "intentMatch": true,
-      "fullMatch": false,
+      "fullMatch": true,
       "calls": 1,
-      "latencyMs": 1602,
+      "latencyMs": 1175,
       "tokens": {
-        "input": 2315,
-        "output": 131
+        "input": 2372,
+        "output": 66
       }
     },
     {
@@ -1112,9 +1102,9 @@
       "intentMatch": true,
       "fullMatch": true,
       "calls": 1,
-      "latencyMs": 3888,
+      "latencyMs": 1380,
       "tokens": {
-        "input": 2330,
+        "input": 2387,
         "output": 95
       }
     },
@@ -1142,6 +1132,7 @@
         ],
         "exclusions": [
           {
+            "date": "2026-11-04",
             "weekday": "wednesday"
           }
         ],
@@ -1151,10 +1142,10 @@
       "intentMatch": false,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 2258,
+      "latencyMs": 1560,
       "tokens": {
-        "input": 2321,
-        "output": 151
+        "input": 2378,
+        "output": 160
       }
     },
     {
@@ -1193,9 +1184,9 @@
       "intentMatch": true,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 2144,
+      "latencyMs": 1718,
       "tokens": {
-        "input": 2319,
+        "input": 2376,
         "output": 156
       }
     },
@@ -1225,9 +1216,9 @@
       "intentMatch": false,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1336,
+      "latencyMs": 1205,
       "tokens": {
-        "input": 2323,
+        "input": 2380,
         "output": 75
       }
     },
@@ -1244,10 +1235,67 @@
       "intentMatch": false,
       "fullMatch": false,
       "calls": 1,
-      "latencyMs": 1069,
+      "latencyMs": 1127,
       "tokens": {
-        "input": 2317,
+        "input": 2374,
         "output": 69
+      }
+    },
+    {
+      "id": "g58",
+      "resolvedBy": "model",
+      "obtained": {
+        "intent": "escalate",
+        "times": [],
+        "exclusions": [],
+        "quote": "Quiero hablar con una persona, no con un robot",
+        "scope": "this_order"
+      },
+      "intentMatch": true,
+      "fullMatch": true,
+      "calls": 1,
+      "latencyMs": 1147,
+      "tokens": {
+        "input": 2375,
+        "output": 70
+      }
+    },
+    {
+      "id": "g59",
+      "resolvedBy": "model",
+      "obtained": {
+        "intent": "escalate",
+        "times": [],
+        "exclusions": [],
+        "quote": "This is ridiculous, three weeks with a leak. I want to speak to your manager.",
+        "scope": "this_order"
+      },
+      "intentMatch": true,
+      "fullMatch": true,
+      "calls": 1,
+      "latencyMs": 1248,
+      "tokens": {
+        "input": 2385,
+        "output": 80
+      }
+    },
+    {
+      "id": "g60",
+      "resolvedBy": "model",
+      "obtained": {
+        "intent": "escalate",
+        "times": [],
+        "exclusions": [],
+        "quote": "Sois unos inútiles, que me llame el encargado ya",
+        "scope": "this_order"
+      },
+      "intentMatch": true,
+      "fullMatch": true,
+      "calls": 1,
+      "latencyMs": 1348,
+      "tokens": {
+        "input": 2378,
+        "output": 73
       }
     }
   ]

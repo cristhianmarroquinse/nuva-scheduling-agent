@@ -1,15 +1,15 @@
 {
   "tier": "regex",
   "model": null,
-  "promptVersion": "4",
+  "promptVersion": "5",
   "date": "2026-11-03",
   "metrics": {
-    "n": 57,
-    "intentAccuracy": 0.08771929824561403,
-    "fullAccuracy": 0.08771929824561403,
-    "fastPathShare": 0.08771929824561403,
+    "n": 60,
+    "intentAccuracy": 0.08333333333333333,
+    "fullAccuracy": 0.08333333333333333,
+    "fastPathShare": 0.08333333333333333,
     "modelShare": 0,
-    "unresolvedShare": 0.9122807017543859,
+    "unresolvedShare": 0.9166666666666666,
     "p50LatencyMs": null,
     "p95LatencyMs": null,
     "inputTokens": 0,
@@ -492,6 +492,30 @@
     },
     {
       "id": "g57",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g58",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g59",
+      "resolvedBy": "unresolved",
+      "obtained": null,
+      "intentMatch": false,
+      "fullMatch": false,
+      "calls": 0
+    },
+    {
+      "id": "g60",
       "resolvedBy": "unresolved",
       "obtained": null,
       "intentMatch": false,

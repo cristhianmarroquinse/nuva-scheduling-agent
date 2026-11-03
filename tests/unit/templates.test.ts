@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { reproposalNoted, acknowledgement, clarification, confirmationRequest, confirmationToHandyman, confirmationToTenant, initialProposalToHandyman, initialProposalToTenant, officeWillCheck, answerReply, crossReferenceClarification, reminder, reproposalToHandyman, reproposalToTenant } from '../../src/messages/templates.js';
+import { escalationAck, reproposalNoted, acknowledgement, clarification, confirmationRequest, confirmationToHandyman, confirmationToTenant, initialProposalToHandyman, initialProposalToTenant, officeWillCheck, answerReply, crossReferenceClarification, reminder, reproposalToHandyman, reproposalToTenant } from '../../src/messages/templates.js';
 
 // First message of every order (REQ-ST-2, REQ-ST-4, REQ-OUT-2, REQ-OUT-3): templates, no model.
 
@@ -218,5 +218,13 @@ describe('a re-proposal of the exact time the party named (AC-1.2 of 011, COM-1,
     expect(handyman).toContain('inquilino');
     expect(handyman).not.toMatch(/\?/);
     expect(reproposalNoted({ language: 'es', to: 'tenant', title, slot, address: 'Calle Mayor 1' })).toContain('técnico');
+  });
+});
+
+describe('escalation acknowledgement (AC-1.2 of 012, COM-1, COM-2)', () => {
+  it('tells the sender the office will contact them, in their language', () => {
+    expect(escalationAck({ language: 'en', to: 'tenant' })).toBe('Understood. We are passing your message to the office and someone will contact you.');
+    expect(escalationAck({ language: 'es', to: 'tenant' })).toBe('Entendido. Trasladamos su mensaje a la oficina y una persona se pondrá en contacto con usted.');
+    expect(escalationAck({ language: 'en', to: 'handyman' })).toBe('Entendido. Paso tu mensaje a la oficina y una persona se pondrá en contacto contigo.');
   });
 });
