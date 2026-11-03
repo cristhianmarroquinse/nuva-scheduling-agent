@@ -2,7 +2,7 @@
 
 A scheduling agent for a property maintenance company. Each work order in a read-only CSV needs a 2-hour visit from the single handyman; the agent talks to the tenant (in the tenant's language) and to the handyman (in Spanish) over stdin and stdout, holds and moves visit slots on one shared calendar, and ends every order as `scheduled` or `requires_review` with a reason. Code makes every decision; Claude only turns free-text replies into a validated structure and answers questions from a closed list of facts.
 
-Status: **v1**. Every requirement of the take-home is implemented, each of the 23 invariants in [`specs/INVARIANTS.md`](specs/INVARIANTS.md) is covered by a test, the image only builds when the whole suite passes, the model choice is backed by an [evaluation](eval/REPORT.md), and one real run is committed under [`traces/examples/`](traces/examples/).
+Status: **v1**. Every requirement of the take-home is implemented, each of the 23 invariants in [`specs/INVARIANTS.md`](specs/INVARIANTS.md) is covered by a test, the image only builds when the whole suite passes, the model choice is backed by an [evaluation](eval/REPORT.md), and one real run is committed under [`traces/examples/`](traces/examples/). After v1, a manual run and two end-to-end rounds against the real model (93 scripted scenarios, reviewed against the take-home criteria) led to features 008–013, each with its spec, decisions and tests: see [the roadmap](docs/planning/04-roadmap.md#after-v1).
 
 ## Try it in two minutes
 
@@ -42,6 +42,8 @@ Environment variables:
 **Several orders at once.** All orders share one calendar, and tentative holds are the coordination primitive: a proposal reserves its slot until it is accepted by both, moved, or released. Input lines for different orders interleave freely and are processed one at a time in arrival order. When a higher-urgency order's party asks for times and the only fitting slot is held tentatively by a strictly lower-urgency order, the hold changes hands and the other order is re-proposed and told why, without penalty. A scheduled visit is never moved by anything. The example shows it: WO-1002's counter lands at Thursday 15:00 because Thursday 09:00 is held by WO-1003 ([traces/examples/README.md](traces/examples/README.md)).
 
 **Timeouts.** `<NO RESPONSE>` counts only against a party the agent is actually waiting on: the first one gets a reminder restating the slot, the second ends the order in review. The tenant of a Critical order goes to review at the first silence, with the slot and the handyman's state in the reason. Any real reply resets the count. Nothing waits on wall-clock time.
+
+**Handing over to a person.** A party who asks to speak with a person, complains strongly or is abusive is told that the office will contact them, and the order goes to review with reason `escalated`; their words reach nobody else ([spec 012](specs/features/012-escalate-to-a-person/spec.md)).
 
 **Handyman unavailability.** When the handyman says something that applies to all his work ("mañana no puedo nada"), every tentative visit in that window is moved, in priority order (the most urgent order picks the first free slot, including the order he wrote on), and the window is avoided from then on; confirmed visits stay and the conflict is traced for the office. If he refuses in general but no date can be read, the day of the visit he was answering is blacked out, and the trace marks it as inferred ([spec 010](specs/features/010-blackout-priority/spec.md)).
 
